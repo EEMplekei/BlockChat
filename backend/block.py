@@ -39,12 +39,11 @@ class Block:
     
     
     def validate_block(self, blockchain: Blockchain):
-        """
-        Validate current_hash and previous_hash
-        Called from a node when it receives a broadcasted block (that isn't the genesis block)
-        Checks 1)if validator is correct
-               2)if the previous_hash field is equal to the the hash of the actual previous block
-        """
+        # Validate current_hash and previous_hash
+        # Called from a node when it receives a broadcasted block (that isn't the genesis block)
+        # Checks 1)if validator is correct
+        #        2)if the previous_hash field is equal to the the hash of the actual previous block
+        
         # Special case: If it is the genesis block, it's valid 
         if (self.previous_hash == 1 and self.nonce == 0):
             return True

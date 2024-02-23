@@ -3,10 +3,9 @@ from fastapi import FastAPI
 app = FastAPI()
 
 def create_genesis_block():
-    """
-    ! BOOTSTRAP ONLY !
-    Create the first block of the blockchain (GENESIS BLOCK)
-    """
+    # ! BOOTSTRAP ONLY !
+    # Create the first block of the blockchain (GENESIS BLOCK)
+
     # Create new block
     gen_block = node.create_new_block() # previous_hash autogenerates
     gen_block.nonce = 0
@@ -34,3 +33,4 @@ def create_genesis_block():
     node.current_block = node.create_new_block()
     
     return
+
