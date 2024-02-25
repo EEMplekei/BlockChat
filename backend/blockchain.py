@@ -17,7 +17,6 @@ class Blockchain:
         # UTXOs                   List of deques containing the UTXOs for all nodes in the cluster
         # trxs                    Set of transaction hashes in the original blockhain (to avoid double transactions)
         self.chain = [] # list<Block>
-        self.difficulty = mining_difficulty
         self.maxBlockTransactions = block_size
         self.UTXOs = []
         self.trxns = set()
