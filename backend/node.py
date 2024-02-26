@@ -10,11 +10,10 @@ import os
 import random
 import threading
 
-from dump import Dump
 
 from wallet import Wallet
 from blockchain import Blockchain
-from transaction import Transaction
+from transaction import TransactionType, Transaction
 from block import Block
 from utxo import UTXO
 
@@ -53,8 +52,8 @@ class Node:
         self.pending_transactions = deque()
         self.incoming_block_lock = threading.Lock()
         self.processing_block_lock = threading.Lock()
-
-        self.dump = Dump()
+        self.stake = None
+        self.nonce = random.randint(0, 10000)
 
     #Creates a new block for the blockchain
     def create_new_block(self):
@@ -167,20 +166,17 @@ class Node:
             if (self.id != node['id']):
                 self.unicast_block(node, block)
 
+
     ##### Transaction #####
-    def create_transaction(self, receiver, amount):
-        our_address = self.wallet.address
-        our_signature = self.wallet.private_key
-        transaction = Transaction(our_address, our_signature, receiver, amount)
-        
-        # Sign the transaction.
-        transaction.sign_transaction(our_signature)
-
-        # Calculate the hash
-        transaction.calculate_hash()
-
+    def create_transaction(self, receiver_address, type_of_transaction, payload):
+        sender_address = self.wallet.address
+        nonce = self.nonce
+        # Create a new transaction
+        transaction = Transaction(sender_address, receiver_address, type_of_transaction, payload, type_of_transaction, payload, nonce)
+        self.nonce += 1
         return transaction
-    
+        
+
     def unicast_transaction(self, node, transaction):
         request_address = 'http://' + node['ip'] + ':' + node['port']
         request_url = request_address + '/get_transaction'
