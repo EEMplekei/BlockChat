@@ -76,7 +76,6 @@ def create_genesis_block():
 # Initialize the new node
 node = Node()
 
-
 # Get info about the cluster, bootstrap node
 load_dotenv()
 total_nodes = int(os.getenv('TOTAL_NODES'))
@@ -124,7 +123,6 @@ def create_transaction(receiver_id: int, amount: int):
     node.add_transaction_to_pending(transaction)
     # Broadcast transaction
     node.broadcast_transaction(transaction)
-
     return JSONResponse('Successful Transaction !', status_code=status.HTTP_200_OK)
 
 @app.get("/api/view_transactions")
@@ -147,7 +145,6 @@ def view_transactions():
                 "amount": transaction.amount
             }
         )
-
     return JSONResponse(transactions, status_code=status.HTTP_200_OK)
 
 @app.get("/api/get_balance")
@@ -179,8 +176,7 @@ def get_chain():
 # INTERNAL ROUTES
 @app.get("/")
 async def root():
-    # return {"message": f"Welcome to Noobcoin. I am {socket.gethostname()} : {socket.gethostbyname(socket.gethostname())}"}
-    return {"message": f"Welcome to Noobcoin"}
+    return {"message": f"Welcome to BlockChat"}
 
 @app.post("/get_ring")
 async def get_ring(request: Request):
@@ -227,15 +223,15 @@ def get_block(data: bytes = Depends(get_body)):
 
     # Wait until incoming block has finished processing
     with (node.processing_block_lock):
-        # 1. Check validity of block
+        # Check validity of block
         if (new_block.validate_block(node.blockchain)):
             # If it is valid:
-            # 1. Stop the current block mining
+            # Stop the current block mining
             with(node.incoming_block_lock):
                 node.incoming_block = True
             # node.processing_block = False
             print("Block was ⛏️  by someone else 🧑")
-            # 2. Add block to the blockchain
+            # Add block to the blockchain
             print("✅📦! Adding it to the chain")
             node.add_block_to_chain(new_block)
             print("Blockchain length: ", len(node.blockchain.chain))
@@ -278,13 +274,12 @@ async def let_me_in(request: Request):
 def check_full_ring():
     # ! BOOTSTRAP ONLY !
     # Checks if all nodes have been added to the ring
-
     time.sleep(1)
     if (len(node.ring) == total_nodes):
         node.broadcast_ring()
         node.broadcast_blockchain()
         node.broadcast_initial_nbc()
         
-# WEB SERVER RUN
-        
+
+# WEB SERVER RUN    
 uvicorn.run(app, host="0.0.0.0", port=port)
