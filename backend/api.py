@@ -14,7 +14,7 @@ import threading
 import requests
 
 from node import Node
-from transaction import Transaction
+from transaction import Transaction, TransactionType
 from utxo import UTXO
 from blockchain import Blockchain
 
@@ -36,23 +36,33 @@ argParser.add_argument("-p", "--port", help="Port in which node is running", def
 argParser.add_argument("--ip", help="IP of the host")
 args = argParser.parse_args()
 
+# Call once function to ensure that genesis block is only created once
+def call_once(func):
+    def wrapper(*args, **kwargs):
+        if not wrapper.called:
+            wrapper.called = True
+            return func(*args, **kwargs)
+        else:
+            raise RuntimeError("Function can only be called once.")
+    
+    wrapper.called = False
+    return wrapper
+
 # Function that creates genesis block
+@call_once
 def create_genesis_block():
     # BOOTSTRAP: Create the first block of the blockchain (GENESIS BLOCK)
     gen_block = node.create_new_block() # previous_hash autogenerates
     # Create first transaction
     first_transaction = Transaction(
-        sender_address='0', 
-        receiver_address = node.wallet.address, 
-        type_of_transaction= 'coins',
-        amount= total_bbc,
-        message= None,
-        nonce= None,
-        transaction_id= None,
-        signature= None
+        sender_address='0',
+        receiver_address=node.wallet.address, 
+        type_of_transaction=TransactionType.COINS,
+        payload=total_bbc,
+        nonce=1
     )
     # Add transaction to genesis block
-    gen_block.transactions_list.append(first_transaction)
+    gen_block.transactions.append(first_transaction)
     gen_block.calculate_hash() # void
     # Add genesis block to blockchain
     node.blockchain.chain.append(gen_block)
