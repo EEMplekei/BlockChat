@@ -21,7 +21,6 @@ class Block:
         self.validator = None
         self.current_hash = self.calculate_hash() 
         self.previous_hash = previous_hash
-        self.nonce = None
 	
     def calculate_hash(self):
         #Return hash of the block
