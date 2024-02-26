@@ -36,18 +36,13 @@ argParser.add_argument("-p", "--port", help="Port in which node is running", def
 argParser.add_argument("--ip", help="IP of the host")
 args = argParser.parse_args()
 
+# Function that creates genesis block
 def create_genesis_block():
     # BOOTSTRAP: Create the first block of the blockchain (GENESIS BLOCK)
-    
-    # Create new block
     gen_block = node.create_new_block() # previous_hash autogenerates
-    gen_block.nonce = 0
-
     # Create first transaction
-    # NEEDS MODIFICATIONS
     first_transaction = Transaction(
         sender_address='0', 
-        sender_private_key=None, 
         receiver_address = node.wallet.address, 
         type_of_transaction= 'coins',
         amount= total_bbc,
@@ -56,22 +51,18 @@ def create_genesis_block():
         transaction_id= None,
         signature= None
     )
-
     # Add transaction to genesis block
     gen_block.transactions_list.append(first_transaction)
     gen_block.calculate_hash() # void
-
-    # Add genesis block to bockchain
+    # Add genesis block to blockchain
     node.blockchain.chain.append(gen_block)
-
     # Add first UTXO
     node.blockchain.UTXOs[0].append(UTXO(-1, node.id, total_bbc))
-
     # Create new empty block
     node.current_block = node.create_new_block()
-    
     return
 
+# ======================== MAIN ========================
 # INITIALIZATION
 # Initialize the new node
 node = Node()
@@ -103,7 +94,8 @@ else:
     node.unicast_node(bootstrap_node)
 
 
-
+# ======================== ROUTES ========================
+# ========================================================
 # CLIENT ROUTES 
 @app.get("/api/create_transaction/{receiver_id}/{amount}")
 def create_transaction(receiver_id: int, amount: int):
@@ -114,7 +106,7 @@ def create_transaction(receiver_id: int, amount: int):
     # Check if there are enough NBCs
     # !! Only for cli demo
     # if (node.ring[node.wallet.address]['balance'] < amount):
-    #     return JSONResponse(content={"message":'Not enough Noobcoins in wallet'}, status_code=status.HTTP_400_BAD_REQUEST)
+    #     return JSONResponse(content={"message":'Not enough BlockChat coins in wallet'}, status_code=status.HTTP_400_BAD_REQUEST)
     
     # Create transaction
     receiver_address = list(node.ring.keys())[receiver_id]
@@ -172,7 +164,7 @@ def get_chain():
 
 
 
-
+# =================================================
 # INTERNAL ROUTES
 @app.get("/")
 async def root():

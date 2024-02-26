@@ -19,8 +19,8 @@ class Block:
         self.timestamp = time()
         self.transactions = []
         self.validator = None
-        self.current_hash = self.calculate_hash() 
         self.previous_hash = previous_hash
+        self.current_hash = self.calculate_hash() 
 	
     def calculate_hash(self):
         #Return hash of the block
