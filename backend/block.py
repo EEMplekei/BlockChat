@@ -25,7 +25,6 @@ class Block:
     def calculate_hash(self):
         #Return hash of the block
         block_object = {
-            'nonce': self.nonce,
             'timestamp': self.timestamp, 
             'transactions': [tr.transaction_id for tr in self.transactions],
             'previous_hash': self.previous_hash
