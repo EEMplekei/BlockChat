@@ -81,7 +81,7 @@ class Node:
             transaction.sender_address == self.wallet.address):
             self.wallet.transactions.append(transaction)
         # info message
-        print(f"1. Transaction added to blockchain: {self.ring[transaction.sender_address]['id']} -> {self.ring[transaction.receiver_address]['id']} : {transaction.amount} NBCs")
+        print(f"1. Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> {self.ring[str(transaction.receiver_address)]['id']} : {transaction.amount} BBCs")
         
         # Update the balance of sender and receiver in the ring.
         self.ring[str(transaction.sender_address)]['balance'] -=  transaction.amount
@@ -260,5 +260,5 @@ class Node:
     # Send the initial amount of 1000 BlockChat coins to all nodes
     def broadcast_initial_bcc(self):
         for node_address in self.ring:
-            if (self.id != self.ring[node_address]['id']):
+            if (self.id != self.ring[str(node_address)]['id']):
                 self.unicast_initial_bcc(node_address)

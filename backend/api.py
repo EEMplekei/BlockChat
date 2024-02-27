@@ -65,8 +65,6 @@ def create_genesis_block():
     gen_block.calculate_hash() # void
     # Add genesis block to blockchain
     node.blockchain.chain.append(gen_block)
-    # Add first UTXO
-    node.blockchain.UTXOs[0].append(UTXO(-1, node.id, total_bbc))
     # Create new empty block
     node.current_block = node.create_new_block()
     return
@@ -135,11 +133,11 @@ def set_stake(amount: int):
         return JSONResponse(content={"message":'Stake amount cannot be negative'}, status_code=status.HTTP_400_BAD_REQUEST)
     
     # Check if amount is greater than total balance
-    if (amount > node.ring[node.wallet.address]['balance']):
+    if (amount > node.ring[str(node.wallet.address)]['balance']):
         return JSONResponse(content={"message":'Stake amount cannot be greater than total balance'}, status_code=status.HTTP_400_BAD_REQUEST)
     
     # Check if amount is greater than the remaining from pending transactions
-    if (amount > node.ring[node.wallet.address]['balance'] - node.get_pending_transactions_amount()):
+    if (amount > node.ring[str(node.wallet.address)]['balance'] - node.get_pending_transactions_amount()):
         return JSONResponse(content={"message":'Stake amount cannot be greater than the remaining from pending transactions'}, status_code=status.HTTP_400_BAD_REQUEST)
     
     # Set stake
@@ -175,8 +173,7 @@ def view_transactions():
 def get_balance():
     # Gets the total balance for the given node (in NBCs)
     # Get the BBCs attribute from the node object
-    balance = node.ring[node.wallet.address]['balance'] # Alternative
-    # balance = node.blockchain.wallet_balance(node.id)
+    balance = node.ring[str(node.wallet.address)]['balance'] # Alternative
 
     return JSONResponse({'balance': balance}, status_code=status.HTTP_200_OK)
 
@@ -225,7 +222,6 @@ async def get_blockchain(request: Request):
     # Gets the lastest version of the blockchain from the Bootstrap node
     data = await request.body()
     node.blockchain = pickle.loads(data)
-    node.temp_utxos = deepcopy(node.blockchain.UTXOs)
 
     print("Blockchain received successfully !")
     return JSONResponse('OK')

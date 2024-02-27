@@ -152,12 +152,3 @@ class Transaction:
 		else: 
 			print("✅ Transaction Validated !")
 			return True
-
-
-wallet_sender = Wallet()
-wallet_receiver = Wallet()
-
-transaction = Transaction(wallet_sender.address, wallet_receiver.address, TransactionType.COINS, 10, 69)
-transaction.sign_transaction(wallet_sender.private_key)
-
-transaction.verify_signature(wallet_sender.public_key)
