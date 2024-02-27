@@ -15,21 +15,16 @@ class Transaction:
 	sender_address = None                               # public key of sender wallet
 	receiver_address = None                             # public key of receiver wallet
 	type_of_transaction : TransactionType = None        # type of transaction (coins, message)
-	payload = None                                      # amount of coins or message
+	amount = None										# amount of coins to send (if type is coins)
+	message = None										# message to send (if type is message)
 	nonce = None                                        # nonce for transaction
 	transaction_id = None                               # ID of transaction
 	signature = None                                    # signature that proves sender owns the private key
 	
 	#Constructor, take only the sa, ra, type of transaction and payload
 	def __init__(self, sender_address, receiver_address, type_of_transaction: TransactionType, payload, nonce):
-		
-		#Check if the sender and receiver addresses are strings (they might not be public key but we don't check that here, it will throw an error later if it's not a public key)
-		if(not isinstance(sender_address, str)):
-			raise ValueError("Sender address must be a string")
-		if(not isinstance(receiver_address, str)):
-			raise ValueError("Receiver address must be a string")
-
-
+					
+		#Check valid type and payload
 		if type_of_transaction == TransactionType.COINS:
 			if not ((isinstance(payload, (int, float))) and (payload > 0)):
 				raise ValueError("Transaction amount must be a positive number")
@@ -43,6 +38,7 @@ class Transaction:
 		else:
 			raise ValueError("Invalid transaction type")
 
+		#Check valid nonce
 		if not (isinstance(nonce, int) and nonce > 0):
 			raise ValueError("Nonce must be an integer")
 
@@ -51,6 +47,7 @@ class Transaction:
 		self.type_of_transaction = type_of_transaction      # type of transaction (coins, message)
 		self.nonce = nonce                                  # nonce for transaction
 		
+		#Calculate the hash of the transaction (ra, sa, type of transaction, payload, nonce)
 		self.calculate_hash()
 
 	#Equality operator overloading (==)
@@ -74,40 +71,39 @@ class Transaction:
 	#Sign transaction hash with private key
 	#Mentioned in the original Satoshi Nakamoto's paper (bitcoin), we calculate the hash of the transaction and sign it with the private key of the sender
 	def sign_transaction(self, private_key):
-
-		pem = private_key.public_key().public_bytes(
-			encoding=serialization.Encoding.PEM,
-			format=serialization.PublicFormat.SubjectPublicKeyInfo
+		
+		#Check if the private key matches the sender address
+		pub_from_priv_key = private_key.public_key().public_bytes(
+					encoding=serialization.Encoding.PEM,
+					format=serialization.PublicFormat.SubjectPublicKeyInfo
 		)
-		print(pem)
-  
-		pem1 = self.sender_address.public_bytes(
-			encoding=serialization.Encoding.PEM,
-			format=serialization.PublicFormat.SubjectPublicKeyInfo
-		)
-		print(pem1)
-		print(pem == pem1)
-		print(private_key.public_key() == self.sender_address)
-		if private_key.public_key() != self.sender_address:
+		if pub_from_priv_key != self.sender_address:
 			raise ValueError("Private key does not match the sender address")
-		elif self.transaction_id is None:
+
+		#Check if the transaction has been hashed
+		if self.transaction_id is None:
 			self.calculate_hash()
+
 		self.signature = private_key.sign(
-			self.calculate_hash,
+			self.transaction_id.encode(),
 			padding.PSS(
 				mgf=padding.MGF1(hashes.SHA256()),
 				salt_length=padding.PSS.MAX_LENGTH
 			),
-			hashes.SHA256()
+			utils.Prehashed(hashes.SHA256())
 		)
-	
-	#Verify the received transaction
+
+	#Verify the received transaction (based on the signature)
 	def verify_signature(self, public_key):
 		#Verify signature of sender (private, public keys)
+		if self.signature is None:
+			raise ValueError("No signature found in the transaction")
+		else:
+			print(self.signature)
 		try:
 			public_key.verify(
 				self.signature,
-				self,
+				self.transaction_id.encode(),
 				padding.PSS(
 					mgf=padding.MGF1(hashes.SHA256()),
 					salt_length=padding.PSS.MAX_LENGTH
@@ -115,37 +111,39 @@ class Transaction:
 				hashes.SHA256()
 			)
 			return True
-		except InvalidSignature:
+		except exceptions.InvalidSignature:
 			return False
 
-	# def validate_transaction(self, id, UTXOs):
-	#     #Verify signature of sender + 
-	#     #Verify sender has enough amount to spend
-	#     balance = 0
-	#     for utxo in UTXOs[id]:
-	#          balance += utxo.amount
+	#Validate the transaction
+	def validate_transaction(self, id, sender_balance):
+		#Verify signature of sender + 
+		#Verify sender has enough amount to spend
+		balance = 0
+		for utxo in UTXOs[id]:
+			 balance += utxo.amount
 
 			 
-	#     if (not self.verify_signature()):
-	#         print("❌ Transaction NOT Validated : Not valid address")
-	#         return False
+		if (not self.verify_signature()):
+			print("❌ Transaction NOT Validated : Not valid address")
+			return False
 		
-	#     # elif(ring[str(self.sender_address)]['balance'] < self.amount ):
-	#     #     print("❌ Transaction NOT Validated : Not enough coins")
-	#     #     return False
+		# elif(ring[str(self.sender_address)]['balance'] < self.amount ):
+		#     print("❌ Transaction NOT Validated : Not enough coins")
+		#     return False
 
-	#     elif(balance < self.amount):
-	#         print("❌ Transaction NOT Validated : Not enough coins")
-	#         return False
+		elif(balance < self.amount):
+			print("❌ Transaction NOT Validated : Not enough coins")
+			return False
 		
-	#     else: 
-	#         print("✅ Transaction Validated !")
-	#         return True
+		else: 
+			print("✅ Transaction Validated !")
+			return True
+
 
 wallet_sender = Wallet()
 wallet_receiver = Wallet()
 
-transaction1 = Transaction(wallet_sender.public_key, wallet_receiver.public_key, TransactionType.COINS, 10, 69)
-transaction1.sign_transaction(wallet_receiver.private_key)
-# transaction1.sign_transaction(wallet.private_key)
+transaction = Transaction(wallet_sender.address, wallet_receiver.address, TransactionType.COINS, 10, 69)
+transaction.sign_transaction(wallet_sender.private_key)
 
+transaction.verify_signature(wallet_sender.public_key)
