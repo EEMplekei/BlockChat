@@ -130,7 +130,17 @@ class Node:
             if (self.id != node['id']):
                 self.unicast_block(node, block)
 
+    ### Stake ###     
+    def unicast_stake(self, node, stake):
+        request_address = 'http://' + node['ip'] + ':' + node['port']
+        request_url = request_address + '/get_stake'
+        requests.post(request_url, pickle.dumps(stake))
 
+    def broadcast_stake(self, stake):
+        for node in self.ring.values():
+            if (self.id != node['id']):
+                self.unicast_stake(node, stake)
+    
     ##### Transaction #####
     def create_transaction(self, receiver_address, type_of_transaction, payload):
         sender_address = self.wallet.address
