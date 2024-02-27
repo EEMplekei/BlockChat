@@ -1,5 +1,3 @@
-# NODE 
-
 from collections import deque
 from copy import deepcopy
 from dotenv import load_dotenv
@@ -15,7 +13,6 @@ from wallet import Wallet
 from blockchain import Blockchain
 from transaction import TransactionType, Transaction
 from block import Block
-from utxo import UTXO
 
 
 load_dotenv()

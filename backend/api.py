@@ -15,7 +15,6 @@ import requests
 
 from node import Node
 from transaction import Transaction, TransactionType
-from utxo import UTXO
 from blockchain import Blockchain
 
 app = FastAPI()
