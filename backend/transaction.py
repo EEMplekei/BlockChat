@@ -105,11 +105,12 @@ class Transaction:
 		
 	#Verify the received transaction (based on the signature)
 	def verify_signature(self, public_key):
-		#Verify signature of sender (private, public keys)
+
 		if self.signature is None:
 			raise ValueError("No signature found in the transaction")
 
 		try:
+			public_key = serialization.load_pem_public_key(public_key)
 			public_key.verify(
 				self.signature,
 				self.transaction_id,
@@ -119,7 +120,6 @@ class Transaction:
 				),
 				utils.Prehashed(hashes.SHA256())
 			)
-			print("Transaction validated !")
 			return True
 		except exceptions.InvalidSignature:
 			print("Transaction not validated : Invalid signature")
@@ -128,36 +128,19 @@ class Transaction:
 			print("Transaction not validated : ", e)
 			return False
 
-	#Validate the transaction
-	def validate_transaction(self, id, sender_balance):
-		#Verify signature of sender + 
-		#Verify sender has enough amount to spend
-		balance = 0
-		for utxo in UTXOs[id]:
-			 balance += utxo.amount
+	#Validate the transaction (based on the signature and the sender's balance)
+	def validate_transaction(self, sender_balance):
 
-			 
-		if (not self.verify_signature()):
-			print("❌ Transaction NOT Validated : Not valid address")
+		#Recalculate the hash of the transaction because it might have been tampered with by a malicious sender
+		self.calculate_hash()
+		
+		if(not self.verify_signature(self.sender_address)):
+			print("Transaction not validated : Not valid signature")
 			return False
 		
-		# elif(ring[str(self.sender_address)]['balance'] < self.amount ):
-		#     print("❌ Transaction NOT Validated : Not enough coins")
-		#     return False
-
-		elif(balance < self.amount):
-			print("❌ Transaction NOT Validated : Not enough coins")
+		transaction_cost = (self.amount if self.type_of_transaction == TransactionType.COINS else len(self.message))
+		if(transaction_cost > sender_balance):
+			print("Transaction not validated : Not enough coins")
 			return False
-		
-		else: 
-			print("✅ Transaction Validated !")
-			return True
-
-
-wallet_sender = Wallet()
-wallet_receiver = Wallet()
-
-transaction = Transaction(wallet_sender.address, wallet_receiver.address, TransactionType.COINS, 10, 69)
-transaction.sign_transaction(wallet_sender.private_key)
-
-transaction.verify_signature(wallet_sender.public_key)
+				
+		return True
