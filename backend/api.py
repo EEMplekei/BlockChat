@@ -127,6 +127,29 @@ def create_transaction(receiver_id: int, amount: int):
     node.broadcast_transaction(transaction)
     return JSONResponse('Successful Transaction !', status_code=status.HTTP_200_OK)
 
+
+@app.get("/api/set_stake/{amount}")
+def set_stake(amount: int):
+    # Sets the stake of the node
+    # Check if amount is negative
+    if (amount < 0):
+        return JSONResponse(content={"message":'Stake amount cannot be negative'}, status_code=status.HTTP_400_BAD_REQUEST)
+    
+    # Check if amount is greater than total balance
+    if (amount > node.ring[node.wallet.address]['balance']):
+        return JSONResponse(content={"message":'Stake amount cannot be greater than total balance'}, status_code=status.HTTP_400_BAD_REQUEST)
+    
+    # Check if amount is greater than the remaining from pending transactions
+    if (amount > node.ring[node.wallet.address]['balance'] - node.get_pending_transactions_amount()):
+        return JSONResponse(content={"message":'Stake amount cannot be greater than the remaining from pending transactions'}, status_code=status.HTTP_400_BAD_REQUEST)
+    
+    # Set stake
+    node.ring.stake = amount
+    node.stake = amount
+    # Broadcast staking
+    node.broadcast_stake()
+    return JSONResponse('Successful Staking !', status_code=status.HTTP_200_OK)
+
 @app.get("/api/view_transactions")
 def view_transactions():
     # Returns the transactions of the last validated, mined block
@@ -187,6 +210,15 @@ async def get_ring(request: Request):
     node.ring = pickle.loads(data)
 
     print("Ring received successfully !")
+    return JSONResponse('OK')
+
+@app.post("/get_stake")
+async def get_stake(request: Request):
+    # Gets the stake of the nodes from Bootstrap node
+    data = await request.body()
+    node.stake = pickle.loads(data)
+
+    print("Stake received successfully !")
     return JSONResponse('OK')
 
 @app.post("/get_blockchain")
