@@ -1,9 +1,9 @@
 from enum import Enum
 from hashlib import sha256
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography import exceptions
+from cryptography.hazmat.primitives.asymmetric import ( padding, utils)
 from cryptography.hazmat.primitives import serialization
+from cryptography import exceptions
 from wallet import Wallet
 
 class TransactionType(Enum):
@@ -66,7 +66,17 @@ class Transaction:
 	
 	#Hash function calculation
 	def calculate_hash(self):
-		self.transaction_id = sha256((str(self.sender_address) + str(self.receiver_address) + str(self.type_of_transaction) + str(self.amount) + str(self.message) + str(self.nonce)).encode()).hexdigest()
+	
+		data_to_hash = ''.join([
+		str(self.sender_address),
+		str(self.receiver_address),
+		str(self.type_of_transaction),
+		str(self.amount),
+		str(self.message),
+		str(self.nonce)
+		])
+
+		self.transaction_id = sha256(data_to_hash.encode()).digest()
 
 	#Sign transaction hash with private key
 	#Mentioned in the original Satoshi Nakamoto's paper (bitcoin), we calculate the hash of the transaction and sign it with the private key of the sender
@@ -85,33 +95,37 @@ class Transaction:
 			self.calculate_hash()
 
 		self.signature = private_key.sign(
-			self.transaction_id.encode(),
+			self.transaction_id,
 			padding.PSS(
 				mgf=padding.MGF1(hashes.SHA256()),
 				salt_length=padding.PSS.MAX_LENGTH
 			),
 			utils.Prehashed(hashes.SHA256())
 		)
-
+		
 	#Verify the received transaction (based on the signature)
 	def verify_signature(self, public_key):
 		#Verify signature of sender (private, public keys)
 		if self.signature is None:
 			raise ValueError("No signature found in the transaction")
-		else:
-			print(self.signature)
+
 		try:
 			public_key.verify(
 				self.signature,
-				self.transaction_id.encode(),
+				self.transaction_id,
 				padding.PSS(
 					mgf=padding.MGF1(hashes.SHA256()),
 					salt_length=padding.PSS.MAX_LENGTH
 				),
-				hashes.SHA256()
+				utils.Prehashed(hashes.SHA256())
 			)
+			print("Transaction validated !")
 			return True
 		except exceptions.InvalidSignature:
+			print("Transaction not validated : Invalid signature")
+			return False
+		except Exception as e:
+			print("Transaction not validated : ", e)
 			return False
 
 	#Validate the transaction
