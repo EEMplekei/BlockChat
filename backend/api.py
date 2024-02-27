@@ -14,8 +14,7 @@ import threading
 import requests
 
 from node import Node
-from transaction import Transaction
-from utxo import UTXO
+from transaction import Transaction, TransactionType
 from blockchain import Blockchain
 
 app = FastAPI()
@@ -36,42 +35,43 @@ argParser.add_argument("-p", "--port", help="Port in which node is running", def
 argParser.add_argument("--ip", help="IP of the host")
 args = argParser.parse_args()
 
+# Call once function to ensure that genesis block is only created once
+def call_once(func):
+    def wrapper(*args, **kwargs):
+        if not wrapper.called:
+            wrapper.called = True
+            return func(*args, **kwargs)
+        else:
+            raise RuntimeError("Function can only be called once.")
+    
+    wrapper.called = False
+    return wrapper
+
+# Function that creates genesis block
+@call_once
 def create_genesis_block():
     # BOOTSTRAP: Create the first block of the blockchain (GENESIS BLOCK)
-    
-    # Create new block
     gen_block = node.create_new_block() # previous_hash autogenerates
-    gen_block.nonce = 0
-
     # Create first transaction
-    # NEEDS MODIFICATIONS
     first_transaction = Transaction(
-        sender_address='0', 
-        sender_private_key=None, 
-        receiver_address = node.wallet.address, 
-        type_of_transaction= 'coins',
-        amount= total_bbc,
-        message= None,
-        nonce= None,
-        transaction_id= None,
-        signature= None
+        sender_address='0',
+        receiver_address=node.wallet.address, 
+        type_of_transaction=TransactionType.COINS,
+        payload=total_bbc,
+        nonce=1
     )
-
     # Add transaction to genesis block
-    gen_block.transactions_list.append(first_transaction)
+    gen_block.transactions.append(first_transaction)
     gen_block.calculate_hash() # void
-
-    # Add genesis block to bockchain
+    # Add genesis block to blockchain
     node.blockchain.chain.append(gen_block)
-
     # Add first UTXO
     node.blockchain.UTXOs[0].append(UTXO(-1, node.id, total_bbc))
-
     # Create new empty block
     node.current_block = node.create_new_block()
-    
     return
 
+# ======================== MAIN ========================
 # INITIALIZATION
 # Initialize the new node
 node = Node()
@@ -103,7 +103,8 @@ else:
     node.unicast_node(bootstrap_node)
 
 
-
+# ======================== ROUTES ========================
+# ========================================================
 # CLIENT ROUTES 
 @app.get("/api/create_transaction/{receiver_id}/{amount}")
 def create_transaction(receiver_id: int, amount: int):
@@ -114,7 +115,7 @@ def create_transaction(receiver_id: int, amount: int):
     # Check if there are enough NBCs
     # !! Only for cli demo
     # if (node.ring[node.wallet.address]['balance'] < amount):
-    #     return JSONResponse(content={"message":'Not enough Noobcoins in wallet'}, status_code=status.HTTP_400_BAD_REQUEST)
+    #     return JSONResponse(content={"message":'Not enough BlockChat coins in wallet'}, status_code=status.HTTP_400_BAD_REQUEST)
     
     # Create transaction
     receiver_address = list(node.ring.keys())[receiver_id]
@@ -124,6 +125,29 @@ def create_transaction(receiver_id: int, amount: int):
     # Broadcast transaction
     node.broadcast_transaction(transaction)
     return JSONResponse('Successful Transaction !', status_code=status.HTTP_200_OK)
+
+
+@app.get("/api/set_stake/{amount}")
+def set_stake(amount: int):
+    # Sets the stake of the node
+    # Check if amount is negative
+    if (amount < 0):
+        return JSONResponse(content={"message":'Stake amount cannot be negative'}, status_code=status.HTTP_400_BAD_REQUEST)
+    
+    # Check if amount is greater than total balance
+    if (amount > node.ring[node.wallet.address]['balance']):
+        return JSONResponse(content={"message":'Stake amount cannot be greater than total balance'}, status_code=status.HTTP_400_BAD_REQUEST)
+    
+    # Check if amount is greater than the remaining from pending transactions
+    if (amount > node.ring[node.wallet.address]['balance'] - node.get_pending_transactions_amount()):
+        return JSONResponse(content={"message":'Stake amount cannot be greater than the remaining from pending transactions'}, status_code=status.HTTP_400_BAD_REQUEST)
+    
+    # Set stake
+    node.ring.stake = amount
+    node.stake = amount
+    # Broadcast staking
+    node.broadcast_stake()
+    return JSONResponse('Successful Staking !', status_code=status.HTTP_200_OK)
 
 @app.get("/api/view_transactions")
 def view_transactions():
@@ -172,7 +196,7 @@ def get_chain():
 
 
 
-
+# =================================================
 # INTERNAL ROUTES
 @app.get("/")
 async def root():
@@ -185,6 +209,15 @@ async def get_ring(request: Request):
     node.ring = pickle.loads(data)
 
     print("Ring received successfully !")
+    return JSONResponse('OK')
+
+@app.post("/get_stake")
+async def get_stake(request: Request):
+    # Gets the stake of the nodes from Bootstrap node
+    data = await request.body()
+    node.stake = pickle.loads(data)
+
+    print("Stake received successfully !")
     return JSONResponse('OK')
 
 @app.post("/get_blockchain")
