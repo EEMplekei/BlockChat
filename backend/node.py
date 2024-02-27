@@ -73,6 +73,13 @@ class Node:
         self.pending_transactions.appendleft(transaction)
         return
     
+    # Send the current state of the blockchain to a specific node via HTTP POST request.
+    def update_temp_balance(self, transaction: Transaction):
+        # Update the temporary balance of the sender and receiver in the ring.
+        self.ring[str(transaction.sender_address)]['temp_balance'] -= transaction.amount
+        self.ring[str(transaction.receiver_address)]['temp_balance'] += transaction.amount
+        return
+    
     # Updates the balance for each node given a validated transaction
     def update_wallet_state(self, transaction: Transaction):
         print("========= NEW TRANSACTION 💵 ===========")
@@ -190,13 +197,14 @@ class Node:
     # The following methods are used only by the bootstrap node
     
     # Adds a new node to the cluster
-    def add_node_to_ring(self, id, ip, port, address, balance):
+    def add_node_to_ring(self, id, ip, port, address):
         self.ring[str(address)] = {
                 'id': id,
                 'ip': ip,
                 'port': port,
                 'stake': 0, # stake is 0 for new nodes
-                'balance': balance
+                'balance': 0, # balance is 0 for new nodes
+                'temp_balance': 0, # temp_balance to keep track balance while transactions are on pending list
             }
         
         return
@@ -230,7 +238,7 @@ class Node:
             if (self.id != node['id']):
                 self.unicast_ring(node)
 
-    # Send the current state of the blockchain to a specific node via HTTP POST request.
+    # Send the current state of the blockchain to a specific node
     def unicast_blockchain(self, node):
         request_address = 'http://' + node['ip'] + ':' + node['port']
         request_url = request_address + '/get_blockchain'
@@ -249,7 +257,7 @@ class Node:
     # Send the initial amount of 1000 BlockChat coins to a specific node
     def unicast_initial_bcc(self, node_address):
         # Create initial transaction
-        transaction = self.create_transaction(node_address, 1000)
+        transaction = self.create_transaction(node_address,TransactionType.COINS, 1000)
 
         # Add transaction to pending list
         self.add_transaction_to_pending(transaction)
