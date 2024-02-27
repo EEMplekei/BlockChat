@@ -61,12 +61,15 @@ class Node:
         elif (len(self.blockchain.chain) > 0):
             previous_hash = self.blockchain.chain[-1].current_hash
             
-        self.current_block = Block(previous_hash)
+        self.current_block = Block(previous_hash, self.wallet.address)
         
         return self.current_block
     
     # Adds a transaction to a list of pending transactions
     def add_transaction_to_pending(self, transaction: Transaction):
+        # Before we add to pending list we will call validate_transaction to check if the transaction is valid
+        
+        # If it is valid we will add it to the pending list
         self.pending_transactions.appendleft(transaction)
         return
     
@@ -97,6 +100,30 @@ class Node:
 
         # Remove transactions from pending_transactions if their IDs are in incoming_transactions_ids
         self.pending_transactions = [tx for tx in self.pending_transactions if tx.transaction_id not in incoming_transactions_ids]
+
+    def mint_block(self):
+        """
+        ! VALIDATOR ONLY !
+        Given a list of pending transactions, create a new block and broadcast it to the network
+        """
+        if(len(self.pending_transactions) < block_size):
+             print(f"⛔️ Not enough transactions to mint a block. ({len(self.pending_transactions)}/{block_size})")
+        # call proof of stake
+        # if public key that proof of stake outputs is mine do the following:
+        # Create new block
+        new_block = self.create_new_block()
+        # Add transactions to the new block
+        for _ in range(block_size):
+            new_block.add_transaction(self.pending_transactions.pop())
+            new_block.transactions.append(transaction)
+        # Calculate hash
+        new_block.calculate_hash()
+        # Add block to blockchain
+        self.add_block_to_chain(new_block)
+        # Broadcast block to the network
+        self.broadcast_block(new_block)
+
+
 
     # Adds a newly block to the chain (assuming it has been validated)
     def add_block_to_chain(self, block: Block):

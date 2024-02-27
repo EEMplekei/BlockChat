@@ -13,12 +13,12 @@ from blockchain import Blockchain
 #mining_difficulty = int(os.getenv('MINING_DIFFICULTY'))
 
 class Block:
-    def __init__(self, previous_hash):
+    def __init__(self, previous_hash, validator):
         #Initialize a block
         self.index = None
         self.timestamp = time()
         self.transactions = []
-        self.validator = None
+        self.validator = validator
         self.previous_hash = previous_hash
         self.current_hash = self.calculate_hash() 
 	
