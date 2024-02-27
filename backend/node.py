@@ -44,6 +44,7 @@ class Node:
         self.ip = None
         self.port = None
         self.id = None
+        self.stake = 0 
         self.ring = {}     # address: {id, ip, port, balance}
         self.blockchain = Blockchain()
         self.is_bootstrap = False
@@ -52,7 +53,6 @@ class Node:
         self.pending_transactions = deque()
         self.incoming_block_lock = threading.Lock()
         self.processing_block_lock = threading.Lock()
-        self.stake = None
         self.nonce = random.randint(0, 10000)
 
     #Creates a new block for the blockchain
@@ -61,6 +61,8 @@ class Node:
         # Special case for GENESIS block
         if (len(self.blockchain.chain) == 0):
             previous_hash = 1
+        elif (len(self.blockchain.chain) > 0):
+            previous_hash = self.blockchain.chain[-1].current_hash
             
         self.current_block = Block(previous_hash)
         
@@ -86,32 +88,6 @@ class Node:
         self.ring[str(transaction.receiver_address)]['balance'] +=  transaction.amount
         return
 
-
-    def update_utxos(self, transaction: Transaction):
-        # UTXO attributes
-        sender_address = transaction.sender_address
-        receiver_address = transaction.receiver_address
-        amount = transaction.amount
-        sender_id = self.ring[str(sender_address)]['id']
-        receiver_id = self.ring[str(receiver_address)]['id']
-        
-        # Update sender UTXOs
-        total_amount = 0
-        while(total_amount < amount):
-            try:
-                temp_utxo = self.blockchain.UTXOs[sender_id].popleft()
-                total_amount += temp_utxo.amount
-            except:
-                print("‼️ Not enough UTXOs for : ", sender_id)
-                break
-
-        if (total_amount > amount):
-            # Update receiver UTXOs
-            self.blockchain.UTXOs[receiver_id].append(UTXO(sender_id, receiver_id, amount))
-            # sender get change
-            self.blockchain.UTXOs[sender_id].append(UTXO(sender_id, sender_id, total_amount-amount))
-        return
-    
     # Update pending transactions list from incoming block
     def update_pending_transactions(self, incoming_block: Block):
         """
@@ -119,17 +95,6 @@ class Node:
         compare the transaction_list that you hold with incoming_block's transactions.
         Update the pending transactions list so you void executing it a second time
         """
-        # Remove from pending_transactions all transactions included in the incoming_block
-        # for incoming_transaction in incoming_block.transactions_list:
-        #     index = 0
-        #     while index < len(self.pending_transactions):
-        #         pending_transaction = self.pending_transactions[index]
-        #         if (pending_transaction.transaction_id == incoming_transaction.transaction_id):
-        #             self.pending_transactions.remove(pending_transaction)
-        #         else:
-        #             index += 1
-        # return
-        # A more efficient way to do it!!!
         # Create a set of transaction IDs in incoming_block for faster lookup
         incoming_transactions_ids = {tx.transaction_id for tx in incoming_block.transactions_list}
 
@@ -140,9 +105,8 @@ class Node:
     def add_block_to_chain(self, block: Block):
         # Add block to original chain
         self.blockchain.chain.append(block)
-        # Update UTXOs and wallet accordingly
+        # Update wallet 
         for transaction in block.transactions_list:
-            self.update_utxos(transaction)
             self.update_wallet_state(transaction)
         # Update pending_transactions list
         self.update_pending_transactions(block)
@@ -153,7 +117,7 @@ class Node:
         print("🔗 BLOCKCHAIN 🔗")
         print([block.hash[:7] for block in self.blockchain.chain])
 
-     
+
     # Unicast a validated block
     def unicast_block(self, node, block):
         request_address = 'http://' + node['ip'] + ':' + node['port']
@@ -197,12 +161,10 @@ class Node:
                 'id': id,
                 'ip': ip,
                 'port': port,
+                'stake': 0, # stake is 0 for new nodes
                 'balance': balance
             }
         
-        # Create UTXOs for new node
-        self.blockchain.UTXOs.append(deque())
-
         return
     
     # Sends information about self to the bootstrap node
@@ -246,9 +208,6 @@ class Node:
         ! BOOTSTRAP ONLY !
         Broadcast the current state of the blockchain to all nodes
         """
-        # Create a copy of original UTXOs
-        self.temp_utxos = deepcopy(self.blockchain.UTXOs)
-
         for node in self.ring.values():
             if (self.id != node['id']):
                 self.unicast_blockchain(node)
@@ -269,4 +228,3 @@ class Node:
         for node_address in self.ring:
             if (self.id != self.ring[node_address]['id']):
                 self.unicast_initial_bcc(node_address)
-
