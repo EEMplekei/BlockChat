@@ -291,7 +291,7 @@ async def let_me_in(request: Request):
     id = len(node.ring)
 
     # Add node to the ring
-    node.add_node_to_ring(id, ip, port, address, 0)
+    node.add_node_to_ring(id, ip, port, address)
 
     # Check if all nodes have joined 
     # !! (do it after you have responded to the last node)
