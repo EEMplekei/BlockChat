@@ -129,7 +129,12 @@ async def create_transaction(request: Request):
         type_of_transaction = TransactionType.MESSAGE
     
     # Create transaction
-    receiver_address = list(node.ring.keys())[receiver_id]
+
+    # find pk of receiver
+    for node in node.ring:
+        if node.id == receiver_id:
+            receiver_address=node.address 
+
     transaction = node.create_transaction(receiver_address, type_of_transaction, payload)
     # Add to pending transactions list
     node.add_transaction_to_pending(transaction)
