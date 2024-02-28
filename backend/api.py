@@ -85,6 +85,10 @@ bootstrap_node = {
 ip_address = args.ip
 port = args.port
 
+# Set node's IP and port
+node.ip = ip_address
+node.port = str(port)
+
 # See if node is Bootstrap node
 if (ip_address == bootstrap_node["ip"] and str(port) == bootstrap_node["port"]):
     node.is_bootstrap = True
