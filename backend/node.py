@@ -177,7 +177,7 @@ class Node:
         sender_address = self.wallet.address
         nonce = self.nonce
         # Create a new transaction
-        transaction = Transaction(sender_address, receiver_address, type_of_transaction, payload, type_of_transaction, payload, nonce)
+        transaction = Transaction(sender_address, receiver_address, type_of_transaction, payload, nonce)
         self.nonce += 1
         return transaction
         

@@ -307,7 +307,7 @@ def check_full_ring():
     if (len(node.ring) == total_nodes):
         node.broadcast_ring()
         node.broadcast_blockchain()
-        node.broadcast_initial_nbc()
+        node.broadcast_initial_bcc()
         
 
 # WEB SERVER RUN    
