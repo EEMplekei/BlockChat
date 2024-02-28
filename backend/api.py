@@ -108,20 +108,33 @@ else:
 # ======================== ROUTES ========================
 # ========================================================
 # CLIENT ROUTES 
-@app.get("/api/create_transaction/{receiver_id}/{amount}")
-def create_transaction(receiver_id: int, amount: int):
-    #Creates a new transaction given a receiver wallet and an amount
+@app.post("/api/create_transaction")
+async def create_transaction(request: Request):
+    # json body request expected to be:
+    # {
+    #     "receiver_id": int,
+    #     "payload": str,
+    #     "type_of_transaction": str
+    # }
+
+    # Get the parameters
+    data = await request.json()
+    receiver_id = data.get("receiver_id")
+    payload = data.get("payload")
+    type_of_transaction = data.get("type_of_transaction")
+
+    # Creates a new transaction given a receiver wallet, an amount, and a type of transaction
     if (receiver_id >= total_nodes):
         return JSONResponse({"message":'Node ID does not exist'}, status_code=status.HTTP_400_BAD_REQUEST)
     
-    # Check if there are enough NBCs
-    # !! Only for cli demo
-    # if (node.ring[node.wallet.address]['balance'] < amount):
-    #     return JSONResponse(content={"message":'Not enough BlockChat coins in wallet'}, status_code=status.HTTP_400_BAD_REQUEST)
+    if type_of_transaction == "COINS":
+        type_of_transaction = TransactionType.COINS
+    elif type_of_transaction == "MESSAGE":
+        type_of_transaction = TransactionType.MESSAGE
     
     # Create transaction
     receiver_address = list(node.ring.keys())[receiver_id]
-    transaction = node.create_transaction(receiver_address, amount)
+    transaction = node.create_transaction(receiver_address, type_of_transaction, payload)
     # Add to pending transactions list
     node.add_transaction_to_pending(transaction)
     # Broadcast transaction
