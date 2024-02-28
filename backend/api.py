@@ -123,10 +123,6 @@ async def create_transaction(request: Request):
     payload = data.get("payload")
     type_of_transaction = data.get("type_of_transaction")
 
-    # Creates a new transaction given a receiver wallet, an amount, and a type of transaction
-    if (receiver_id >= total_nodes):
-        return JSONResponse({"message":'Node ID does not exist'}, status_code=status.HTTP_400_BAD_REQUEST)
-    
     if type_of_transaction == "COINS":
         type_of_transaction = TransactionType.COINS
     elif type_of_transaction == "MESSAGE":
