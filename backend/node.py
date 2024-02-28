@@ -197,14 +197,14 @@ class Node:
     # The following methods are used only by the bootstrap node
     
     # Adds a new node to the cluster
-    def add_node_to_ring(self, id, ip, port, address):
+    def add_node_to_ring(self, id, ip, port, address, balance):
         self.ring[str(address)] = {
                 'id': id,
                 'ip': ip,
                 'port': port,
                 'stake': 0, # stake is 0 for new nodes
-                'balance': 0, # balance is 0 for new nodes
-                'temp_balance': 0, # temp_balance to keep track balance while transactions are on pending list
+                'balance': balance,
+                'temp_balance': balance, # temp_balance to keep track balance while transactions are on pending list
             }
         
         return
