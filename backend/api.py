@@ -142,9 +142,17 @@ async def create_transaction(request: Request):
     return JSONResponse('Successful Transaction !', status_code=status.HTTP_200_OK)
 
 
-@app.get("/api/set_stake/{amount}")
-def set_stake(amount: int):
-    # Sets the stake of the node
+@app.post("/api/set_stake")
+async def set_stake(request: Request):
+    # json body request expected to be:
+    # {
+    #     "stake": int,
+    # }
+
+    # Get the parameters
+    data = await request.json()
+    amount = data.get("stake")
+
     # Check if amount is negative
     if (amount < 0):
         return JSONResponse(content={"message":'Stake amount cannot be negative'}, status_code=status.HTTP_400_BAD_REQUEST)
@@ -164,7 +172,7 @@ def set_stake(amount: int):
     node.broadcast_stake()
     return JSONResponse('Successful Staking !', status_code=status.HTTP_200_OK)
 
-@app.get("/api/view_transactions")
+@app.get("/api/view_last_block")
 def view_transactions():
     # Returns the transactions of the last validated, mined block
     if (len(node.blockchain.chain) <= 1):
