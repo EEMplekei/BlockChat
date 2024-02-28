@@ -80,6 +80,13 @@ class Node:
         self.ring[str(transaction.receiver_address)]['temp_balance'] += transaction.amount
         return
     
+    # Sum of pending transactions
+    def get_pending_transactions_amount(self):
+        sum =0
+        for transaction in self.pending_transactions:
+            sum += transaction.amount
+        return sum
+
     # Updates the balance for each node given a validated transaction
     def update_wallet_state(self, transaction: Transaction):
         print("========= NEW TRANSACTION 💵 ===========")
