@@ -200,11 +200,14 @@ def view_transactions():
 
 @app.get("/api/get_balance")
 def get_balance():
-    # Gets the total balance for the given node (in NBCs)
-    # Get the BBCs attribute from the node object
     balance = node.ring[str(node.wallet.address)]['balance'] # Alternative
 
     return JSONResponse({'balance': balance}, status_code=status.HTTP_200_OK)
+
+@app.get("/api/get_temp_balance")
+def get_temp_balance():
+    temp_balance = node.ring[str(node.wallet.address)]['temp_balance'] # Alternative
+    return JSONResponse({'temp_balance': temp_balance}, status_code=status.HTTP_200_OK)
 
 @app.get("/api/get_chain_length")
 def get_chain_length():

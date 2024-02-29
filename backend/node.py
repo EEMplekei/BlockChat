@@ -71,6 +71,7 @@ class Node:
         
         # If it is valid we will add it to the pending list
         self.pending_transactions.appendleft(transaction)
+        self.update_temp_balance(transaction)
         return
     
     # Send the current state of the blockchain to a specific node via HTTP POST request.
