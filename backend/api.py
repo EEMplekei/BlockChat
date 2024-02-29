@@ -231,9 +231,13 @@ def get_chain():
 async def root():
 	return {"message": f"Welcome to BlockChat"}
 
-@app.post("/get_ring")
-async def get_ring(request: Request):
-	# Gets the completed list of nodes from Bootstrap node
+@app.post("/receive_ring")
+# Gets the completed list of nodes from Bootstrap node after all nodes have joined
+async def receive_ring(request: Request):
+	
+	if (node.is_bootstrap):
+		return JSONResponse('Cannot post ring to bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
+	
 	data = await request.body()
 	node.ring = pickle.loads(data)
 
@@ -314,23 +318,25 @@ def get_block(data: bytes = Depends(get_body)):
 async def let_me_in(request: Request):
 	# ! BOOTSTRAP ONLY !
 	# Adds a new node to the cluster
-	
-	# Get the parameters
-	data = await request.form()
-	ip = data.get('ip')
-	port = data.get('port')
-	address = data.get('address')
-	id = len(node.ring)
+	if(node.is_bootstrap):
+		# Get the parameters
+		data = await request.form()
+		ip = data.get('ip')
+		port = data.get('port')
+		address = data.get('address')
+		id = len(node.ring)
 
-	# Add node to the ring
-	node.add_node_to_ring(id, ip, port, address,0)
+		# Add node to the ring
+		node.add_node_to_ring(id, ip, port, address,0)
 
-	# Check if all nodes have joined 
-	# !! (do it after you have responded to the last node)
-	t = threading.Thread(target=check_full_ring)
-	t.start()
+		# Check if all nodes have joined 
+		# !! (do it after you have responded to the last node)
+		t = threading.Thread(target=check_full_ring)
+		t.start()
 
-	return JSONResponse({'id': id})
+		return JSONResponse({'id': id})
+	else:
+		return JSONResponse('Cannot post to let-me-in to a non-bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
 
 def check_full_ring():
 	# ! BOOTSTRAP ONLY !
@@ -342,5 +348,5 @@ def check_full_ring():
 		node.broadcast_initial_bcc()
 		
 
-# WEB SERVER RUN    
-uvicorn.run(app, host="0.0.0.0", port=port)
+# WEB SERVER RUN
+uvicorn.run(app, host="0.0.0.0", port = port)

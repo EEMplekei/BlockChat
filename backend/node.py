@@ -237,7 +237,7 @@ class Node:
     # Send the current ring information to a specific node via HTTP POST request.
     def unicast_ring(self, node):
         request_address = 'http://' + node['ip'] + ':' + node['port']
-        request_url = request_address + '/get_ring'
+        request_url = request_address + '/receive_ring'
         requests.post(request_url, pickle.dumps(self.ring))
 
     # Broadcast the current ring information to all nodes
