@@ -213,7 +213,6 @@ class Node:
                 'stake': 0, # stake is 0 for new nodes
                 'balance': balance,
                 'temp_balance': balance, # temp_balance to keep track balance while transactions are on pending list
-                'address': self.wallet.address
             }
         
         return
