@@ -46,8 +46,6 @@ class Transaction:
 		self.type_of_transaction = type_of_transaction      # type of transaction (coins, message)
 		self.nonce = nonce                                  # nonce for transaction
 		
-		#Calculate the hash of the transaction (ra, sa, type of transaction, payload, nonce)
-		self.transaction_id = self.calculate_hash()
 
 	#Equality operator overloading (==)
 	def __eq__(self, other):
@@ -75,7 +73,7 @@ class Transaction:
 		str(self.nonce)
 		])
 
-		return sha256(data_to_hash.encode()).digest()
+		self.transaction_id = sha256(data_to_hash.encode()).digest()
 
 	#Sign transaction hash with private key
 	#Mentioned in the original Satoshi Nakamoto's paper (bitcoin), we calculate the hash of the transaction and sign it with the private key of the sender

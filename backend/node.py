@@ -59,7 +59,7 @@ class Node:
         if (len(self.blockchain.chain) == 0):
             previous_hash = 1
         elif (len(self.blockchain.chain) > 0):
-            previous_hash = self.blockchain.chain[-1].current_hash
+            previous_hash = self.blockchain.chain[-1].hash
             
         self.current_block = Block(previous_hash, self.wallet.address)
         
@@ -151,7 +151,7 @@ class Node:
         self.update_pending_transactions(block)
         # Add transactions to blockchain set
         for t in block.transactions_list:
-            self.blockchain.trxns.add(t.transaction_id)
+            self.blockchain.transactions_hashes.add(t.transaction_id)
         # debug
         print("🔗 BLOCKCHAIN 🔗")
         print([block.hash[:7] for block in self.blockchain.chain])

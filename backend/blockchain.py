@@ -1,40 +1,42 @@
-from dotenv import load_dotenv
-import requests
-import pickle
 import os
-from collections import deque
+from colorama import Fore
 
-load_dotenv()
-block_size = int(os.getenv('BLOCK_SIZE'))
+try:
+	block_size = int(os.environ('BLOCK_SIZE'))
+except Exception as e:
+	#Either there is no such env var so we get None or it is not int castable
+	print(f"{Fore.RED}Cannot get BLOCK_SIZE from environment variable: {e}{Fore.RESET}")
+	print(f"{Fore.YELLOW}Using default block size of 10{Fore.RESET}")
+	block_size = 10
 
+# Blockchain class 
 class Blockchain:
-    # Blockchain class
-    def __init__(self):
-        # Initialize a Blockchain
-        # chain:                  List of blocks in the original blockchain
-        # difficulty:             Number of 0s in block needed for correct nonce to be found
-        # maxBlockTransactions    Capacity of a single block
-        # UTXOs                   List of deques containing the UTXOs for all nodes in the cluster
-        # trxs                    Set of transaction hashes in the original blockhain (to avoid double transactions)
-        self.chain = [] # list<Block>
-        self.maxBlockTransactions = block_size
-        self.UTXOs = []
-        self.trxns = set()
-    
-    # Validate the chain from the bootstrap node
-    def validate_chain(self):
-        for i in range(0, len(self.chain)-1):
-            temp_block = self.chain[i]
-            if (not (i==0 and temp_block.previous_hash == 1 and temp_block.nonce == 0)):
-                    return False
-            elif(not temp_block.validate_block(self)):
-                 return False
-        return True
+	
+	chain = list()
+	block_capacity : int = None
+	transactions_hashes = set()
+ 
+	# Initialize a Blockchain
+	def __init__(self):
+		
+		self.chain = [] 						# List of blocks in the blockchain (list<block>)
+		self.block_capacity = block_size  		# Capacity of a single block
+		self.transactions_hashes = set()		# Set of transaction hashes in the original blockhain (to avoid double transactions)
+	
+	# Validate the chain from the bootstrap node
+	def validate_chain(self):
+	
+		# Check if the chain is empty and then validate the genesis block
+		if self.chain:
+			genesis_block = self.chain[0]
+			if genesis_block.previous_hash != 1 or genesis_block.validator != 0:
+				print(f"{Fore.RED}Cannot validate the chain: Genesis block is not valid {Fore.RESET}")
+				return False
 
-    # Get the total wallet balance (based on the wallet of specific client_id)
-    def wallet_balance(self, client_id):      
-        balance = 0
-        for utxo in self.UTXOs[client_id]:
-             balance += utxo.amount
+		#Validate other blocks
+		for index, block in enumerate(self.chain):
+			if not block.validate_block(self):
+				print(f"{Fore.RED}Cannot validate the chain: Block with hash \"{block.hash}\" and index \"{index}\" is not valid{Fore.RESET}")
+				return False
 
-        return balance
+		return True
