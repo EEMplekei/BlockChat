@@ -1,24 +1,32 @@
 from collections import deque
-from copy import deepcopy
 from dotenv import load_dotenv
+from colorama import Fore
 import requests
 import pickle
-import json
 import os
 import random
 import threading
 
+#Try loading modules, if it fails, print error and raise ImportError
+try:
+    from wallet import Wallet
+    from blockchain import Blockchain
+    from transaction import TransactionType, Transaction
+    from proof_of_stake import PoSProtocol
+    from block import Block
+except Exception as e:
+    print(f"{Fore.RED}Error loading modules: {e}{Fore.RESET}")
+    raise ImportError
 
-from wallet import Wallet
-from blockchain import Blockchain
-from transaction import TransactionType, Transaction
-from proof_of_stake import PoSProtocol
-from block import Block
-
-
-load_dotenv()
-block_size = int(os.getenv('BLOCK_SIZE'))
-
+#Try loading environment variables, if it fails, print error and use default block size
+try:
+    load_dotenv()
+    block_size = int(os.getenv('BLOCK_SIZE'))
+except Exception as e:
+    print(f"{Fore.RED}Error loading environment variables: {e}{Fore.RESET}")
+    print(f"{Fore.YELLOW}Using default block size: 3{Fore.RESET}")
+    block_size = 3
+    
 class Node:
 
     def __init__(self):
@@ -73,7 +81,7 @@ class Node:
         # Validate it here because here we reach and for other's transactions
         
         #TESTED (!)
-        if transaction.validate_transaction(self.ring[str(transaction.sender_address)]['temp_balance']) == False:
+        if not transaction.validate_transaction(self.ring[str(transaction.sender_address)]['temp_balance']):
             return False
         
         self.pending_transactions.appendleft(transaction)
@@ -144,7 +152,7 @@ class Node:
         Given a list of pending transactions, create a new block and broadcast it to the network
         """
         if(len(self.pending_transactions) < block_size):
-             print(f"⛔️ Not enough transactions to mint a block. ({len(self.pending_transactions)}/{block_size})")
+             print(f"Not enough transactions to mint a block. ({len(self.pending_transactions)}/{block_size})")
         # call proof of stake
         # Create an instance of PoSProtocol
         protocol = PoSProtocol(self.blockchain.chain[-1].hash)
