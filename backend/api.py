@@ -262,15 +262,6 @@ async def receive_ring(request: Request):
 	print("Ring received successfully !")
 	return JSONResponse('OK')
 
-@app.post("/get_stake")
-async def get_stake(request: Request):
-	# Gets the stake of the nodes from Bootstrap node
-	data = await request.body()
-	node.stake = pickle.loads(data)
-
-	print("Stake received successfully !")
-	return JSONResponse('OK')
-
 @app.post("/get_blockchain")
 async def get_blockchain(request: Request):
 	# Gets the lastest version of the blockchain from the Bootstrap node

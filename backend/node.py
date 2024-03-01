@@ -42,7 +42,6 @@ class Node:
         self.ip = None
         self.port = None
         self.id = None
-        self.stake = 0 
         self.ring = {}     # address: {id, ip, port, balance}
         self.blockchain = Blockchain()
         self.is_bootstrap = False
@@ -71,27 +70,44 @@ class Node:
         # Before we add to pending list we will call validate_transaction to check if the transaction is valid
 
         # If it is valid we will add it to the pending list
+        # Validate it here because here we reach and for other's transactions
+        
+        #TESTED (!)
+        if transaction.validate_transaction(self.ring[str(transaction.sender_address)]['temp_balance']) == False:
+            return False
+        
         self.pending_transactions.appendleft(transaction)
+
         self.update_temp_balance(transaction)
+
         if len(self.pending_transactions) >= block_size:
             self.mint_block()
         return
     
     # Send the current state of the blockchain to a specific node via HTTP POST request.
     def update_temp_balance(self, transaction: Transaction):
-        if (transaction.receiver_address == 0):
-            # IF IT IS STAKE CASE
-            self.ring[str(transaction.sender_address)]['stake'] = transaction.amount
-            self.ring[str(transaction.sender_address)]['temp_balance'] -= transaction.amount
-        elif (transaction.type_of_transaction == TransactionType.MESSAGE):
-            # IF IT IS message
-            self.ring[str(transaction.sender_address)]['temp_balance'] -= len(transaction.message)
-            self.ring[str(transaction.receiver_address)]['temp_balance'] += len(transaction.message)
-        else: 
+        if (transaction.type_of_transaction == TransactionType.COINS and transaction.receiver_address != 0): 
             # IF IT IS NORMAL TRANSACTION COINS
             # Update the temporary balance of the sender and receiver in the ring.
             self.ring[str(transaction.sender_address)]['temp_balance'] -= transaction.amount
             self.ring[str(transaction.receiver_address)]['temp_balance'] += transaction.amount
+        
+        elif (transaction.type_of_transaction == TransactionType.MESSAGE):
+            # IF IT IS message
+            self.ring[str(transaction.sender_address)]['temp_balance'] -= len(transaction.message)
+            self.ring[str(transaction.receiver_address)]['temp_balance'] += len(transaction.message)
+        
+        elif (transaction.receiver_address == 0 and transaction.type_of_transaction == TransactionType.COINS):
+            # IF IT IS STAKE CASE
+            if self.ring[str(transaction.sender_address)]['stake'] != 0:
+                # Update Temp Balance
+                old_stake = self.ring[str(transaction.sender_address)]['stake']
+                self.ring[str(transaction.sender_address)]['temp_balance'] += old_stake
+                # Need to remove entry in pending list
+                # HERE
+            self.ring[str(transaction.sender_address)]['stake'] = transaction.amount
+            self.ring[str(transaction.sender_address)]['temp_balance'] -= transaction.amount
+        
         return
 
     # Updates the balance for each node given a validated transaction
@@ -179,17 +195,6 @@ class Node:
         for node in self.ring.values():
             if (self.id != node['id']):
                 self.unicast_block(node, block)
-
-    ### Stake ###     
-    def unicast_stake(self, node, stake):
-        request_address = 'http://' + node['ip'] + ':' + node['port']
-        request_url = request_address + '/get_stake'
-        requests.post(request_url, pickle.dumps(stake))
-
-    def broadcast_stake(self, stake):
-        for node in self.ring.values():
-            if (self.id != node['id']):
-                self.unicast_stake(node, stake)
     
     ##### Transaction #####
     def create_transaction(self, receiver_address, type_of_transaction, payload):
@@ -200,9 +205,6 @@ class Node:
         transaction = Transaction(sender_address, receiver_address, type_of_transaction, payload, nonce)
         # Sign it
         transaction.sign_transaction(self.wallet.private_key)
-        # Validate it
-        if transaction.validate_transaction(self.ring[str(self.wallet.address)]['temp_balance']) == False:
-            return False
         self.nonce += 1
         return transaction
         
@@ -283,7 +285,7 @@ class Node:
     def unicast_initial_bcc(self, node_address):
         # Create initial transaction
         transaction = self.create_transaction(node_address,TransactionType.COINS, 1000)
-
+        
         # Add transaction to pending list
         self.add_transaction_to_pending(transaction)
 
