@@ -1,7 +1,9 @@
 import os
 from colorama import Fore
+from dotenv import load_dotenv
 
 try:
+	load_dotenv()
 	block_size = int(os.environ('BLOCK_SIZE'))
 except Exception as e:
 	#Either there is no such env var so we get None or it is not int castable
@@ -21,7 +23,7 @@ class Blockchain:
 		
 		self.chain = [] 						# List of blocks in the blockchain (list<block>)
 		self.block_capacity = block_size  		# Capacity of a single block
-		self.transactions_hashes = set()		# Set of transaction hashes in the original blockhain (to avoid double transactions)
+		self.transactions_hashes = set()		# Set of transaction hashes in the original blockchain (to avoid double transactions)
 	
 	# Validate the chain from the bootstrap node
 	def validate_chain(self):
