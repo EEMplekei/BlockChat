@@ -1,40 +1,20 @@
-from fastapi import FastAPI, Request, Depends, APIRouter, status, Response
+from fastapi import FastAPI, Request, Depends, status, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
-from copy import deepcopy
+from colorama import Fore
 import os
-import socket
-import json
 import uvicorn
 import argparse
 import pickle
 import time
 import threading
-import requests
-
+import socket
+import fcntl
+import socket
+import struct
 from node import Node
 from transaction import Transaction, TransactionType
-from blockchain import Blockchain
-
-app = FastAPI()
-
-# CORS (Cross-Origin Resource Sharing)
-origins = ["*"]
-app.add_middleware(
-	CORSMiddleware,
-	allow_origins=origins,
-	allow_credentials=True,
-	allow_methods=["*"],
-	allow_headers=["*"],
-)
-
-# ARGUMENTS
-#todo change to autoparse
-argParser = argparse.ArgumentParser()
-argParser.add_argument("-p", "--port", help="Port in which node is running", default=8000, type=int)
-argParser.add_argument("--ip", help="IP of the host")
-args = argParser.parse_args()
 
 # Call once function to ensure that genesis block is only created once
 def call_once(func):
@@ -70,25 +50,64 @@ def create_genesis_block():
 	node.current_block = node.create_new_block()
 	return
 
-# ======================== MAIN ========================
-# INITIALIZATION
-# Initialize the new node
+#Parse the arguments and return the IP and port
+def get_ip_and_port():
+	
+	argParser = argparse.ArgumentParser()
+	argParser.add_argument("-p", "--port", help="Port in which node is running", default=8000, type=int)
+	argParser.add_argument("-i", "--interface", help="Interface on which the node is running", default="eth2")
+	args = argParser.parse_args()
+
+	try:
+		ip = get_ip_linux(args.interface)
+	except OSError:
+		print(f"{Fore.RED}Could not get the IP address of interface {args.interface}{Fore.RESET}")
+		return None, None
+	port = args.port
+
+	return ip, port
+
+#Get the IPv4 address of a specific interface
+def get_ip_linux(interface: str) -> str:
+
+	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	packed_iface = struct.pack('256s', interface.encode('utf_8'))
+	packed_addr = fcntl.ioctl(sock.fileno(), 0x8915, packed_iface)[20:24]
+	return socket.inet_ntoa(packed_addr)
+
+# ======================== MAIN ===========================
+
+# Get info about the node IP and port
+ip_address, port = get_ip_and_port()
+if(ip_address == None or port == None):
+	exit()
+
+#Initialize FastAPI
+app = FastAPI()
+
+# CORS (Cross-Origin Resource Sharing)
+app.add_middleware(
+	CORSMiddleware,
+	allow_origins = ["*"],
+	allow_credentials = True,
+	allow_methods = ["*"],
+	allow_headers = ["*"],
+)
+
+
+# Initialize the new node and set it's IP and port
 node = Node()
+node.ip , node.port = ip_address, str(port)
 
 # Get info about the cluster, bootstrap node
 load_dotenv()
 total_nodes = int(os.getenv('TOTAL_NODES'))
 total_bbc = total_nodes * 1000
+
 bootstrap_node = {
 	'ip': os.getenv('BOOTSTRAP_IP'),
 	'port': os.getenv('BOOTSTRAP_PORT')
 }
-ip_address = args.ip
-port = args.port
-
-# Set node's IP and port
-node.ip = ip_address
-node.port = str(port)
 
 # See if node is Bootstrap node
 if (ip_address == bootstrap_node["ip"] and str(port) == bootstrap_node["port"]):
@@ -106,9 +125,9 @@ else:
 	node.unicast_node(bootstrap_node)
 
 
-# ======================== ROUTES ========================
-# ========================================================
-# CLIENT ROUTES 
+# ======================== ROUTES =========================
+# Client routes 
+
 @app.post("/api/create_transaction")
 async def create_transaction(request: Request):
 	# json body request expected to be:
@@ -227,8 +246,9 @@ def get_chain():
 
 
 
-# =================================================
-# INTERNAL ROUTES
+# =========================================================
+# Internal routes
+
 @app.get("/")
 async def root():
 	return {"message": f"Welcome to BlockChat"}
