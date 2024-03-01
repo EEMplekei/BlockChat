@@ -4,6 +4,7 @@ from colorama import Fore
 import requests
 import pickle
 import os
+import random
 import threading
 
 #Try loading modules, if it fails, print error and raise ImportError
