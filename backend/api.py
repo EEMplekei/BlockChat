@@ -117,13 +117,16 @@ async def create_transaction(request: Request):
 	#     "payload": str,
 	#     "type_of_transaction": str
 	# }
-
 	# Get the parameters
 	data = await request.json()
 	receiver_id = data.get("receiver_id")
 	payload = data.get("payload")
 	type_of_transaction = data.get("type_of_transaction")
 
+	if receiver_id > (total_nodes - 1) or receiver_id < 0:
+		return JSONResponse('Invalid receiver ID', status_code=status.HTTP_400_BAD_REQUEST)
+
+	# Check the type
 	if type_of_transaction == "COINS":
 		type_of_transaction = TransactionType.COINS
 		payload = int(payload)
@@ -136,9 +139,11 @@ async def create_transaction(request: Request):
 		if value['id'] == receiver_id:
 			receiver_address = key
 	
-
 	if receiver_address != None:
+		# Create transaction function also signs it and validates it inside
 		transaction = node.create_transaction(receiver_address, type_of_transaction, payload)
+		if transaction == False:
+			return JSONResponse('Transaction is not Valid', status_code=status.HTTP_400_BAD_REQUEST)
 		# Add to pending transactions list
 		node.add_transaction_to_pending(transaction)
 		# Broadcast transaction
@@ -153,29 +158,20 @@ async def set_stake(request: Request):
 	# {
 	#     "stake": int,
 	# }
-
 	# Get the parameters
 	data = await request.json()
 	amount = data.get("stake")
 	amount = int(amount)
-
-	# Check if amount is negative
-	if (amount < 0):
-		return JSONResponse(content={"message":'Stake amount cannot be negative'}, status_code=status.HTTP_400_BAD_REQUEST)
-	
-	# Check if amount is greater than total balance
-	if (amount > node.ring[str(node.wallet.address)]['balance']):
-		return JSONResponse(content={"message":'Stake amount cannot be greater than total balance'}, status_code=status.HTTP_400_BAD_REQUEST)
-	
-	# Check if amount is greater than the remaining from pending transactions
-	if (amount > node.ring[str(node.wallet.address)]['balance'] - node.get_pending_transactions_amount()):
-		return JSONResponse(content={"message":'Stake amount cannot be greater than the remaining from pending transactions'}, status_code=status.HTTP_400_BAD_REQUEST)
-	
 	# Set stake
-	node.ring.stake = amount
-	node.stake = amount
-	# Broadcast staking
-	node.broadcast_stake()
+	type = TransactionType.COINS
+	# Create transaction function also validates it inside
+	staking_transaction = node.create_transaction(0, type, amount)
+	if staking_transaction == False:
+			return JSONResponse('Transaction is not Valid', status_code=status.HTTP_400_BAD_REQUEST)
+	# Add to pending transactions list
+	node.add_transaction_to_pending(staking_transaction)
+	# Broadcast transaction
+	node.broadcast_transaction(staking_transaction)
 	return JSONResponse('Successful Staking !', status_code=status.HTTP_200_OK)
 
 @app.get("/api/view_last_block")

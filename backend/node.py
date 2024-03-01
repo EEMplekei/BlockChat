@@ -68,7 +68,7 @@ class Node:
     # Adds a transaction to a list of pending transactions
     def add_transaction_to_pending(self, transaction: Transaction):
         # Before we add to pending list we will call validate_transaction to check if the transaction is valid
-        
+
         # If it is valid we will add it to the pending list
         self.pending_transactions.appendleft(transaction)
         self.update_temp_balance(transaction)
@@ -76,17 +76,20 @@ class Node:
     
     # Send the current state of the blockchain to a specific node via HTTP POST request.
     def update_temp_balance(self, transaction: Transaction):
-        # Update the temporary balance of the sender and receiver in the ring.
-        self.ring[str(transaction.sender_address)]['temp_balance'] -= transaction.amount
-        self.ring[str(transaction.receiver_address)]['temp_balance'] += transaction.amount
+        if (transaction.receiver_address == 0):
+            # IF IT IS STAKE CASE
+            self.ring[str(transaction.sender_address)]['stake'] = transaction.amount
+            self.ring[str(transaction.sender_address)]['temp_balance'] -= transaction.amount
+        elif (transaction.type_of_transaction == TransactionType.MESSAGE):
+            # IF IT IS message
+            self.ring[str(transaction.sender_address)]['temp_balance'] -= len(transaction.message)
+            self.ring[str(transaction.receiver_address)]['temp_balance'] += len(transaction.message)
+        else: 
+            # IF IT IS NORMAL TRANSACTION COINS
+            # Update the temporary balance of the sender and receiver in the ring.
+            self.ring[str(transaction.sender_address)]['temp_balance'] -= transaction.amount
+            self.ring[str(transaction.receiver_address)]['temp_balance'] += transaction.amount
         return
-    
-    # Sum of pending transactions
-    def get_pending_transactions_amount(self):
-        sum =0
-        for transaction in self.pending_transactions:
-            sum += transaction.amount
-        return sum
 
     # Updates the balance for each node given a validated transaction
     def update_wallet_state(self, transaction: Transaction):
@@ -182,10 +185,16 @@ class Node:
     
     ##### Transaction #####
     def create_transaction(self, receiver_address, type_of_transaction, payload):
+        # Assume receiver_address is valid
         sender_address = self.wallet.address
         nonce = self.nonce
         # Create a new transaction
         transaction = Transaction(sender_address, receiver_address, type_of_transaction, payload, nonce)
+        # Sign it
+        transaction.sign_transaction(self.wallet.private_key)
+        # Validate it
+        if transaction.validate_transaction(self.ring[str(self.wallet.address)]['temp_balance']) == False:
+            return False
         self.nonce += 1
         return transaction
         

@@ -28,11 +28,11 @@ class Block:
 			   
 		data_to_hash = ''.join([
 			str(self.timestamp),
-			''.join(str(tr['transaction_id']) for tr in self.transactions),
+			''.join(str(tr.transaction_id) for tr in self.transactions),
 			str(self.previous_hash)
 		])
 		
-		self.hash = sha256.new(data_to_hash.encode()).hexdigest()	
+		self.hash = sha256(data_to_hash.encode()).hexdigest()	
 	
 	#Validate a block (check correct validator, check previous hash is correct, validate current hash)
 	#We assume this function does not get called on the genesis block (to avoid excessive if statements that will fail on every other on the blocks)

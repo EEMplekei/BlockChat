@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 try:
 	load_dotenv()
-	block_size = int(os.environ('BLOCK_SIZE'))
+	block_size = int(os.getenv('BLOCK_SIZE'))
 except Exception as e:
 	#Either there is no such env var so we get None or it is not int castable
 	print(f"{Fore.RED}Cannot get BLOCK_SIZE from environment variable: {e}{Fore.RESET}")
