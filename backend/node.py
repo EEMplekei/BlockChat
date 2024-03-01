@@ -12,6 +12,7 @@ import threading
 from wallet import Wallet
 from blockchain import Blockchain
 from transaction import TransactionType, Transaction
+from proof_of_stake import PoSProtocol
 from block import Block
 
 
@@ -72,6 +73,8 @@ class Node:
         # If it is valid we will add it to the pending list
         self.pending_transactions.appendleft(transaction)
         self.update_temp_balance(transaction)
+        if len(self.pending_transactions) >= block_size:
+            self.mint_block()
         return
     
     # Send the current state of the blockchain to a specific node via HTTP POST request.
@@ -124,20 +127,25 @@ class Node:
         if(len(self.pending_transactions) < block_size):
              print(f"⛔️ Not enough transactions to mint a block. ({len(self.pending_transactions)}/{block_size})")
         # call proof of stake
-        # if public key that proof of stake outputs is mine do the following:
-        # Create new block
-        new_block = self.create_new_block()
-        # Add transactions to the new block
-        for _ in range(block_size):
-            new_block.add_transaction(self.pending_transactions.pop())
-            new_block.transactions.append(transaction)
-        # Calculate hash
-        new_block.calculate_hash()
-        # Add block to blockchain
-        self.add_block_to_chain(new_block)
-        # Broadcast block to the network
-        self.broadcast_block(new_block)
-
+        # Create an instance of PoSProtocol
+        protocol = PoSProtocol(self.blockchain.chain[-1].hash)
+        # Add nodes to the round
+        protocol.add_node_to_round(self.ring)
+        # Select a validator
+        validator = protocol.select_validator()
+        # If the current node is the validator, mint a block
+        if validator and validator[0] == self.wallet.address:
+            print("🔒 I am the validator")
+            new_block = self.create_new_block()  
+            # Add transactions to the new block
+            for _ in range(block_size):
+                new_block.transactions_list.append(self.pending_transactions.pop())
+            # Calculate hash
+            new_block.calculate_hash()
+            # Add block to blockchain
+            self.add_block_to_chain(new_block)
+            # Broadcast block to the network
+            self.broadcast_block(new_block)
 
 
     # Adds a newly block to the chain (assuming it has been validated)
