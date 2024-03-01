@@ -13,8 +13,12 @@ import socket
 import fcntl
 import socket
 import struct
-from node import Node
-from transaction import Transaction, TransactionType
+try:
+	from node import Node
+	from transaction import Transaction, TransactionType
+except ImportError:
+	print(f"{Fore.RED}Could not import required classes{Fore.RESET}")
+	exit()
 
 # Call once function to ensure that genesis block is only created once
 def call_once(func):
