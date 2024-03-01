@@ -28,7 +28,7 @@ class Block:
 			   
 		data_to_hash = ''.join([
 			str(self.timestamp),
-			''.join(str(tr.transcations_id) for tr in self.transactions),
+			''.join(str(tr['transaction_id']) for tr in self.transactions),
 			str(self.previous_hash)
 		])
 		
