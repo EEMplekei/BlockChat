@@ -1,6 +1,7 @@
 from time import time
 from hashlib import sha256
-from blockchain import Blockchain
+from colorama import Fore
+from transaction import TransactionType
 
 class Block:
 	
@@ -47,3 +48,34 @@ class Block:
 			return False
 
 		return True
+
+	#Get the transactions from a block
+	def get_transactions_from_block(self, node):
+		transactions = []
+
+		for transaction in self.transactions:
+			if transaction.receiver_address == 0:
+				transactions.append({
+					"type": "Stake",
+					"sender_id": node.ring[str(transaction.sender_address)]['id'],
+					"amount": transaction.amount
+				})
+			else:
+				if(transaction.type_of_transaction == TransactionType.COINS):
+					transactions.append({
+					"type": "Coins Transfer",
+					"sender_id": node.ring[str(transaction.sender_address)]['id'],
+					"receiver_id": node.ring[str(transaction.receiver_address)]['id'],
+					"amount": transaction.amount
+					})
+				elif (transaction.type_of_transaction == TransactionType.MESSAGE):
+					transactions.append({
+					"type": "Message",
+					"sender_id": node.ring[str(transaction.sender_address)]['id'],
+					"receiver_id": node.ring[str(transaction.receiver_address)]['id'],
+					"message": transaction.message
+					})
+				else:
+					print(f"{Fore.RED}Panic! Invalid transaction type found in block!{Fore.RESET}")
+					raise ValueError("Invalid transaction type found in block")
+		return transactions

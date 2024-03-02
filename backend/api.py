@@ -14,8 +14,8 @@ import fcntl
 import socket
 import struct
 try:
-	from node import Node
-	from transaction import Transaction, TransactionType
+	from components.node import Node
+	from components.transaction import Transaction, TransactionType
 except ImportError:
 	print(f"{Fore.RED}Could not import required classes{Fore.RESET}")
 	exit()
@@ -35,19 +35,22 @@ def call_once(func):
 # Function that creates genesis block
 @call_once
 def create_genesis_block():
+
 	# BOOTSTRAP: Create the first block of the blockchain (GENESIS BLOCK)
 	gen_block = node.create_new_block() # previous_hash autogenerates
+	
 	# Create first transaction
 	first_transaction = Transaction(
-		sender_address='0',
-		receiver_address=node.wallet.address, 
-		type_of_transaction=TransactionType.COINS,
-		payload=total_bbc,
-		nonce=1
+		sender_address = '0',
+		receiver_address = node.wallet.address, 
+		type_of_transaction = TransactionType.COINS,
+		payload = total_bbc,
+		nonce = 1
 	)
+ 
 	# Add transaction to genesis block
 	gen_block.transactions.append(first_transaction)
-	gen_block.calculate_hash() # void
+	gen_block.calculate_hash()
 	# Add genesis block to blockchain
 	node.blockchain.chain.append(gen_block)
 	# Create new empty block
@@ -79,6 +82,7 @@ def get_ip_linux(interface: str) -> str:
 	packed_addr = fcntl.ioctl(sock.fileno(), 0x8915, packed_iface)[20:24]
 	return socket.inet_ntoa(packed_addr)
 
+
 # ======================== MAIN ===========================
 
 # Get info about the node IP and port
@@ -97,7 +101,6 @@ app.add_middleware(
 	allow_methods = ["*"],
 	allow_headers = ["*"],
 )
-
 
 # Initialize the new node and set it's IP and port
 node = Node()
@@ -140,6 +143,7 @@ async def create_transaction(request: Request):
 	#     "payload": str,
 	#     "type_of_transaction": str
 	# }
+
 	# Get the parameters
 	data = await request.json()
 	receiver_id = data.get("receiver_id")
@@ -155,23 +159,29 @@ async def create_transaction(request: Request):
 		payload = int(payload)
 	elif type_of_transaction == "MESSAGE":
 		type_of_transaction = TransactionType.MESSAGE
-	
-	receiver_address = None
+	else:
+		return JSONResponse('Invalid type of transaction', status_code=status.HTTP_400_BAD_REQUEST)
+
 	# Find public key (address) corresponding to receiver_id
+	receiver_address = None
 	for key, value in node.ring.items():
 		if value['id'] == receiver_id:
 			receiver_address = key
 	
 	if receiver_address != None:
-		# Create transaction function also signs it and validates it inside
-		transaction = node.create_transaction(receiver_address, type_of_transaction, payload)
-		if transaction == False:
-			return JSONResponse('Transaction is not Valid', status_code=status.HTTP_400_BAD_REQUEST)
-		# Add to pending transactions list
-		node.add_transaction_to_pending(transaction)
-		# Broadcast transaction
-		node.broadcast_transaction(transaction)
-		return JSONResponse('Successful Transaction !', status_code=status.HTTP_200_OK)
+		try:
+			# Create transaction function also signs it and validates it inside
+			transaction = node.create_transaction(receiver_address, type_of_transaction, payload)
+			if transaction == False:
+				return JSONResponse('Transaction is not Valid', status_code=status.HTTP_400_BAD_REQUEST)
+			# Add to pending transactions list
+			node.add_transaction_to_pending(transaction)
+			# Broadcast transaction
+			node.broadcast_transaction(transaction)
+			return JSONResponse('Successful Transaction !', status_code=status.HTTP_200_OK)
+		except Exception as e:
+			print(f"{Fore.RED}Error create_transaction: {e}{Fore.RESET}")
+			return JSONResponse("Could not create transaction", status_code=status.HTTP_400_BAD_REQUEST)
 	else:
 		return JSONResponse('Receiver not found', status_code=status.HTTP_400_BAD_REQUEST)
 
@@ -181,16 +191,24 @@ async def set_stake(request: Request):
 	# {
 	#     "stake": int,
 	# }
+ 
 	# Get the parameters
 	data = await request.json()
 	amount = data.get("stake")
-	amount = int(amount)
-	# Set stake
-	type = TransactionType.COINS
+	
+	#Input validation
+	try:
+		amount = int(amount)
+	except ValueError:
+		return JSONResponse('Stake must be an integer number', status_code=status.HTTP_400_BAD_REQUEST)
+	if(amount <= 0):
+		return JSONResponse('Stake must be greater than 0', status_code=status.HTTP_400_BAD_REQUEST)
+
 	# Create transaction function also validates it inside
-	staking_transaction = node.create_transaction(0, type, amount)
-	if staking_transaction == False:
-			return JSONResponse('Transaction is not Valid', status_code=status.HTTP_400_BAD_REQUEST)
+	staking_transaction = node.create_transaction(0, TransactionType.COINS, amount)
+	if not staking_transaction:
+		return JSONResponse('Transaction is not Valid', status_code=status.HTTP_400_BAD_REQUEST)
+
 	# Add to pending transactions list
 	node.add_transaction_to_pending(staking_transaction)
 	# Broadcast transaction
@@ -198,64 +216,48 @@ async def set_stake(request: Request):
 	return JSONResponse('Successful Staking !', status_code=status.HTTP_200_OK)
 
 @app.get("/api/view_last_block")
-def view_transactions():
-	# Returns the transactions of the last validated, mined block
+def view_last_block_transactions():
+	
 	if (len(node.blockchain.chain) <= 1):
-		return JSONResponse('There are no mined blocks at the moment !')
+		return JSONResponse('There are no mined blocks at the moment!', status_code = status.HTTP_204_NO_CONTENT)
 	
 	# Get last block in the chain
 	latest_block = node.blockchain.chain[-1]
-	# Return a list of transactions (sender, receiver, amount)
-	transactions = []
-	for transaction in latest_block.transactions:
-		if(transaction.receiver_address==0):
-			transactions.append(
-				{
-					"sender_id": node.ring[str(transaction.sender_address)]['id'],
-					# "sender_address": transaction.sender_address,
-					"receiver_id": "stake",
-					# "receiver_address": transaction.receiver_address,
-					"amount": transaction.amount
-				}
-			)
-		else:	
-			transactions.append(
-				{
-					"sender_id": node.ring[str(transaction.sender_address)]['id'],
-					# "sender_address": transaction.sender_address,
-					"receiver_id": node.ring[str(transaction.receiver_address)]['id'],
-					# "receiver_address": transaction.receiver_address,
-					"amount": transaction.amount
-				}
-			)
+ 
+	# Return a list of transactions
+	try:
+		transactions = latest_block.get_transactions_from_block(node)
+	except Exception as e:
+		print(f"{Fore.RED}Error view_last_block_transactions: {e}{Fore.RESET}")
+		return JSONResponse('Could not get transactions from block', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 	return JSONResponse(transactions, status_code=status.HTTP_200_OK)
 
 @app.get("/api/get_balance")
 def get_balance():
-	balance = node.ring[str(node.wallet.address)]['balance'] # Alternative
+	try:
+		balance = node.ring[str(node.wallet.address)]['balance'] # Alternative
+	except Exception as e:
+		print(f"{Fore.RED}Error get_balance: {e}{Fore.RESET}")
+		return JSONResponse('Could not get balance', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 	return JSONResponse({'balance': balance}, status_code=status.HTTP_200_OK)
 
 @app.get("/api/get_temp_balance")
 def get_temp_balance():
-	temp_balance = node.ring[str(node.wallet.address)]['temp_balance'] # Alternative
+	try:
+		temp_balance = node.ring[str(node.wallet.address)]['temp_balance'] # Alternative
+	except Exception as e:
+		print(f"{Fore.RED}Error get_temp_balance: {e}{Fore.RESET}")
+		return JSONResponse('Could not get temp_balance', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)	
 	return JSONResponse({'temp_balance': temp_balance}, status_code=status.HTTP_200_OK)
 
 @app.get("/api/get_chain_length")
 def get_chain_length():
-	# Gets the current valid blockchain length of the receiver
-	# Get the current length of the node's blockchain
-	chain_len = len(node.blockchain.chain)
-
-	return JSONResponse({'chain_length': chain_len}, status_code=status.HTTP_200_OK)
+	return JSONResponse({'chain_length': len(node.blockchain.chain)}, status_code=status.HTTP_200_OK)
 
 @app.get("/api/get_chain")
 def get_chain():
-	# Gets the current valid blockchain of the receiver
-	# Get the current length of the node's blockchain
 	return Response(pickle.dumps(node.blockchain), status_code=status.HTTP_200_OK)
-
-
 
 # =========================================================
 # Internal routes
@@ -340,30 +342,30 @@ def get_block(data: bytes = Depends(get_body)):
 
 @app.post("/let_me_in")
 async def let_me_in(request: Request):
-    # ! BOOTSTRAP ONLY !
-    # Adds a new node to the cluster
-    if node.is_bootstrap:
-        # Deserialize the data received in the request body using pickle.loads()
-        data = await request.body()
-        node_data = pickle.loads(data)
+	# ! BOOTSTRAP ONLY !
+	# Adds a new node to the cluster
+	if node.is_bootstrap:
+		# Deserialize the data received in the request body using pickle.loads()
+		data = await request.body()
+		node_data = pickle.loads(data)
 
-        # Extract necessary parameters from the deserialized data
-        ip = node_data.get('ip')
-        port = node_data.get('port')
-        address = node_data.get('address')
-        id = len(node.ring)
+		# Extract necessary parameters from the deserialized data
+		ip = node_data.get('ip')
+		port = node_data.get('port')
+		address = node_data.get('address')
+		id = len(node.ring)
 
 		# Add node to the ring
-        node.add_node_to_ring(id, ip, port, address,0)
+		node.add_node_to_ring(id, ip, port, address,0)
 
 		# Check if all nodes have joined 
 		# !! (do it after you have responded to the last node)
-        t = threading.Thread(target=check_full_ring)
-        t.start()
+		t = threading.Thread(target=check_full_ring)
+		t.start()
 
-        return JSONResponse({'id': id})
-    else:
-        return JSONResponse('Cannot post to let-me-in to a non-bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
+		return JSONResponse({'id': id})
+	else:
+		return JSONResponse('Cannot post to let-me-in to a non-bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
 
 def check_full_ring():
 	# ! BOOTSTRAP ONLY !
