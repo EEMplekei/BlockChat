@@ -20,7 +20,7 @@ except Exception as e:
 
 #Try loading environment variables, if it fails, print error and use default block size
 try:
-    load_dotenv("../.env")
+    load_dotenv()
     block_size = int(os.getenv('BLOCK_SIZE'))
 except Exception as e:
     print(f"{Fore.RED}Error loading environment variables: {e}{Fore.RESET}")

@@ -3,7 +3,7 @@ from colorama import Fore
 from dotenv import load_dotenv
 
 try:
-	load_dotenv("../.env")
+	load_dotenv()
 	block_size = int(os.getenv('BLOCK_SIZE'))
 except Exception as e:
 	#Either there is no such env var so we get None or it is not int castable
