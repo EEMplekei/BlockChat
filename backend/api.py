@@ -207,7 +207,7 @@ def view_transactions():
 	latest_block = node.blockchain.chain[-1]
 	# Return a list of transactions (sender, receiver, amount)
 	transactions = []
-	for transaction in latest_block.transactions_list:
+	for transaction in latest_block.transactions:
 		transactions.append(
 			{
 				"sender_id": node.ring[transaction.sender_address]['id'],

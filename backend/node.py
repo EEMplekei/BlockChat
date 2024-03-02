@@ -142,7 +142,7 @@ class Node:
         Update the pending transactions list so you void executing it a second time
         """
         # Create a set of transaction IDs in incoming_block for faster lookup
-        incoming_transactions_ids = {tx.transaction_id for tx in incoming_block.transactions_list}
+        incoming_transactions_ids = {tx.transaction_id for tx in incoming_block.transactions}
 
         # Remove transactions from pending_transactions if their IDs are in incoming_transactions_ids
         self.pending_transactions = [tx for tx in self.pending_transactions if tx.transaction_id not in incoming_transactions_ids]
@@ -162,14 +162,14 @@ class Node:
         protocol.add_node_to_round(self.ring)
         # Select a validator
         validator = protocol.select_validator()
-        print(f"The validator is: ", validator)
+        print(f"The validator is: \n", validator)
         # If the current node is the validator, mint a block
-        if validator and validator[0] == self.wallet.address:
+        if validator and validator[0] == str(self.wallet.address):
             print("🔒 I am the validator")
             new_block = self.create_new_block()  
             # Add transactions to the new block
             for _ in range(block_size):
-                new_block.transactions_list.append(self.pending_transactions.pop())
+                new_block.transactions.append(self.pending_transactions.pop())
             # Calculate hash
             new_block.calculate_hash()
             # Add block to blockchain
@@ -183,12 +183,12 @@ class Node:
         # Add block to original chain
         self.blockchain.chain.append(block)
         # Update wallet 
-        for transaction in block.transactions_list:
+        for transaction in block.transactions:
             self.update_wallet_state(transaction)
         # Update pending_transactions list
         self.update_pending_transactions(block)
         # Add transactions to blockchain set
-        for t in block.transactions_list:
+        for t in block.transactions:
             self.blockchain.transactions_hashes.add(t.transaction_id)
         # debug
         print("🔗 BLOCKCHAIN 🔗")
