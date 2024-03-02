@@ -329,27 +329,30 @@ def get_block(data: bytes = Depends(get_body)):
 
 @app.post("/let_me_in")
 async def let_me_in(request: Request):
-	# ! BOOTSTRAP ONLY !
-	# Adds a new node to the cluster
-	if(node.is_bootstrap):
-		# Get the parameters
-		data = await request.form()
-		ip = data.get('ip')
-		port = data.get('port')
-		address = data.get('address')
-		id = len(node.ring)
+    # ! BOOTSTRAP ONLY !
+    # Adds a new node to the cluster
+    if node.is_bootstrap:
+        # Deserialize the data received in the request body using pickle.loads()
+        data = await request.body()
+        node_data = pickle.loads(data)
+
+        # Extract necessary parameters from the deserialized data
+        ip = node_data.get('ip')
+        port = node_data.get('port')
+        address = node_data.get('address')
+        id = len(node.ring)
 
 		# Add node to the ring
-		node.add_node_to_ring(id, ip, port, address,0)
+        node.add_node_to_ring(id, ip, port, address,0)
 
 		# Check if all nodes have joined 
 		# !! (do it after you have responded to the last node)
-		t = threading.Thread(target=check_full_ring)
-		t.start()
+        t = threading.Thread(target=check_full_ring)
+        t.start()
 
-		return JSONResponse({'id': id})
-	else:
-		return JSONResponse('Cannot post to let-me-in to a non-bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
+        return JSONResponse({'id': id})
+    else:
+        return JSONResponse('Cannot post to let-me-in to a non-bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
 
 def check_full_ring():
 	# ! BOOTSTRAP ONLY !

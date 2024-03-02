@@ -89,6 +89,7 @@ class Node:
         self.update_temp_balance(transaction)
 
         if len(self.pending_transactions) >= block_size:
+            print("tora tha kaleso tin mint_block")
             self.mint_block()
         return
     
@@ -156,10 +157,12 @@ class Node:
         # call proof of stake
         # Create an instance of PoSProtocol
         protocol = PoSProtocol(self.blockchain.chain[-1].hash)
+        #print(self.ring)
         # Add nodes to the round
         protocol.add_node_to_round(self.ring)
         # Select a validator
         validator = protocol.select_validator()
+        print(f"The validator is: ", validator)
         # If the current node is the validator, mint a block
         if validator and validator[0] == self.wallet.address:
             print("🔒 I am the validator")
@@ -248,11 +251,17 @@ class Node:
     def unicast_node(self, node):
         request_address = 'http://' + node['ip'] + ':' + node['port']
         request_url = request_address + '/let_me_in'
-        response = requests.post(request_url, data={
+        # Data to be sent to the bootstrap node
+        data_to_send = {
             'ip': self.ip,
             'port': self.port,
             'address': self.wallet.address
-        })
+        }
+        # Serialize the data using pickle.dumps()
+        serialized_data = pickle.dumps(data_to_send)
+
+        # Send the serialized data via POST request
+        response = requests.post(request_url, data=serialized_data)
 
         if response.status_code == 200:
             print("Node added successfully !")
