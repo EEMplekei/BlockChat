@@ -218,8 +218,8 @@ async def set_stake(request: Request):
 @app.get("/api/view_last_block")
 def view_last_block_transactions():
 	
-	if (len(node.blockchain.chain) <= 1):
-		return JSONResponse('There are no mined blocks at the moment!', status_code = status.HTTP_204_NO_CONTENT)
+	if (len(node.blockchain.chain) < 1):
+		return Response(status_code = status.HTTP_204_NO_CONTENT)
 	
 	# Get last block in the chain
 	latest_block = node.blockchain.chain[-1]
