@@ -208,15 +208,26 @@ def view_transactions():
 	# Return a list of transactions (sender, receiver, amount)
 	transactions = []
 	for transaction in latest_block.transactions:
-		transactions.append(
-			{
-				"sender_id": node.ring[transaction.sender_address]['id'],
-				# "sender_address": transaction.sender_address,
-				"receiver_id": node.ring[transaction.receiver_address]['id'],
-				# "receiver_address": transaction.receiver_address,
-				"amount": transaction.amount
-			}
-		)
+		if(transaction.receiver_address==0):
+			transactions.append(
+				{
+					"sender_id": node.ring[str(transaction.sender_address)]['id'],
+					# "sender_address": transaction.sender_address,
+					"receiver_id": "stake",
+					# "receiver_address": transaction.receiver_address,
+					"amount": transaction.amount
+				}
+			)
+		else:	
+			transactions.append(
+				{
+					"sender_id": node.ring[str(transaction.sender_address)]['id'],
+					# "sender_address": transaction.sender_address,
+					"receiver_id": node.ring[str(transaction.receiver_address)]['id'],
+					# "receiver_address": transaction.receiver_address,
+					"amount": transaction.amount
+				}
+			)
 	return JSONResponse(transactions, status_code=status.HTTP_200_OK)
 
 @app.get("/api/get_balance")
@@ -302,7 +313,7 @@ def get_block(data: bytes = Depends(get_body)):
 	# Wait until incoming block has finished processing
 	with (node.processing_block_lock):
 		# Check validity of block
-		if (new_block.validate_block(node.blockchain)):
+		if (new_block.validate_block(node.blockchain.chain[-1].hash, node.current_validator)):
 			# If it is valid:
 			# Stop the current block mining
 			with(node.incoming_block_lock):
@@ -317,13 +328,13 @@ def get_block(data: bytes = Depends(get_body)):
 		# Check if latest_block.previous_hash == incoming_block.previous_hash
 		elif(node.blockchain.chain[-1].previous_hash == new_block.previous_hash):
 			print("🗑️  Rejected incoming block")
-		else:
-			print("Incoming block previous_hash: ", new_block.previous_hash)
-			print("🔗 BLOCKCHAIN 🔗")
-			print([block.hash[:7] for block in node.blockchain.chain])
-			# Resolve conflict in case of wrong previous_hash
-			node.blockchain.resolve_conflict(node)
-			print("❌📦 Something went wrong with validation 🙁")
+		# else:
+		# 	print("Incoming block previous_hash: ", new_block.previous_hash)
+		# 	print("🔗 BLOCKCHAIN 🔗")
+		# 	print([block.hash[:7] for block in node.blockchain.chain])
+		# 	# Resolve conflict in case of wrong previous_hash
+		# 	node.blockchain.resolve_conflict(node)
+		# 	print("❌📦 Something went wrong with validation 🙁")
 
 		return JSONResponse('OK')
 

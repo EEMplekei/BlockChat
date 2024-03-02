@@ -56,6 +56,7 @@ class Node:
         self.incoming_block = False
         self.processing_block = False
         self.pending_transactions = deque()
+        self.current_validator = None
         self.incoming_block_lock = threading.Lock()
         self.processing_block_lock = threading.Lock()
         self.nonce = random.randint(0, 10000)
@@ -89,7 +90,6 @@ class Node:
         self.update_temp_balance(transaction)
 
         if len(self.pending_transactions) >= block_size:
-            print("tora tha kaleso tin mint_block")
             self.mint_block()
         return
     
@@ -127,11 +127,14 @@ class Node:
             transaction.sender_address == self.wallet.address):
             self.wallet.transactions.append(transaction)
         # info message
-        print(f"1. Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> {self.ring[str(transaction.receiver_address)]['id']} : {transaction.amount} BBCs")
-        
-        # Update the balance of sender and receiver in the ring.
-        self.ring[str(transaction.sender_address)]['balance'] -=  transaction.amount
-        self.ring[str(transaction.receiver_address)]['balance'] +=  transaction.amount
+        if(transaction.receiver_address==0):
+            print(f"1. Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> STAKE : {transaction.amount} BBCs")
+        else:
+            print(f"1. Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> {self.ring[str(transaction.receiver_address)]['id']} : {transaction.amount} BBCs")
+            # Update the balance of sender and receiver in the ring.
+            self.ring[str(transaction.sender_address)]['balance'] -=  transaction.amount
+            self.ring[str(transaction.receiver_address)]['balance'] +=  transaction.amount
+
         return
 
     # Update pending transactions list from incoming block
@@ -164,6 +167,7 @@ class Node:
         validator = protocol.select_validator()
         print(f"The validator is: \n", validator)
         # If the current node is the validator, mint a block
+        self.current_validator = validator[0]
         if validator and validator[0] == str(self.wallet.address):
             print("🔒 I am the validator")
             new_block = self.create_new_block()  
@@ -185,6 +189,7 @@ class Node:
         # Update wallet 
         for transaction in block.transactions:
             self.update_wallet_state(transaction)
+            self.ring[str(transaction.sender_address)]['temp_balance'] = self.ring[str(transaction.sender_address)]['balance']
         # Update pending_transactions list
         self.update_pending_transactions(block)
         # Add transactions to blockchain set
