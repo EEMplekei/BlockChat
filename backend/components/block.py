@@ -1,7 +1,7 @@
 from time import time
 from hashlib import sha256
 from colorama import Fore
-from transaction import TransactionType
+from components.transaction import TransactionType
 
 class Block:
 	

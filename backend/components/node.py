@@ -9,11 +9,11 @@ import threading
 
 #Try loading modules, if it fails, print error and raise ImportError
 try:
-    from wallet import Wallet
-    from blockchain import Blockchain
-    from transaction import TransactionType, Transaction
-    from proof_of_stake import PoSProtocol
-    from block import Block
+    from components.wallet import Wallet
+    from components.blockchain import Blockchain
+    from components.transaction import TransactionType, Transaction
+    from components.proof_of_stake import PoSProtocol
+    from components.block import Block
 except Exception as e:
     print(f"{Fore.RED}Node: Error loading modules: {e}{Fore.RESET}")
     raise ImportError
