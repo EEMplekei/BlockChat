@@ -1,4 +1,5 @@
 import random
+
 class PoSProtocol:
     def __init__(self, seed=None):
         self.staker_nodes = []

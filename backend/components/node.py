@@ -15,12 +15,12 @@ try:
     from proof_of_stake import PoSProtocol
     from block import Block
 except Exception as e:
-    print(f"{Fore.RED}Error loading modules: {e}{Fore.RESET}")
+    print(f"{Fore.RED}Node: Error loading modules: {e}{Fore.RESET}")
     raise ImportError
 
 #Try loading environment variables, if it fails, print error and use default block size
 try:
-    load_dotenv()
+    load_dotenv("../.env")
     block_size = int(os.getenv('BLOCK_SIZE'))
 except Exception as e:
     print(f"{Fore.RED}Error loading environment variables: {e}{Fore.RESET}")
