@@ -376,4 +376,4 @@ def check_full_ring():
 		
 
 # WEB SERVER RUN
-uvicorn.run(app, host="0.0.0.0", port = port)
+uvicorn.run(app, host=None, port = port)
