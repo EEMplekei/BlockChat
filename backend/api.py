@@ -101,15 +101,6 @@ if(ip_address == None or port == None):
 #Initialize FastAPI
 app = FastAPI()
 
-# CORS (Cross-Origin Resource Sharing)
-app.add_middleware(
-	CORSMiddleware,
-	allow_origins = ["*"],
-	allow_credentials = True,
-	allow_methods = ["*"],
-	allow_headers = ["*"],
-)
-
 # Initialize the new node and set it's IP and port
 node = Node()
 node.ip , node.port = ip_address, str(port)
@@ -135,10 +126,8 @@ if (node.is_bootstrap):
 	node.id = 0
 	node.add_node_to_ring(node.id, node.ip, node.port, node.wallet.address, total_bbc)
 	create_genesis_block()
-
 else:
-	node.unicast_node(bootstrap_node)
-
+	node.advertise_to_boostrap()
 
 # ======================== ROUTES =========================
 # Client routes 

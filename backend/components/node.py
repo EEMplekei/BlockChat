@@ -213,7 +213,7 @@ class Node:
                 self.unicast_block(node, block)
     
     ##### Transaction #####
-    def create_transaction(self, receiver_address, type_of_transaction, payload):
+    def create_transaction(self, receiver_address, type_of_transaction: TransactionType, payload):
         # Assume receiver_address is valid
         sender_address = self.wallet.address
         nonce = self.nonce
