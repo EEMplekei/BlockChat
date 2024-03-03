@@ -4,6 +4,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ( padding, utils)
 from cryptography.hazmat.primitives import serialization
 from cryptography import exceptions
+from colorama import Fore
 
 class TransactionType(Enum):
 	COINS = 1
@@ -132,12 +133,12 @@ class Transaction:
 		self.calculate_hash()
 		
 		if(not self.verify_signature(self.sender_address)):
-			print("Transaction not validated : Not valid signature")
+			print(f"{Fore.YELLOW}validate_transaction{Fore.RESET}: {Fore.RED}Transaction not validated, not valid signature{Fore.RESET}")
 			return False
 		
 		transaction_cost = (self.amount if self.type_of_transaction == TransactionType.COINS else len(self.message))
 		if(transaction_cost > sender_balance):
-			print("Transaction not validated : Not enough coins")
+			print(f"{Fore.YELLOW}validate_transaction{Fore.RESET}: {Fore.RED}Transaction not validated, not enough coins{Fore.RESET}")
 			return False
 				
 		return True
