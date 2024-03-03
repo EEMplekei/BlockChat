@@ -86,8 +86,11 @@ class Node:
             return False
         
         self.pending_transactions.appendleft(transaction)
-
         self.update_temp_balance(transaction)
+        
+        # If the sender of transaction is the current node, broadcast the transaction
+        #if(str(transaction.sender_address) == self.wallet.address):
+        #    self.broadcast_transaction(transaction)
 
         if len(self.pending_transactions) >= block_size:
             self.mint_block()
@@ -148,7 +151,7 @@ class Node:
         incoming_transactions_ids = {tx.transaction_id for tx in incoming_block.transactions}
 
         # Remove transactions from pending_transactions if their IDs are in incoming_transactions_ids
-        self.pending_transactions = [tx for tx in self.pending_transactions if tx.transaction_id not in incoming_transactions_ids]
+        self.pending_transactions = deque([tx for tx in self.pending_transactions if tx.transaction_id not in incoming_transactions_ids])
 
     def mint_block(self):
         """
@@ -165,7 +168,6 @@ class Node:
         protocol.add_node_to_round(self.ring)
         # Select a validator
         validator = protocol.select_validator()
-        print(f"The validator is: \n", validator)
         # If the current node is the validator, mint a block
         self.current_validator = validator[0]
         if validator and validator[0] == str(self.wallet.address):

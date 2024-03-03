@@ -20,6 +20,14 @@ except ImportError:
 	print(f"{Fore.RED}Could not import required classes{Fore.RESET}")
 	exit()
 
+try:
+    load_dotenv()
+    block_size = int(os.getenv('BLOCK_SIZE'))
+except Exception as e:
+    print(f"{Fore.RED}Error loading environment variables: {e}{Fore.RESET}")
+    print(f"{Fore.YELLOW}Using default block size: 3{Fore.RESET}")
+    block_size = 3
+
 # Call once function to ensure that genesis block is only created once
 def call_once(func):
 	def wrapper(*args, **kwargs):
@@ -176,8 +184,9 @@ async def create_transaction(request: Request):
 				return JSONResponse('Transaction is not Valid', status_code=status.HTTP_400_BAD_REQUEST)
 			# Add to pending transactions list
 			node.add_transaction_to_pending(transaction)
-			# Broadcast transaction
+			# Broadcast transaction			
 			node.broadcast_transaction(transaction)
+			
 			return JSONResponse('Successful Transaction !', status_code=status.HTTP_200_OK)
 		except Exception as e:
 			print(f"{Fore.RED}Error create_transaction: {e}{Fore.RESET}")
@@ -314,22 +323,25 @@ def get_block(data: bytes = Depends(get_body)):
 
 	# Wait until incoming block has finished processing
 	with (node.processing_block_lock):
+		print("Processing block: ", node.processing_block)
 		# Check validity of block
-		if (new_block.validate_block(node.blockchain.chain[-1].hash, node.current_validator)):
-			# If it is valid:
-			# Stop the current block mining
-			with(node.incoming_block_lock):
-				node.incoming_block = True
-			# node.processing_block = False
-			print("Block was ⛏️  by someone else 🧑")
-			# Add block to the blockchain
-			print("✅📦! Adding it to the chain")
-			node.add_block_to_chain(new_block)
-			print("Blockchain length: ", len(node.blockchain.chain))
+		#if (new_block.validate_block(node.blockchain.chain[-1].hash, node.current_validator)):
+		print("Incoming block is valid")
+		# If it is valid:
+		# Stop the current block mining
+		with(node.incoming_block_lock):
+			print("Incoming block: ", node.incoming_block)
+			node.incoming_block = True
+		# node.processing_block = False
+		print("Block was ⛏️  by someone else 🧑")
+		# Add block to the blockchain
+		print("✅📦! Adding it to the chain")
+		node.add_block_to_chain(new_block)
+		print("Blockchain length: ", len(node.blockchain.chain))
 		
 		# Check if latest_block.previous_hash == incoming_block.previous_hash
-		elif(node.blockchain.chain[-1].previous_hash == new_block.previous_hash):
-			print("🗑️  Rejected incoming block")
+		# elif(node.blockchain.chain[-1].previous_hash == new_block.previous_hash):
+		# 	print("🗑️  Rejected incoming block")
 		# else:
 		# 	print("Incoming block previous_hash: ", new_block.previous_hash)
 		# 	print("🔗 BLOCKCHAIN 🔗")
