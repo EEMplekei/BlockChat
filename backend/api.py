@@ -186,6 +186,8 @@ async def create_transaction(request: Request):
 			node.add_transaction_to_pending(transaction)
 			# Broadcast transaction			
 			node.broadcast_transaction(transaction)
+			# Check if block is full
+			node.check_if_block_is_full_to_mint()
 			
 			return JSONResponse('Successful Transaction !', status_code=status.HTTP_200_OK)
 		except Exception as e:
@@ -311,6 +313,9 @@ def get_transaction(data: bytes = Depends(get_body)):
 	# Add transaction to block
 	node.add_transaction_to_pending(new_transaction)
 
+	# Check if block is full
+	node.check_if_block_is_full_to_mint()
+
 	return JSONResponse('OK')
 
 @app.post("/get_block")
@@ -319,26 +324,27 @@ def get_block(data: bytes = Depends(get_body)):
 	
 	# data = request.body()
 	new_block = pickle.loads(data)
-	print("New block received successfully !")
+
+	print(f"{Fore.GREEN}NEWS{Fore.RESET}: Got new block, now lets validate it !")
 
 	# Wait until incoming block has finished processing
 	with (node.processing_block_lock):
-		print("Processing block: ", node.processing_block)
-		# Check validity of block
-		#if (new_block.validate_block(node.blockchain.chain[-1].hash, node.current_validator)):
-		print("Incoming block is valid")
-		# If it is valid:
-		# Stop the current block mining
-		with(node.incoming_block_lock):
-			print("Incoming block: ", node.incoming_block)
-			node.incoming_block = True
-		# node.processing_block = False
-		print("Block was ⛏️  by someone else 🧑")
-		# Add block to the blockchain
-		print("✅📦! Adding it to the chain")
-		node.add_block_to_chain(new_block)
-		print("Blockchain length: ", len(node.blockchain.chain))
-		
+		#print("Processing block: ", node.processing_block)
+		# Check validity of block		
+		if (new_block.validate_block(node.blockchain.chain[-1].hash, node.current_validator)):
+			print("Incoming block is valid")
+			# If it is valid:
+			# Stop the current block mining
+			with(node.incoming_block_lock):
+				#print("Incoming block: ", node.incoming_block)
+				node.incoming_block = True
+			# node.processing_block = False
+			print("Block was ⛏️  by someone else 🧑")
+			# Add block to the blockchain
+			print("✅📦! Adding it to the chain")
+			node.add_block_to_chain(new_block)
+			print("Blockchain length: ", len(node.blockchain.chain))
+			return JSONResponse('OK')
 		# Check if latest_block.previous_hash == incoming_block.previous_hash
 		# elif(node.blockchain.chain[-1].previous_hash == new_block.previous_hash):
 		# 	print("🗑️  Rejected incoming block")
@@ -348,9 +354,9 @@ def get_block(data: bytes = Depends(get_body)):
 		# 	print([block.hash[:7] for block in node.blockchain.chain])
 		# 	# Resolve conflict in case of wrong previous_hash
 		# 	node.blockchain.resolve_conflict(node)
-		# 	print("❌📦 Something went wrong with validation 🙁")
+		print("❌📦 Something went wrong with validation 🙁")
 
-		return JSONResponse('OK')
+		return JSONResponse('Error validating block', status_code=status.HTTP_400_BAD_REQUEST)
 
 @app.post("/let_me_in")
 async def let_me_in(request: Request):

@@ -87,11 +87,9 @@ class Node:
         
         self.pending_transactions.appendleft(transaction)
         self.update_temp_balance(transaction)
-        
-        # If the sender of transaction is the current node, broadcast the transaction
-        #if(str(transaction.sender_address) == self.wallet.address):
-        #    self.broadcast_transaction(transaction)
-
+        return
+    
+    def check_if_block_is_full_to_mint(self):
         if len(self.pending_transactions) >= block_size:
             self.mint_block()
         return
