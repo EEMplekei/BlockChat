@@ -180,10 +180,12 @@ async def create_transaction(request: Request):
 		try:
 			# Create transaction function also signs it and validates it inside
 			transaction = node.create_transaction(receiver_address, type_of_transaction, payload)
-			if transaction == False:
-				return JSONResponse('Transaction is not Valid', status_code=status.HTTP_400_BAD_REQUEST)
-			# Add to pending transactions list
-			node.add_transaction_to_pending(transaction)
+   
+   			# Add to pending transactions list and check that it should pass
+			if not node.add_transaction_to_pending(transaction):
+				return JSONResponse('Transaction is not valid', status_code=status.HTTP_400_BAD_REQUEST)
+			
+			print("Transaction added to pending list :comment on create transation call")
 			# Broadcast transaction			
 			node.broadcast_transaction(transaction)
 			# Check if block is full
@@ -217,12 +219,14 @@ async def set_stake(request: Request):
 
 	# Create transaction function also validates it inside
 	staking_transaction = node.create_transaction(0, TransactionType.COINS, amount)
-	if not staking_transaction:
-		return JSONResponse('Transaction is not Valid', status_code=status.HTTP_400_BAD_REQUEST)
+	
+	# Add to pending transactions list and check that it was added to pending
+	if not node.add_transaction_to_pending(staking_transaction):
+		return JSONResponse('Transaction is not valid', status_code=status.HTTP_400_BAD_REQUEST)
 
 	# Add to pending transactions list
 	node.add_transaction_to_pending(staking_transaction)
-	# Broadcast transaction
+    # Broadcast transaction
 	node.broadcast_transaction(staking_transaction)
 	return JSONResponse('Successful Staking !', status_code=status.HTTP_200_OK)
 
