@@ -363,16 +363,15 @@ async def let_me_in(request: Request):
 
 	# Check if all nodes have joined 
 	# !! (do it after you have responded to the last node)
-	t = threading.Thread(target=check_full_ring)
+	t = threading.Thread(target=check_full_ring, args=(len(node.ring), ))
 	t.start()
 
 	return JSONResponse({'id': id})
 
-def check_full_ring():
-	# ! BOOTSTRAP ONLY !
+def check_full_ring(ring_nodes_count):
 	# Checks if all nodes have been added to the ring
 	time.sleep(1)
-	if (len(node.ring) == total_nodes):
+	if (ring_nodes_count == total_nodes):
 		node.broadcast_ring()
 		node.broadcast_blockchain()
 		node.broadcast_initial_bcc()
