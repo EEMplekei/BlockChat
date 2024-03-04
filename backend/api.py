@@ -262,14 +262,7 @@ def get_chain():
 	data = []
 	# Iterate through the blockchain and get the transactions, hash and previous hash and get the validator of each block
 	for block in node.blockchain.chain:
-		transactions = []
-		for transaction in block.transactions:
-			transactions.append({
-				'sender_address': transaction.sender_address,
-				'receiver_address': transaction.receiver_address,
-				'type_of_transaction': transaction.type_of_transaction,
-				'payload': transaction.payload
-			})
+		transactions = block.get_transactions_from_block(node)
 		data.append({
 			'transactions': transactions,
 			'hash': block.hash,
