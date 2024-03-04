@@ -23,10 +23,12 @@ except ImportError:
 try:
 	load_dotenv()
 	block_size = int(os.getenv('BLOCK_SIZE'))
+	FEE_RATE = float(os.getenv('FEE_RATE'))
 except Exception as e:
 	print(f"{Fore.RED}Error loading environment variables: {e}{Fore.RESET}")
-	print(f"{Fore.YELLOW}Using default block size: 3{Fore.RESET}")
-	block_size = 3
+	print(f"{Fore.YELLOW}Using default block size: 10. Default FEE_RATE: 3%{Fore.RESET}")
+	block_size = 10
+	FEE_RATE = 0.03
 
 # Call once function to ensure that genesis block is only created once
 def call_once(func):
@@ -165,18 +167,33 @@ async def create_transaction(request: Request):
 	for key, value in node.ring.items():
 		if value['id'] == receiver_id:
 			receiver_address = key
-	
+
+	# Get the validator address
+	validator_address = node.current_validator
+
 	if receiver_address != None:
 		try:
 			# Create transaction function also signs it and validates it inside
 			transaction = node.create_transaction(receiver_address, type_of_transaction, payload)
-   
+
+			# Create transaction fee
+			if type_of_transaction == TransactionType.COINS:
+				transaction_fee = node.create_transaction(validator_address, TransactionType.FEE, payload*FEE_RATE)
+			elif (type_of_transaction == TransactionType.MESSAGE):
+				transaction_fee = node.create_transaction(validator_address, TransactionType.FEE, len(payload)*FEE_RATE)
+
    			# Add to pending transactions list and check that it should pass
 			if not node.add_transaction_to_pending(transaction):
 				return JSONResponse('Transaction is not valid', status_code=status.HTTP_400_BAD_REQUEST)
-			
 			# Broadcast transaction			
 			node.broadcast_transaction(transaction)
+
+			# Add to pending transactions list and check that it should pass
+			if not node.add_transaction_to_pending(transaction_fee):
+				return JSONResponse('Transaction is not valid', status_code=status.HTTP_400_BAD_REQUEST)
+			# Broadcast transaction			
+			node.broadcast_transaction(transaction_fee)
+
 			# Check if block is full
 			# node.check_if_block_is_full_to_mint()
 			
@@ -259,7 +276,17 @@ def get_chain_length():
 
 @app.get("/api/get_chain")
 def get_chain():
-	return Response(pickle.dumps(node.blockchain), status_code=status.HTTP_200_OK)
+	data = []
+	# Iterate through the blockchain and get the transactions, hash and previous hash and get the validator of each block
+	for block in node.blockchain.chain:
+		transactions = block.get_transactions_from_block(node)
+		data.append({
+			'transactions': transactions,
+			'hash': block.hash,
+			'previous_hash': block.previous_hash,
+			'validator': block.validator
+		})
+	return JSONResponse(data, status_code=status.HTTP_200_OK)
 
 # =========================================================
 # Internal routes

@@ -118,9 +118,7 @@ class Node:
         
         elif (transaction.type_of_transaction == TransactionType.MESSAGE):
             # IF IT IS message
-            self.ring[str(transaction.sender_address)]['temp_balance'] -= len(transaction.message)
-            self.ring[str(transaction.receiver_address)]['temp_balance'] += len(transaction.message)
-        
+            self.ring[str(transaction.sender_address)]['temp_balance'] -= len(transaction.message)        
         elif (transaction.receiver_address == 0 and transaction.type_of_transaction == TransactionType.COINS):
             # IF IT IS STAKE CASE
             if self.ring[str(transaction.sender_address)]['stake'] != 0:
@@ -143,13 +141,16 @@ class Node:
             self.wallet.transactions.append(transaction)
         # info message
         if(transaction.receiver_address==0):
-            print(f"1. Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> STAKE : {transaction.amount} BBCs")
-        else:
-            print(f"1. Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> {self.ring[str(transaction.receiver_address)]['id']} : {transaction.amount} BBCs")
+            print(f"Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> STAKE : {transaction.amount} BBCs")
+        elif(transaction.type_of_transaction == TransactionType.MESSAGE):
+            print(f"Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> {self.ring[str(transaction.receiver_address)]['id']} : {len(transaction.message)} characters")
+            # Update the balance of sender and receiver in the ring.
+            self.ring[str(transaction.sender_address)]['balance'] -=  len(transaction.message)
+        elif(transaction.type_of_transaction == TransactionType.COINS):
+            print(f"Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> {self.ring[str(transaction.receiver_address)]['id']} : {transaction.amount} BBCs")
             # Update the balance of sender and receiver in the ring.
             self.ring[str(transaction.sender_address)]['balance'] -=  transaction.amount
             self.ring[str(transaction.receiver_address)]['balance'] +=  transaction.amount
-
         return
 
     # Update pending transactions list from incoming block
