@@ -253,9 +253,13 @@ class Node:
         return
     
     # Sends information about self to the bootstrap node
-    def unicast_node(self, node):
-        request_address = 'http://' + node['ip'] + ':' + node['port']
-        request_url = request_address + '/let_me_in'
+    def advertise_to_bootstrap(self):
+        try:
+            boostrap_address = 'http://' + str(os.getenv('BOOTSTRAP_IP')) + ':' + str(os.getenv('BOOTSTRAP_PORT'))
+        except Exception as e:
+            print(f"{Fore.RED}Error loading bootstrap ip and port from .env files{Fore.RESET}")
+            raise e
+
         # Data to be sent to the bootstrap node
         data_to_send = {
             'ip': self.ip,
@@ -266,7 +270,7 @@ class Node:
         serialized_data = pickle.dumps(data_to_send)
 
         # Send the serialized data via POST request
-        response = requests.post(request_url, data=serialized_data)
+        response = requests.post(boostrap_address + '/let_me_in', data=serialized_data)
 
         if response.status_code == 200:
             print("Node added successfully !")
