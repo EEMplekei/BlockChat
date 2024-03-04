@@ -332,6 +332,8 @@ def get_block(data: bytes = Depends(get_body)):
 			# Add block to the blockchain
 			print("✅📦! Adding it to the chain")
 			node.add_block_to_chain(new_block)
+			# Update the stake of each node
+			node.refresh_stake()
 			print("Blockchain length: ", len(node.blockchain.chain))
 			return JSONResponse('OK')
 		print("❌📦 Something went wrong with validation 🙁")

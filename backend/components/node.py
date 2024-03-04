@@ -168,8 +168,6 @@ class Node:
         protocol.add_node_to_round(self.ring)
         # Select a validator
         validator = protocol.select_validator()
-        print("MPIKA")
-        print(self.id)
         # If the current node is the validator, mint a block
         self.current_validator = validator[0]
         if validator and validator[0] == str(self.wallet.address):
@@ -184,6 +182,8 @@ class Node:
             self.add_block_to_chain(new_block)
             # Broadcast block to the network
             self.broadcast_block(new_block)
+            # Update the stake of each node
+            self.refresh_stake()
         return
 
 
@@ -204,7 +204,12 @@ class Node:
         print("🔗 BLOCKCHAIN 🔗")
         print([block.hash[:7] for block in self.blockchain.chain])
 
-
+    # Refresh the stake of each node
+    def refresh_stake(self):
+        for node in self.ring.values():
+            node['stake'] = 0
+        return
+    
     # Unicast a validated block
     def unicast_block(self, node, block):
         request_address = 'http://' + node['ip'] + ':' + node['port']
