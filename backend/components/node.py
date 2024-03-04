@@ -133,7 +133,7 @@ class Node:
         elif(transaction.type_of_transaction == TransactionType.MESSAGE):
             print(f"Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> {self.ring[str(transaction.receiver_address)]['id']} : {len(transaction.message)} characters")
             # Update the balance of sender and receiver in the ring.
-            self.ring[str(transaction.sender_address)]['balance'] -=  transaction.amount
+            self.ring[str(transaction.sender_address)]['balance'] -=  len(transaction.message)
         elif(transaction.type_of_transaction == TransactionType.COINS):
             print(f"Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> {self.ring[str(transaction.receiver_address)]['id']} : {transaction.amount} BBCs")
             # Update the balance of sender and receiver in the ring.
