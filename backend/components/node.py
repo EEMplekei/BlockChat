@@ -9,13 +9,13 @@ import threading
 
 #Try loading modules, if it fails, print error and raise ImportError
 try:
-    from wallet import Wallet
-    from blockchain import Blockchain
-    from transaction import TransactionType, Transaction
-    from proof_of_stake import PoSProtocol
-    from block import Block
+    from components.wallet import Wallet
+    from components.blockchain import Blockchain
+    from components.transaction import TransactionType, Transaction
+    from components.proof_of_stake import PoSProtocol
+    from components.block import Block
 except Exception as e:
-    print(f"{Fore.RED}Error loading modules: {e}{Fore.RESET}")
+    print(f"{Fore.RED}Node: Error loading modules: {e}{Fore.RESET}")
     raise ImportError
 
 #Try loading environment variables, if it fails, print error and use default block size
@@ -86,11 +86,14 @@ class Node:
             return False
         
         self.pending_transactions.appendleft(transaction)
-
         self.update_temp_balance(transaction)
-
+        return True
+    
+    def check_if_block_is_full_to_mint(self):
         if len(self.pending_transactions) >= block_size:
-            self.mint_block()
+            # Create a thread to mint the block
+            mint_thread = threading.Thread(target=self.mint_block)
+            mint_thread.start()
         return
     
     # Send the current state of the blockchain to a specific node via HTTP POST request.
@@ -148,7 +151,7 @@ class Node:
         incoming_transactions_ids = {tx.transaction_id for tx in incoming_block.transactions}
 
         # Remove transactions from pending_transactions if their IDs are in incoming_transactions_ids
-        self.pending_transactions = [tx for tx in self.pending_transactions if tx.transaction_id not in incoming_transactions_ids]
+        self.pending_transactions = deque([tx for tx in self.pending_transactions if tx.transaction_id not in incoming_transactions_ids])
 
     def mint_block(self):
         """
@@ -165,7 +168,8 @@ class Node:
         protocol.add_node_to_round(self.ring)
         # Select a validator
         validator = protocol.select_validator()
-        print(f"The validator is: \n", validator)
+        print("MPIKA")
+        print(self.id)
         # If the current node is the validator, mint a block
         self.current_validator = validator[0]
         if validator and validator[0] == str(self.wallet.address):
@@ -180,6 +184,7 @@ class Node:
             self.add_block_to_chain(new_block)
             # Broadcast block to the network
             self.broadcast_block(new_block)
+        return
 
 
     # Adds a newly block to the chain (assuming it has been validated)
@@ -213,7 +218,7 @@ class Node:
                 self.unicast_block(node, block)
     
     ##### Transaction #####
-    def create_transaction(self, receiver_address, type_of_transaction, payload):
+    def create_transaction(self, receiver_address, type_of_transaction: TransactionType, payload):
         # Assume receiver_address is valid
         sender_address = self.wallet.address
         nonce = self.nonce
@@ -253,9 +258,13 @@ class Node:
         return
     
     # Sends information about self to the bootstrap node
-    def unicast_node(self, node):
-        request_address = 'http://' + node['ip'] + ':' + node['port']
-        request_url = request_address + '/let_me_in'
+    def advertise_to_bootstrap(self):
+        try:
+            boostrap_address = 'http://' + str(os.getenv('BOOTSTRAP_IP')) + ':' + str(os.getenv('BOOTSTRAP_PORT'))
+        except Exception as e:
+            print(f"{Fore.RED}Error loading bootstrap ip and port from .env files{Fore.RESET}")
+            raise e
+
         # Data to be sent to the bootstrap node
         data_to_send = {
             'ip': self.ip,
@@ -266,7 +275,7 @@ class Node:
         serialized_data = pickle.dumps(data_to_send)
 
         # Send the serialized data via POST request
-        response = requests.post(request_url, data=serialized_data)
+        response = requests.post(boostrap_address + '/let_me_in', data=serialized_data)
 
         if response.status_code == 200:
             print("Node added successfully !")
