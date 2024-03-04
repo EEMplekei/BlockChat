@@ -21,12 +21,12 @@ except ImportError:
 	exit()
 
 try:
-    load_dotenv()
-    block_size = int(os.getenv('BLOCK_SIZE'))
+	load_dotenv()
+	block_size = int(os.getenv('BLOCK_SIZE'))
 except Exception as e:
-    print(f"{Fore.RED}Error loading environment variables: {e}{Fore.RESET}")
-    print(f"{Fore.YELLOW}Using default block size: 3{Fore.RESET}")
-    block_size = 3
+	print(f"{Fore.RED}Error loading environment variables: {e}{Fore.RESET}")
+	print(f"{Fore.YELLOW}Using default block size: 3{Fore.RESET}")
+	block_size = 3
 
 # Call once function to ensure that genesis block is only created once
 def call_once(func):
@@ -54,8 +54,9 @@ def create_genesis_block():
 		type_of_transaction = TransactionType.COINS,
 		payload = total_bbc,
 		nonce = 1
-	)
- 
+	)	
+	#Calculate hash of first transaction
+	first_transaction.calculate_hash()
 	# Add transaction to genesis block
 	gen_block.transactions.append(first_transaction)
 	gen_block.calculate_hash()
@@ -229,7 +230,7 @@ def view_last_block_transactions():
 	try:
 		transactions = latest_block.get_transactions_from_block(node)
 	except Exception as e:
-		print(f"{Fore.RED}Error view_last_block_transactions: {e}{Fore.RESET}")
+		print(f"{Fore.YELLOW}view_last_block_transactions{Fore.RESET}: {Fore.RED}Error: {e}{Fore.RESET}")
 		return JSONResponse('Could not get transactions from block', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 	return JSONResponse(transactions, status_code=status.HTTP_200_OK)
 
