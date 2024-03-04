@@ -259,7 +259,24 @@ def get_chain_length():
 
 @app.get("/api/get_chain")
 def get_chain():
-	return Response(pickle.dumps(node.blockchain), status_code=status.HTTP_200_OK)
+	data = []
+	# Iterate through the blockchain and get the transactions, hash and previous hash and get the validator of each block
+	for block in node.blockchain.chain:
+		transactions = []
+		for transaction in block.transactions:
+			transactions.append({
+				'sender_address': transaction.sender_address,
+				'receiver_address': transaction.receiver_address,
+				'type_of_transaction': transaction.type_of_transaction,
+				'payload': transaction.payload
+			})
+		data.append({
+			'transactions': transactions,
+			'hash': block.hash,
+			'previous_hash': block.previous_hash,
+			'validator': block.validator
+		})
+	return JSONResponse(data, status_code=status.HTTP_200_OK)
 
 # =========================================================
 # Internal routes
