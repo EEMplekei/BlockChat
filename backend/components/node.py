@@ -170,6 +170,8 @@ class Node:
         validator = protocol.select_validator()
         # If the current node is the validator, mint a block
         self.current_validator = validator[0]
+        # Output what random generator selected
+        print(f"🎲 Randomly selected validator: {validator[1]}")
         if validator and validator[0] == str(self.wallet.address):
             print("🔒 I am the validator")
             new_block = self.create_new_block()  
