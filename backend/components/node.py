@@ -87,14 +87,26 @@ class Node:
         
         self.pending_transactions.appendleft(transaction)
         self.update_temp_balance(transaction)
+        # Check if the block is full to mint
+        self.check_if_block_is_full_to_mint()
+
         return True
     
-    def check_if_block_is_full_to_mint(self):
+    def check_if_block_is_full_to_select_validator_and_mint(self):
         if len(self.pending_transactions) >= block_size:
             # Create a thread to mint the block
             mint_thread = threading.Thread(target=self.mint_block)
             mint_thread.start()
         return
+
+    def check_if_block_is_full_to_mint(self):
+        if len(self.pending_transactions) >= block_size:
+            # Create a thread to mint the block
+            mint_thread = threading.Thread(target=self.validator_mint_block)
+            mint_thread.start()
+        return
+
+    
     
     # Send the current state of the blockchain to a specific node via HTTP POST request.
     def update_temp_balance(self, transaction: Transaction):
@@ -153,6 +165,37 @@ class Node:
         # Remove transactions from pending_transactions if their IDs are in incoming_transactions_ids
         self.pending_transactions = deque([tx for tx in self.pending_transactions if tx.transaction_id not in incoming_transactions_ids])
 
+    def find_next_validator(self):
+        # Create an instance of PoSProtocol
+        protocol = PoSProtocol(self.blockchain.chain[-1].hash)
+        # Add nodes to the round
+        protocol.add_node_to_round(self.ring)
+        # Select a validator
+        validator = protocol.select_validator()
+        # If the current node is the validator, mint a block
+        self.current_validator = validator[0]
+        # Output what random generator selected
+        print(f"🎲 Randomly selected validator: {validator[1]}")
+
+    def validator_mint_block(self):
+        # If the current_validator is None, find one: (Edge case for the first block -excluding genesis block-)
+        if self.current_validator is None:
+            self.find_next_validator()
+        # If the current node is the validator, mint a block
+        if self.current_validator == str(self.wallet.address):
+            print("🔒 I am the validator")
+            new_block = self.create_new_block()  
+            # Add transactions to the new block
+            for _ in range(block_size):
+                new_block.transactions.append(self.pending_transactions.pop())
+            # Calculate hash
+            new_block.calculate_hash()
+            # Add block to blockchain
+            self.add_block_to_chain(new_block)
+            # Broadcast block to the network
+            self.broadcast_block(new_block)
+        return
+
     def mint_block(self):
         """
         ! VALIDATOR ONLY !
@@ -202,7 +245,11 @@ class Node:
         # Add transactions to blockchain set
         for t in block.transactions:
             self.blockchain.transactions_hashes.add(t.transaction_id)
-        # debug
+        
+        # Select a new validator for the next block
+        self.find_next_validator()
+        # After you have selected a validator, set the stake of each node in the ring equal to 0
+        self.refresh_stake()
         print("🔗 BLOCKCHAIN 🔗")
         print([block.hash[:7] for block in self.blockchain.chain])
 

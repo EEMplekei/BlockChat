@@ -178,7 +178,7 @@ async def create_transaction(request: Request):
 			# Broadcast transaction			
 			node.broadcast_transaction(transaction)
 			# Check if block is full
-			node.check_if_block_is_full_to_mint()
+			# node.check_if_block_is_full_to_mint()
 			
 			return JSONResponse('Successful Transaction !', status_code=status.HTTP_200_OK)
 		except Exception as e:
@@ -305,7 +305,7 @@ def get_transaction(data: bytes = Depends(get_body)):
 	node.add_transaction_to_pending(new_transaction)
 
 	# Check if block is full
-	node.check_if_block_is_full_to_mint()
+	# node.check_if_block_is_full_to_mint()
 
 	return JSONResponse('OK')
 
@@ -334,7 +334,7 @@ def get_block(data: bytes = Depends(get_body)):
 			print("✅📦! Adding it to the chain")
 			node.add_block_to_chain(new_block)
 			# Update the stake of each node
-			node.refresh_stake()
+			# node.refresh_stake()
 			print("Blockchain length: ", len(node.blockchain.chain))
 			return JSONResponse('OK')
 		print("❌📦 Something went wrong with validation 🙁")
