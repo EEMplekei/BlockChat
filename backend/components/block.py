@@ -60,8 +60,13 @@ class Block:
 
 	#Get the transactions from a block
 	def get_transactions_from_block(self, node):
-		transactions = []
 
+		#Special case for the genesis block
+		if self.previous_hash == 1:
+			return get_genesis_block_transactions(self, node)
+
+		#General case for any other block
+		transactions = []
 		for transaction in self.transactions:
 			if transaction.receiver_address == 0:
 				transactions.append({
@@ -85,6 +90,22 @@ class Block:
 					"message": transaction.message
 					})
 				else:
-					print(f"{Fore.RED}Panic! Invalid transaction type found in block!{Fore.RESET}")
+					print(f"{Fore.YELLOW} get_transactions_from_block{Fore.RESET}:{Fore.RED}Invalid transaction type found in block!{Fore.RESET}")
 					raise ValueError("Invalid transaction type found in block")
 		return transactions
+
+def get_genesis_block_transactions(self, node):
+	transactions = []
+
+	for transaction in self.transactions:
+		print(transaction.sender_address, transaction.receiver_address, transaction.amount, transaction.type_of_transaction)
+		if transaction.sender_address == '0':
+			transactions.append({
+				"type": "Genesis",
+				"receiver_id": node.ring[str(transaction.receiver_address)]['id'],
+				"amount": transaction.amount
+			})
+		else:
+			print(f"{Fore.YELLOW}get_genesis_block_transactions{Fore.RESET}: {Fore.RED}Invalid transaction type found in genesis block!{Fore.RESET}")
+			raise ValueError("Invalid transaction type found in genesis block")
+	return transactions
