@@ -194,7 +194,7 @@ async def create_transaction(request: Request):
 			# Broadcast transaction			
 			node.broadcast_transaction(transaction_fee)
 
-			# Check if block is full
+			# Check if block is full to mint
 			# node.check_if_block_is_full_to_mint()
 			
 			return JSONResponse('Successful Transaction !', status_code=status.HTTP_200_OK)
@@ -344,6 +344,8 @@ def get_block(data: bytes = Depends(get_body)):
 	new_block = pickle.loads(data)
 
 	print(f"{Fore.GREEN}NEWS{Fore.RESET}: Got new block, now lets validate it !")
+	if node.current_validator is None:
+		node.find_next_validator()
 
 	# Wait until incoming block has finished processing
 	with (node.processing_block_lock):
