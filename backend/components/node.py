@@ -87,11 +87,13 @@ class Node:
         
         self.pending_transactions.appendleft(transaction)
         self.update_temp_balance(transaction)
-        return
+        return True
     
     def check_if_block_is_full_to_mint(self):
         if len(self.pending_transactions) >= block_size:
-            self.mint_block()
+            # Create a thread to mint the block
+            mint_thread = threading.Thread(target=self.mint_block)
+            mint_thread.start()
         return
     
     # Send the current state of the blockchain to a specific node via HTTP POST request.
@@ -166,6 +168,8 @@ class Node:
         protocol.add_node_to_round(self.ring)
         # Select a validator
         validator = protocol.select_validator()
+        print("MPIKA")
+        print(self.id)
         # If the current node is the validator, mint a block
         self.current_validator = validator[0]
         if validator and validator[0] == str(self.wallet.address):
@@ -180,6 +184,7 @@ class Node:
             self.add_block_to_chain(new_block)
             # Broadcast block to the network
             self.broadcast_block(new_block)
+        return
 
 
     # Adds a newly block to the chain (assuming it has been validated)

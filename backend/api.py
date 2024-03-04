@@ -1,5 +1,4 @@
 from fastapi import FastAPI, Request, Depends, status, Response
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from colorama import Fore
@@ -71,7 +70,7 @@ def get_ip_and_port():
 	
 	argParser = argparse.ArgumentParser()
 	argParser.add_argument("-p", "--port", help="Port in which node is running", default=8000, type=int)
-	argParser.add_argument("-i", "--interface", help="Interface on which the node is running", default="eth2")
+	argParser.add_argument("-i", "--interface", help="Interface on which the node is running")
 	args = argParser.parse_args()
 
 	try:
@@ -175,7 +174,6 @@ async def create_transaction(request: Request):
 			if not node.add_transaction_to_pending(transaction):
 				return JSONResponse('Transaction is not valid', status_code=status.HTTP_400_BAD_REQUEST)
 			
-			print("Transaction added to pending list :comment on create transation call")
 			# Broadcast transaction			
 			node.broadcast_transaction(transaction)
 			# Check if block is full
@@ -212,11 +210,9 @@ async def set_stake(request: Request):
 	
 	# Add to pending transactions list and check that it was added to pending
 	if not node.add_transaction_to_pending(staking_transaction):
-		return JSONResponse('Transaction is not valid', status_code=status.HTTP_400_BAD_REQUEST)
+		return JSONResponse('Staking is not valid', status_code=status.HTTP_400_BAD_REQUEST)
 
-	# Add to pending transactions list
-	node.add_transaction_to_pending(staking_transaction)
-    # Broadcast transaction
+	# Broadcast transaction
 	node.broadcast_transaction(staking_transaction)
 	return JSONResponse('Successful Staking !', status_code=status.HTTP_200_OK)
 
@@ -316,14 +312,13 @@ def get_transaction(data: bytes = Depends(get_body)):
 def get_block(data: bytes = Depends(get_body)):
 	# Gets an incoming mined block and adds it to the blockchain.
 	
-	# data = request.body()
+	# Deserialize the data received in the request body using pickle.loads()
 	new_block = pickle.loads(data)
 
 	print(f"{Fore.GREEN}NEWS{Fore.RESET}: Got new block, now lets validate it !")
 
 	# Wait until incoming block has finished processing
 	with (node.processing_block_lock):
-		#print("Processing block: ", node.processing_block)
 		# Check validity of block		
 		if (new_block.validate_block(node.blockchain.chain[-1].hash, node.current_validator)):
 			print("Incoming block is valid")
@@ -339,15 +334,6 @@ def get_block(data: bytes = Depends(get_body)):
 			node.add_block_to_chain(new_block)
 			print("Blockchain length: ", len(node.blockchain.chain))
 			return JSONResponse('OK')
-		# Check if latest_block.previous_hash == incoming_block.previous_hash
-		# elif(node.blockchain.chain[-1].previous_hash == new_block.previous_hash):
-		# 	print("🗑️  Rejected incoming block")
-		# else:
-		# 	print("Incoming block previous_hash: ", new_block.previous_hash)
-		# 	print("🔗 BLOCKCHAIN 🔗")
-		# 	print([block.hash[:7] for block in node.blockchain.chain])
-		# 	# Resolve conflict in case of wrong previous_hash
-		# 	node.blockchain.resolve_conflict(node)
 		print("❌📦 Something went wrong with validation 🙁")
 
 		return JSONResponse('Error validating block', status_code=status.HTTP_400_BAD_REQUEST)
