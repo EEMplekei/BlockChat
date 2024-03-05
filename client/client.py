@@ -157,21 +157,12 @@ def client():
 		if choice == '📦 View last block':
 			try:
 				# api client call to view last block
-				response = requests.get(address+'/api/')
-				try:
-					data = response.json()                
-					table = Texttable()
-					table.set_deco(Texttable.HEADER)
-					table.set_cols_dtype(['t', 't', 't'])
-					table.set_cols_align(["c", "c", "c"])
-					rows = []
-					rows.append(["Sender ID", "Receiver ID", "Amount"])
-					for line in data:
-						rows.append(list(line.values()))
-					table.add_rows(rows)
-					print(table.draw() + "\n")
-				except:
-					print("Validated block not available yet. Try again later")
+				response = requests.get(address+'/api/view_last_block')
+				data = response.json()
+				
+				print(data)
+				#draw_blockchain(data)
+					
 			except requests.exceptions.HTTPError:
 				print("Node is not active. Try again later.")
 			input("Press any key to go back...")
