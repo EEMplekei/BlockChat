@@ -7,7 +7,7 @@ import pickle
 import threading
 
 try:
-	from backend.helper_functions.env_variables import *
+	from helper_functions.env_variables import *
 	from components.node import Node
 	from components.transaction import TransactionType
 except ImportError:
@@ -18,7 +18,7 @@ except ImportError:
 
 # Initialize environment variables
 load_dotenv()
-total_nodes = try_load_env('TOTAL_NODES')
+total_nodes = int(try_load_env('TOTAL_NODES'))
 
 #Initialize FastAPI
 app = FastAPI()
@@ -265,4 +265,4 @@ async def let_me_in(request: Request):
 	return JSONResponse({'id': id})
 
 # WEB SERVER RUN
-uvicorn.run(app, host = None, port = try_load_env('PORT'))
+uvicorn.run(app, host = None, port = node.port)

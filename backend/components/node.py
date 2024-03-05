@@ -22,17 +22,8 @@ except Exception as e:
     print(f"{Fore.RED}Node: Error loading modules: {e}{Fore.RESET}")
     raise ImportError
 
-#Try loading environment variables, if it fails, print error and use default block size
-try:
-    load_dotenv()
-    block_size = int(os.getenv('BLOCK_SIZE'))
-except Exception as e:
-    print(f"{Fore.RED}Error loading environment variables: {e}{Fore.RESET}")
-    print(f"{Fore.YELLOW}Using default block size: 3{Fore.RESET}")
-    block_size = 3
-
 # Get environment variables for blocksize, total nodes and bootstrap node
-block_size, total_nodes = try_load_env('BLOCK_SIZE'), try_load_env('TOTAL_NODES')
+block_size, total_nodes = int(try_load_env('BLOCK_SIZE')), int(try_load_env('TOTAL_NODES'))
 total_bbc = total_nodes * 1000
 
 class Node:
@@ -355,7 +346,8 @@ class Node:
         return True
 
     def check_if_bootstrap(self):
-        if (self.ip, self.port) == (try_load_env('BOOTSTRAP_IP'), try_load_env('BOOTSTRAP_PORT')):
+        if (self.ip, self.port) == (try_load_env('BOOTSTRAP_IP'), int(try_load_env('BOOTSTRAP_PORT'))):
+            print(f"I am boostrap. Node: {self.id}")
             return True
         else:
             return False
