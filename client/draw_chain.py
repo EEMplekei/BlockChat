@@ -18,46 +18,60 @@ def brand():
 
 
 def draw_chain():
-	chain = f"""{Fore.CYAN}
-						┌───│───┐
-						│       │
-						│       │
-						│       │
-						└───│───┘
-						┌───│───┐   
-						│       │
-						│       │
-						│       │
-						└───│───┘
-						┌───│───┐   
-						│       │
-						│       │
-						│       │
-						└───│───┘
+	chain = f"""{Fore.LIGHTBLUE_EX}
+				┌───│───┐
+				│       │
+				│       │
+				└───│───┘
+				┌───│───┐   
+				│       │
+				│       │
+				└───│───┘
+				┌───│───┐   
+				│       │
+				│       │
+				└───│───┘
 {Fore.RESET}"""
 	print(chain)
 
+def fix_spaces(string):
+	return " " * (65 - len(string))
 
 def draw_blockchain(blockchain_data):
 	brand()
+	print()
+	print("    ⛓️ BlockChat Blockchain ⛓️")
+	print()
+	# Draw the blockchain
 	for i,block in enumerate(blockchain_data):
+		
+		line = "Block "+str(i)+":  "+block['hash']+""
 		print(f"    ┌──────────────────────────────────────────────────────────────────┐")
-		print(f"    │ {Fore.GREEN}Block {i}:  {block['hash']} {Fore.RESET}│")
+		print(f"    │ {Fore.GREEN}{line}{Fore.RESET}{fix_spaces(line)}│")
 		print(f"    ├──────────────────────────────────────────────────────────────────┤")
-		print(f"    │ {Fore.GREEN}Previous Hash: {block['previous_hash']} {Fore.RESET}      │")  
+		line = "Previous Hash: "+block['previous_hash']+""
+		print(f"    │ {Fore.GREEN}{line}{Fore.RESET}{fix_spaces(line)}│")  
 		print(f"    ├──────────────────────────────────────────────────────────────────┤")
-		print(f"    │ {Fore.GREEN}Validator: {block['validator']} {Fore.RESET}         │")
+		line = "Validator: "+block['validator']+""
+		print(f"    │ {Fore.GREEN}{line}{Fore.RESET}{fix_spaces(line)}│")
 		for transaction in block["transactions"]:
 			print(f"    ├++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++┤")
-			print(f"    │   {Fore.LIGHTMAGENTA_EX} Transaction Type: {transaction['type']} {Fore.RESET}   │") 
-			print(f"    ├──────────────────────────────────────────────────────────────────┤")
-			print(f"    │   {Fore.LIGHTMAGENTA_EX} Sender: {transaction['sender_id']} {Fore.RESET} │") 
-			print(f"    ├──────────────────────────────────────────────────────────────────┤")
-			print(f"    │   {Fore.LIGHTMAGENTA_EX} Receiver: {transaction['receiver_id']} {Fore.RESET} │")
-			print(f"    ├──────────────────────────────────────────────────────────────────┤")
-			print(f"    │   {Fore.LIGHTMAGENTA_EX} Amount: {transaction['amount']} {Fore.RESET} │")
+			print(f"    │ {Fore.LIGHTMAGENTA_EX}Transaction Details{Fore.RESET}{fix_spaces("Transaction Details")}│")
+			line = "Transaction Type: "+transaction['type']+""
+			print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces("   "+line+"")}│") 
+			line = "Sender: "+transaction['sender_id']+""
+			print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces("   "+line+"")}│") 
+			line = "Receiver: "+transaction['receiver_id']+""
+			print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces("   "+line+"")}│")
+			line = "Payload: "+str(transaction['amount'])+""
+			print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces("   "+line+"")}│")
 		print("    └──────────────────────────────────────────────────────────────────┘")
 		if (block == blockchain_data[len(blockchain_data) - 1]):
+			print()
+			print("    Here is a visual representation of the blockchain")
+			print("    Scroll above to see the details of each block")
+			print()
+			print()
 			break
 		draw_chain()
 	
