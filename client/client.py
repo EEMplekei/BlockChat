@@ -218,11 +218,10 @@ def client():
             print('View the balance of the client from the client wallet.\n\n')
 
             input("Press any key to go back...")
-            # Go back to main client menu
-
+            # Go back to main client menu after help
             os.system('cls||clear')
-            break
-
+            # Remove the break statement to go back to the client menu
+            continue
         # EXIT =======================================
         if choice == '🌙 Exit':
             os.system('cls||clear')
