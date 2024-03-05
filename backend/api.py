@@ -122,13 +122,15 @@ if (ip_address == bootstrap_node["ip"] and str(port) == bootstrap_node["port"]):
 	print("I am bootstrap")
 
 # Register node to the cluster as bootstrap node
-if (node.is_bootstrap):
-	# Add himself to ring
-	node.id = 0
-	node.add_node_to_ring(node.id, node.ip, node.port, node.wallet.address, total_bbc)
-	create_genesis_block()
-else:
-	node.advertise_to_bootstrap()
+async def register_node_to_cluster():
+	if (node.is_bootstrap):
+		# Add himself to ring
+		node.id = 0
+		node.add_node_to_ring(node.id, node.ip, node.port, node.wallet.address, total_bbc)
+		create_genesis_block()
+	else:
+		time.sleep(1)
+		node.advertise_to_bootstrap()
 
 # ======================== ROUTES =========================
 # Client routes 
@@ -370,12 +372,13 @@ async def let_me_in(request: Request):
 
 def check_full_ring(ring_nodes_count):
 	# Checks if all nodes have been added to the ring
-	time.sleep(1)
+	#time.sleep(1)
 	if (ring_nodes_count == total_nodes):
 		node.broadcast_ring()
 		node.broadcast_blockchain()
 		node.broadcast_initial_bcc()
 		
-
+thread = threading.Thread(target=register_node_to_cluster)
+thread.start()
 # WEB SERVER RUN
 uvicorn.run(app, host=None, port = port)
