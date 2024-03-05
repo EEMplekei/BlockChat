@@ -40,6 +40,15 @@ address= 'http://' + (domain) + ':' + str(port)
 
 # Command Line Interface client
 def client():
+    
+    try:
+        response = requests.get(address+'/api/')
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print()
+        print("❌ API is not available. Try again later ❌")
+        exit()
+
     os.system('cls||clear')
     brand()
     while(True):
