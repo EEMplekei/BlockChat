@@ -6,6 +6,7 @@ import pickle
 import os
 import random
 import threading
+import time
 
 #Try loading modules, if it fails, print error and raise ImportError
 try:
@@ -107,7 +108,6 @@ class Node:
         return
 
     
-    
     # Send the current state of the blockchain to a specific node via HTTP POST request.
     def update_temp_balance(self, transaction: Transaction):
         if (transaction.type_of_transaction == TransactionType.COINS and transaction.receiver_address != 0): 
@@ -168,6 +168,7 @@ class Node:
 
     def find_next_validator(self):
         # Create an instance of PoSProtocol
+        print("Previous hash: ", self.blockchain.chain[-1].hash)
         protocol = PoSProtocol(self.blockchain.chain[-1].hash)
         # Add nodes to the round
         protocol.add_node_to_round(self.ring)
@@ -176,26 +177,28 @@ class Node:
         # If the current node is the validator, mint a block
         self.current_validator = validator[0]
         # Output what random generator selected
-        print(f"🎲 Randomly selected validator: {validator[1]}")
+        print(f"🎲 Randomly selected validator for the next Block: {validator[1]}")
 
     def validator_mint_block(self):
+        time.sleep(1)
         # If the current_validator is None, find one: (Edge case for the first block -excluding genesis block-)
         if self.current_validator is None:
             self.find_next_validator()
-        # If the current node is the validator, mint a block
-        if self.current_validator == str(self.wallet.address):
-            print("🔒 I am the validator")
-            new_block = self.create_new_block()  
-            # Add transactions to the new block
-            for _ in range(block_size):
-                new_block.transactions.append(self.pending_transactions.pop())
-            # Calculate hash
-            new_block.calculate_hash()
-            # Add block to blockchain
-            self.add_block_to_chain(new_block)
-            # Broadcast block to the network
-            self.broadcast_block(new_block)
-        return
+        with (self.processing_block_lock):
+            if len(self.pending_transactions) >= block_size:
+                # If the current node is the validator, mint a block
+                if self.current_validator == str(self.wallet.address):
+                    print("🔒 I am the validator")
+                    new_block = self.create_new_block()  
+                    # Add transactions to the new block
+                    for _ in range(block_size):
+                        new_block.transactions.append(self.pending_transactions.pop())
+                    # Calculate hash
+                    new_block.calculate_hash()
+                    # Add block to blockchain
+                    self.add_block_to_chain(new_block)
+                    # Broadcast block to the network
+                    self.broadcast_block(new_block)
 
     def mint_block(self):
         """
@@ -215,7 +218,7 @@ class Node:
         # If the current node is the validator, mint a block
         self.current_validator = validator[0]
         # Output what random generator selected
-        print(f"🎲 Randomly selected validator: {validator[1]}")
+        print(f"Randomly selected validator: {validator[1]}")
         if validator and validator[0] == str(self.wallet.address):
             print("🔒 I am the validator")
             new_block = self.create_new_block()  
@@ -247,12 +250,15 @@ class Node:
         for t in block.transactions:
             self.blockchain.transactions_hashes.add(t.transaction_id)
         
+        print("🔗 BLOCKCHAIN 🔗")
+        print([block.hash[:7] for block in self.blockchain.chain])
+
+        print("Blockchain length: ", len(self.blockchain.chain))
+
         # Select a new validator for the next block
         self.find_next_validator()
         # After you have selected a validator, set the stake of each node in the ring equal to 0
         self.refresh_stake()
-        print("🔗 BLOCKCHAIN 🔗")
-        print([block.hash[:7] for block in self.blockchain.chain])
 
     # Refresh the stake of each node
     def refresh_stake(self):

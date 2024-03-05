@@ -156,9 +156,9 @@ class Transaction:
 			return False
 		
 		if (self.type_of_transaction == TransactionType.COINS):
-			transaction_cost = self.amount*FEE_RATE
+			transaction_cost = self.amount+self.amount*FEE_RATE
 		elif (self.type_of_transaction == TransactionType.MESSAGE):
-			transaction_cost = len(self.message)*FEE_RATE
+			transaction_cost = len(self.message)+len(self.message)*FEE_RATE
 		elif (self.type_of_transaction == TransactionType.FEE):
 			transaction_cost = self.amount
 		else:
