@@ -93,17 +93,10 @@ class Node:
 
         return True
     
-    def check_if_block_is_full_to_select_validator_and_mint(self):
-        if len(self.pending_transactions) >= block_size:
-            # Create a thread to mint the block
-            mint_thread = threading.Thread(target=self.mint_block)
-            mint_thread.start()
-        return
-
     def check_if_block_is_full_to_mint(self):
         if len(self.pending_transactions) >= block_size:
             # Create a thread to mint the block
-            mint_thread = threading.Thread(target=self.validator_mint_block)
+            mint_thread = threading.Thread(target=self.mint_block)
             mint_thread.start()
         return
 
@@ -179,7 +172,7 @@ class Node:
         # Output what random generator selected
         print(f"🎲 Randomly selected validator for the next Block: {validator[1]}")
 
-    def validator_mint_block(self):
+    def mint_block(self):
         time.sleep(1)
         # If the current_validator is None, find one: (Edge case for the first block -excluding genesis block-)
         if self.current_validator is None:
@@ -199,42 +192,6 @@ class Node:
                     self.add_block_to_chain(new_block)
                     # Broadcast block to the network
                     self.broadcast_block(new_block)
-
-    def mint_block(self):
-        """
-        ! VALIDATOR ONLY !
-        Given a list of pending transactions, create a new block and broadcast it to the network
-        """
-        if(len(self.pending_transactions) < block_size):
-             print(f"Not enough transactions to mint a block. ({len(self.pending_transactions)}/{block_size})")
-        # call proof of stake
-        # Create an instance of PoSProtocol
-        protocol = PoSProtocol(self.blockchain.chain[-1].hash)
-        #print(self.ring)
-        # Add nodes to the round
-        protocol.add_node_to_round(self.ring)
-        # Select a validator
-        validator = protocol.select_validator()
-        # If the current node is the validator, mint a block
-        self.current_validator = validator[0]
-        # Output what random generator selected
-        print(f"Randomly selected validator: {validator[1]}")
-        if validator and validator[0] == str(self.wallet.address):
-            print("🔒 I am the validator")
-            new_block = self.create_new_block()  
-            # Add transactions to the new block
-            for _ in range(block_size):
-                new_block.transactions.append(self.pending_transactions.pop())
-            # Calculate hash
-            new_block.calculate_hash()
-            # Add block to blockchain
-            self.add_block_to_chain(new_block)
-            # Broadcast block to the network
-            self.broadcast_block(new_block)
-            # Update the stake of each node
-            self.refresh_stake()
-        return
-
 
     # Adds a newly block to the chain (assuming it has been validated)
     def add_block_to_chain(self, block: Block):
@@ -290,7 +247,6 @@ class Node:
         self.nonce += 1
         return transaction
         
-
     def unicast_transaction(self, node, transaction):
         request_address = 'http://' + node['ip'] + ':' + node['port']
         request_url = request_address + '/get_transaction'
