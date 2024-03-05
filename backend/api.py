@@ -378,16 +378,16 @@ def check_full_ring(ring_nodes_count):
 		node.broadcast_blockchain()
 		node.broadcast_initial_bcc()
 	
-async def register_node_to_cluster():
+def register_node_to_cluster():
 	if (node.is_bootstrap):
 		# Add himself to ring
 		node.id = 0
 		node.add_node_to_ring(node.id, node.ip, node.port, node.wallet.address, total_bbc)
 		create_genesis_block()
 	else:
-		time.sleep(1)
-		node.advertise_to_bootstrap() 
-	
+		time.sleep(2)
+		node.advertise_to_bootstrap()
+
 thread = threading.Thread(target=register_node_to_cluster)
 thread.start()
 # WEB SERVER RUN
