@@ -1,139 +1,38 @@
 from fastapi import FastAPI, Request, Depends, status, Response
 from fastapi.responses import JSONResponse
-from dotenv import load_dotenv
 from colorama import Fore
-import os
+from dotenv import load_dotenv
 import uvicorn
-import argparse
 import pickle
-import time
 import threading
-import socket
-import fcntl
-import socket
-import struct
 
 try:
+	from backend.helper_functions.env_variables import *
 	from components.node import Node
-	from components.transaction import Transaction, TransactionType
+	from components.transaction import TransactionType
 except ImportError:
 	print(f"{Fore.RED}Could not import required classes{Fore.RESET}")
 	exit()
 
-try:
-	load_dotenv()
-	block_size = int(os.getenv('BLOCK_SIZE'))
-except Exception as e:
-	print(f"{Fore.RED}Error loading environment variables: {e}{Fore.RESET}")
-	print(f"{Fore.YELLOW}Using default block size: 3{Fore.RESET}")
-	block_size = 3
-
-# Call once function to ensure that genesis block is only created once
-def call_once(func):
-	def wrapper(*args, **kwargs):
-		if not wrapper.called:
-			wrapper.called = True
-			return func(*args, **kwargs)
-		else:
-			raise RuntimeError("Function can only be called once.")
-	
-	wrapper.called = False
-	return wrapper
-
-# Function that creates genesis block
-@call_once
-def create_genesis_block():
-
-	# BOOTSTRAP: Create the first block of the blockchain (GENESIS BLOCK)
-	gen_block = node.create_new_block() # previous_hash autogenerates
-	
-	# Create first transaction
-	first_transaction = Transaction(
-		sender_address = '0',
-		receiver_address = node.wallet.address, 
-		type_of_transaction = TransactionType.COINS,
-		payload = total_bbc,
-		nonce = 1
-	)	
-	#Calculate hash of first transaction
-	first_transaction.calculate_hash()
-	# Add transaction to genesis block
-	gen_block.transactions.append(first_transaction)
-	gen_block.calculate_hash()
-	# Add genesis block to blockchain
-	node.blockchain.chain.append(gen_block)
-	# Create new empty block
-	node.current_block = node.create_new_block()
-	return
-
-#Parse the arguments and return the IP and port
-def get_ip_and_port():
-	
-	argParser = argparse.ArgumentParser()
-	argParser.add_argument("-p", "--port", help="Port in which node is running", default=8000, type=int)
-	argParser.add_argument("-i", "--interface", help="Interface on which the node is running")
-	args = argParser.parse_args()
-
-	try:
-		ip = get_ip_linux(args.interface)
-	except OSError:
-		print(f"{Fore.RED}Could not get the IP address of interface {args.interface}{Fore.RESET}")
-		return None, None
-	port = args.port
-
-	return ip, port
-
-#Get the IPv4 address of a specific interface
-def get_ip_linux(interface: str) -> str:
-
-	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	packed_iface = struct.pack('256s', interface.encode('utf_8'))
-	packed_addr = fcntl.ioctl(sock.fileno(), 0x8915, packed_iface)[20:24]
-	return socket.inet_ntoa(packed_addr)
-
-
 # ======================== MAIN ===========================
 
-# Get info about the node IP and port
-ip_address, port = get_ip_and_port()
-if(ip_address == None or port == None):
-	exit()
+# Initialize environment variables
+load_dotenv()
+total_nodes = try_load_env('TOTAL_NODES')
 
 #Initialize FastAPI
 app = FastAPI()
 
-# Initialize the new node and set it's IP and port
+# Initialize the new node and set it's IP and port (happens in the constructor)
+# The node will be a bootstrap node if it's ip and port match the bootstrap node's ip and port
 node = Node()
-node.ip , node.port = ip_address, str(port)
-
-# Get info about the cluster, bootstrap node
-load_dotenv()
-total_nodes = int(os.getenv('TOTAL_NODES'))
-total_bbc = total_nodes * 1000
-
-bootstrap_node = {
-	'ip': os.getenv('BOOTSTRAP_IP'),
-	'port': os.getenv('BOOTSTRAP_PORT')
-}
-
-# See if node is Bootstrap node
-if (ip_address == bootstrap_node["ip"] and str(port) == bootstrap_node["port"]):
-	node.is_bootstrap = True
-	print("I am bootstrap")
-
-# Register node to the cluster as bootstrap node
-async def register_node_to_cluster():
-	if (node.is_bootstrap):
-		# Add himself to ring
-		node.id = 0
-		node.add_node_to_ring(node.id, node.ip, node.port, node.wallet.address, total_bbc)
-		create_genesis_block()
-	else:
-		time.sleep(1)
-		node.advertise_to_bootstrap()
+node.register_node_to_cluster()
 
 # ======================== ROUTES =========================
 # Client routes 
+@app.get("/")
+async def root():
+	return JSONResponse({"message": f"Welcome to BlockChat. Node: {node.id}"}, status_code=status.HTTP_200_OK)
 
 @app.post("/api/create_transaction")
 async def create_transaction(request: Request):
@@ -266,10 +165,6 @@ def get_chain():
 # =========================================================
 # Internal routes
 
-@app.get("/")
-async def root():
-	return {"message": f"Welcome to BlockChat"}
-
 @app.post("/receive_ring")
 # Gets the completed list of nodes from Bootstrap node after all nodes have joined
 async def receive_ring(request: Request):
@@ -285,7 +180,7 @@ async def receive_ring(request: Request):
 
 @app.post("/get_blockchain")
 async def get_blockchain(request: Request):
-	# Gets the lastest version of the blockchain from the Bootstrap node
+	# Gets the latest version of the blockchain from the Bootstrap node
 	data = await request.body()
 	node.blockchain = pickle.loads(data)
 
@@ -363,32 +258,11 @@ async def let_me_in(request: Request):
 	# Add node to the ring
 	node.add_node_to_ring(id, ip, port, address,0)
 
-	# Check if all nodes have joined 
-	# !! (do it after you have responded to the last node)
-	t = threading.Thread(target=check_full_ring, args=(len(node.ring), ))
+	# Check if all nodes have joined
+	t = threading.Thread(target=node.check_full_ring, args=(len(node.ring), ))
 	t.start()
 
 	return JSONResponse({'id': id})
 
-def check_full_ring(ring_nodes_count):
-	# Checks if all nodes have been added to the ring
-	#time.sleep(1)
-	if (ring_nodes_count == total_nodes):
-		node.broadcast_ring()
-		node.broadcast_blockchain()
-		node.broadcast_initial_bcc()
-	
-def register_node_to_cluster():
-	if (node.is_bootstrap):
-		# Add himself to ring
-		node.id = 0
-		node.add_node_to_ring(node.id, node.ip, node.port, node.wallet.address, total_bbc)
-		create_genesis_block()
-	else:
-		time.sleep(2)
-		node.advertise_to_bootstrap()
-
-thread = threading.Thread(target=register_node_to_cluster)
-thread.start()
 # WEB SERVER RUN
-uvicorn.run(app, host=None, port = port)
+uvicorn.run(app, host = None, port = try_load_env('PORT'))
