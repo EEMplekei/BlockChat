@@ -13,30 +13,30 @@ from texttable import Texttable
 # ARGUMENTS
 argParser = argparse.ArgumentParser()
 argParser.add_argument("-p", "--port", help="Port in which node is running", default=8000, type=int)
-argParser.add_argument("--machine", help="Domain of the VM")
+argParser.add_argument("-d", "--domain", help="Domain of the VM")
 args = argParser.parse_args()
 # Address of node
-machine = args.machine
+d = args.domain
 port = args.port
 
 # Networking Configuration
 domain = ''
-if machine == '1':
+# OKEANOS SPECIFIC DOMAINS SHORTCUTS
+if d == '1':
 	domain = 'snf-43775.ok-kno.grnetcloud.net'
-elif machine == '2':
+elif d == '2':
 	domain = 'snf-43783.ok-kno.grnetcloud.net'
-elif machine == '3':
+elif d == '3':
 	domain = 'snf-43785.ok-kno.grnetcloud.net'
-elif machine == '4':
+elif d == '4':
 	domain = 'snf-43787.ok-kno.grnetcloud.net'
-elif machine == '5':
+elif d == '5':
 	domain = 'snf-43833.ok-kno.grnetcloud.net'
 else:
-	print("Invalid machine number ❌")
-	exit();
+	# FOR OTHER DOMAINS (FOR OTHER DEPLOYMENTS)
+	domain = d
+
 address= 'http://' + (domain) + ':' + str(port) 
-
-
 
 # Command Line Interface client
 def client():
