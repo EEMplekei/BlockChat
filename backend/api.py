@@ -42,6 +42,10 @@ async def create_transaction(request: Request):
 	#     "payload": str,
 	#     "type_of_transaction": str
 	# }
+	
+	# It shouldnt be here, but just in case
+	if node.current_validator is None:
+		node.find_next_validator()
 
 	# Get the parameters
 	data = await request.json()
@@ -66,20 +70,32 @@ async def create_transaction(request: Request):
 	for key, value in node.ring.items():
 		if value['id'] == receiver_id:
 			receiver_address = key
-	
+
+	# Get the validator address
+	validator_address = node.current_validator
+	print(f"Validator address: {validator_address[1]} 🧑")
 	if receiver_address != None:
 		try:
 			# Create transaction function also signs it and validates it inside
 			transaction = node.create_transaction(receiver_address, type_of_transaction, payload)
-   
+
+			# Create transaction fee
+			if type_of_transaction == TransactionType.COINS:
+				transaction_fee = node.create_transaction(validator_address, TransactionType.FEE, payload*FEE_RATE)
+			elif (type_of_transaction == TransactionType.MESSAGE):
+				transaction_fee = node.create_transaction(validator_address, TransactionType.FEE, len(payload)*FEE_RATE)
+
    			# Add to pending transactions list and check that it should pass
 			if not node.add_transaction_to_pending(transaction):
 				return JSONResponse('Transaction is not valid', status_code=status.HTTP_400_BAD_REQUEST)
-			
 			# Broadcast transaction			
 			node.broadcast_transaction(transaction)
-			# Check if block is full
-			node.check_if_block_is_full_to_mint()
+
+			# Add to pending transactions list and check that it should pass
+			if not node.add_transaction_to_pending(transaction_fee):
+				return JSONResponse('Transaction is not valid', status_code=status.HTTP_400_BAD_REQUEST)
+			# Broadcast transaction			
+			node.broadcast_transaction(transaction_fee)
 			
 			return JSONResponse('Successful Transaction !', status_code=status.HTTP_200_OK)
 		except Exception as e:
@@ -145,6 +161,10 @@ def get_balance():
 
 	return JSONResponse({'balance': balance}, status_code=status.HTTP_200_OK)
 
+@app.get("/api")
+def get_api():
+	return JSONResponse({'message': 'API UP AND READY!'}, status_code=status.HTTP_200_OK)
+
 @app.get("/api/get_temp_balance")
 def get_temp_balance():
 	try:
@@ -158,9 +178,23 @@ def get_temp_balance():
 def get_chain_length():
 	return JSONResponse({'chain_length': len(node.blockchain.chain)}, status_code=status.HTTP_200_OK)
 
+@app.get("/api/get_pending_list_length")
+def get_pending_list_length():
+	return JSONResponse({'pending_list_length': len(node.pending_transactions)}, status_code=status.HTTP_200_OK)
+
 @app.get("/api/get_chain")
 def get_chain():
-	return Response(pickle.dumps(node.blockchain), status_code=status.HTTP_200_OK)
+	data = []
+	# Iterate through the blockchain and get the transactions, hash and previous hash and get the validator of each block
+	for block in node.blockchain.chain:
+		transactions = block.get_transactions_from_block(node)
+		data.append({
+			'transactions': transactions,
+			'hash': block.hash,
+			'previous_hash': block.previous_hash,
+			'validator': block.validator
+		})
+	return JSONResponse(data, status_code=status.HTTP_200_OK)
 
 # =========================================================
 # Internal routes
@@ -201,9 +235,6 @@ def get_transaction(data: bytes = Depends(get_body)):
 	# Add transaction to block
 	node.add_transaction_to_pending(new_transaction)
 
-	# Check if block is full
-	node.check_if_block_is_full_to_mint()
-
 	return JSONResponse('OK')
 
 @app.post("/get_block")
@@ -220,19 +251,10 @@ def get_block(data: bytes = Depends(get_body)):
 		# Check validity of block		
 		if (new_block.validate_block(node.blockchain.chain[-1].hash, node.current_validator)):
 			print("Incoming block is valid")
-			# If it is valid:
-			# Stop the current block mining
-			with(node.incoming_block_lock):
-				#print("Incoming block: ", node.incoming_block)
-				node.incoming_block = True
-			# node.processing_block = False
 			print("Block was ⛏️  by someone else 🧑")
 			# Add block to the blockchain
 			print("✅📦! Adding it to the chain")
 			node.add_block_to_chain(new_block)
-			# Update the stake of each node
-			node.refresh_stake()
-			print("Blockchain length: ", len(node.blockchain.chain))
 			return JSONResponse('OK')
 		print("❌📦 Something went wrong with validation 🙁")
 

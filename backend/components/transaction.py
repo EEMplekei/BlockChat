@@ -1,14 +1,25 @@
 from enum import Enum
 from hashlib import sha256
+import os
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ( padding, utils)
 from cryptography.hazmat.primitives import serialization
 from cryptography import exceptions
 from colorama import Fore
+from dotenv import load_dotenv
+
+try:
+	load_dotenv()
+	FEE_RATE = float(os.getenv('FEE_RATE'))
+except Exception as e:
+	print(f"{Fore.RED}Error loading environment variables: {e}{Fore.RESET}")
+	print(f"{Fore.YELLOW}Using default FEE_RATE: 3%{Fore.RESET}")
+	FEE_RATE = 0.03
 
 class TransactionType(Enum):
 	COINS = 1
 	MESSAGE = 2
+	FEE = 3
 
 class Transaction:
 
@@ -25,11 +36,19 @@ class Transaction:
 	def __init__(self, sender_address, receiver_address, type_of_transaction: TransactionType, payload, nonce):
 					
 		#Check valid type and payload
+		#COINS
 		if type_of_transaction == TransactionType.COINS:
 			if not ((isinstance(payload, (int, float))) and (payload > 0)):
 				raise ValueError("Transaction amount must be a positive number")
 			self.amount = payload                           # amount of coins to send
 			self.message = None
+		# FEE
+		elif type_of_transaction == TransactionType.FEE:
+			if not ((isinstance(payload, (int, float))) and (payload > 0)):
+				raise ValueError("Transaction fee must be a positive number")
+			self.amount = payload
+			self.message = None
+		# MESSAGE
 		elif type_of_transaction == TransactionType.MESSAGE:
 			if not isinstance(payload, str):
 				raise ValueError("Transaction message must be a string")
@@ -136,7 +155,17 @@ class Transaction:
 			print(f"{Fore.YELLOW}validate_transaction{Fore.RESET}: {Fore.RED}Transaction not validated, not valid signature{Fore.RESET}")
 			return False
 		
-		transaction_cost = (self.amount if self.type_of_transaction == TransactionType.COINS else len(self.message))
+		if (self.type_of_transaction == TransactionType.COINS):
+			transaction_cost = self.amount+self.amount*FEE_RATE
+		elif (self.type_of_transaction == TransactionType.MESSAGE):
+			transaction_cost = len(self.message)+len(self.message)*FEE_RATE
+		elif (self.type_of_transaction == TransactionType.FEE):
+			transaction_cost = self.amount
+		else:
+			# THE BELOW CODE SHOULD NEVER BE REACHED, IT IS HERE FOR SAFETY. OTHER CHECKS SHOULD CATCH THIS
+			print(f"{Fore.YELLOW}validate_transaction{Fore.RESET}: {Fore.RED}Transaction not validated, invalid transaction type{Fore.RESET}")
+			return False
+		
 		if(transaction_cost > sender_balance):
 			print(f"{Fore.YELLOW}validate_transaction{Fore.RESET}: {Fore.RED}Transaction not validated, not enough coins{Fore.RESET}")
 			return False
