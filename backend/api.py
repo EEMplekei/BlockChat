@@ -19,7 +19,7 @@ except ImportError:
 # Initialize environment variables
 load_dotenv()
 TOTAL_NODES = int(try_load_env('TOTAL_NODES'))
-FEE_RATE = int(try_load_env('FEE_RATE'))
+FEE_RATE = float(try_load_env('FEE_RATE'))
 
 #Initialize FastAPI
 app = FastAPI()
