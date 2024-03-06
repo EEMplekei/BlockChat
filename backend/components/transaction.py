@@ -40,9 +40,11 @@ class Transaction:
 		if type_of_transaction == TransactionType.COINS:
 			if not ((isinstance(payload, (int, float))) and (payload > 0)):
 				raise ValueError("Transaction amount must be a positive number")
+			if (str(receiver_address) == str(sender_address)):
+				raise ValueError("Sender and receiver address can't be the same")
 			self.amount = payload                           # amount of coins to send
 			self.message = None
-		# FEE
+		# FEE (can have sender and receiver as the same address, as it is a fee for the sender's transaction)
 		elif type_of_transaction == TransactionType.FEE:
 			if not ((isinstance(payload, (int, float))) and (payload > 0)):
 				raise ValueError("Transaction fee must be a positive number")
@@ -52,6 +54,8 @@ class Transaction:
 		elif type_of_transaction == TransactionType.MESSAGE:
 			if not isinstance(payload, str):
 				raise ValueError("Transaction message must be a string")
+			if (str(receiver_address) == str(sender_address)):
+				raise ValueError("Sender and receiver address can't be the same")
 			self.amount = None
 			self.message = payload                          # message to send
 		else:

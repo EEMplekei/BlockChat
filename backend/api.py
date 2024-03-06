@@ -74,7 +74,7 @@ async def create_transaction(request: Request):
 
 	# Get the validator address
 	validator_address = node.current_validator
-	print(f"Validator address: {validator_address[1]} 🧑")
+	#print(f"Validator address: {validator_address[1]} 🧑")
 	if receiver_address != None:
 		try:
 			# Create transaction function also signs it and validates it inside
