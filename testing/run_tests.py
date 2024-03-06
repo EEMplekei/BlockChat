@@ -23,7 +23,7 @@ import json
 #==============================================================================================
 
 # Opening JSON file
-f = open('nodes_config.json')
+f = open('../nodes_config.json')
 nodes_config = json.load(f)
 f.close()
 

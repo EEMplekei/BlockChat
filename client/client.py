@@ -10,33 +10,20 @@ from draw_chain import brand
 from draw_chain import draw_blockchain
 from texttable import Texttable
 
+# Opening JSON file
+f = open('../nodes_config.json')
+nodes_config = json.load(f)
+f.close()
+
 # ARGUMENTS
 argParser = argparse.ArgumentParser()
-argParser.add_argument("-p", "--port", help="Port in which node is running", default=8000, type=int)
-argParser.add_argument("-d", "--domain", help="Domain of the VM")
+argParser.add_argument("-n", "--node", help="Node you want to connect to")
 args = argParser.parse_args()
 # Address of node
-d = args.domain
-port = args.port
+node = args.node
 
 # Networking Configuration
-domain = ''
-# OKEANOS SPECIFIC DOMAINS SHORTCUTS
-if d == '1':
-	domain = 'snf-43775.ok-kno.grnetcloud.net'
-elif d == '2':
-	domain = 'snf-43783.ok-kno.grnetcloud.net'
-elif d == '3':
-	domain = 'snf-43785.ok-kno.grnetcloud.net'
-elif d == '4':
-	domain = 'snf-43787.ok-kno.grnetcloud.net'
-elif d == '5':
-	domain = 'snf-43833.ok-kno.grnetcloud.net'
-else:
-	# FOR OTHER DOMAINS (FOR OTHER DEPLOYMENTS)
-	domain = d
-
-address= 'http://' + (domain) + ':' + str(port) 
+address = nodes_config.get(f'node{node}', lambda: (print("Invalid node number") or exit())) if node in map(str, range(10)) else (print("Invalid node number") or exit())
 
 # Command Line Interface client
 def client():

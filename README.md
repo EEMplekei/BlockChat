@@ -29,11 +29,10 @@ python3 api --i eth --port p
 ##### Run the [CLI](./client/README.md) (in order create and see transactions among other things)
 ```bash
 cd BlockChat/client
-python3 client.py --domain api_domain --port p
+python3 client.py --node n
 ```
 > [!IMPORTANT]  
-> api_domain: The domain on which the node is running
-> p: Port on which the node is running
+> n: The node on which you want to connect to
 
 For other operating systems different than Linux-Debian you will have to fill in the gaps 
 
