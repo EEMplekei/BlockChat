@@ -15,19 +15,17 @@ try:
     from components.transaction import TransactionType, Transaction
     from components.proof_of_stake import PoSProtocol
     from components.block import Block
+    from helper_functions.network import get_ip_and_port
+    from helper_functions.env_variables import try_load_env
+    from helper_functions.call_once import call_once
 except Exception as e:
     print(f"{Fore.RED}Node: Error loading modules: {e}{Fore.RESET}")
     raise ImportError
 
-#Try loading environment variables, if it fails, print error and use default block size
-try:
-    load_dotenv()
-    block_size = int(os.getenv('BLOCK_SIZE'))
-except Exception as e:
-    print(f"{Fore.RED}Error loading environment variables: {e}{Fore.RESET}")
-    print(f"{Fore.YELLOW}Using default block size: 3{Fore.RESET}")
-    block_size = 3
-    
+# Get environment variables for blocksize, total nodes and bootstrap node
+block_size, total_nodes = int(try_load_env('BLOCK_SIZE')), int(try_load_env('TOTAL_NODES'))
+total_bbc = total_nodes * 1000
+
 class Node:
 
     def __init__(self):
@@ -48,12 +46,10 @@ class Node:
         # processing_block_lock:  Lock for processing_block variable
         
         self.wallet = Wallet() # create_wallet
-        self.ip = None
-        self.port = None
+        self.ip, self.port = get_ip_and_port()
         self.id = None
         self.ring = {}     # address: {id, ip, port, balance}
         self.blockchain = Blockchain()
-        self.is_bootstrap = False
         self.incoming_block = False
         self.processing_block = False
         self.pending_transactions = deque()
@@ -61,7 +57,8 @@ class Node:
         self.incoming_block_lock = threading.Lock()
         self.processing_block_lock = threading.Lock()
         self.nonce = random.randint(0, 10000)
-
+        self.is_bootstrap = self.check_if_bootstrap()
+        
     #Creates a new block for the blockchain
     def create_new_block(self):
         previous_hash = None
@@ -294,7 +291,7 @@ class Node:
     # Sends information about self to the bootstrap node
     def advertise_to_bootstrap(self):
         try:
-            boostrap_address = 'http://' + str(os.getenv('BOOTSTRAP_IP')) + ':' + str(os.getenv('BOOTSTRAP_PORT'))
+            bootstrap_address = 'http://' + str(try_load_env('BOOTSTRAP_IP')) + ':' + str(try_load_env('BOOTSTRAP_PORT'))
         except Exception as e:
             print(f"{Fore.RED}Error loading bootstrap ip and port from .env files{Fore.RESET}")
             raise e
@@ -309,14 +306,14 @@ class Node:
         serialized_data = pickle.dumps(data_to_send)
 
         # Send the serialized data via POST request
-        response = requests.post(boostrap_address + '/let_me_in', data=serialized_data)
+        response = requests.post(bootstrap_address + '/let_me_in', data=serialized_data)
 
         if response.status_code == 200:
             print("Node added successfully !")
             self.id = response.json()['id']
             print('My ID is: ', self.id)
         else:
-            print("Initiallization failed")
+            print("Initialization failed")
     
     # Send the current ring information to a specific node via HTTP POST request.
     def unicast_ring(self, node):
@@ -362,3 +359,68 @@ class Node:
         for node_address in self.ring:
             if (self.id != self.ring[str(node_address)]['id']):
                 self.unicast_initial_bcc(node_address)
+    
+    # Check if all nodes are up
+    def check_all_nodes_are_up(self):
+        for node in self.ring.values():
+            try:
+                response = requests.get(f"http://{node['ip']}:{node['port']}/")
+                if response.status_code != 200:
+                    return False
+            except requests.RequestException as e:
+                return False
+        return True
+
+    def check_if_bootstrap(self):
+        if (self.ip, self.port) == (try_load_env('BOOTSTRAP_IP'), str(try_load_env('BOOTSTRAP_PORT'))):
+            print(f"I am boostrap. Node: {self.id}")
+            return True
+        else:
+            return False
+        
+    def register_node_to_cluster(self):
+        if (self.is_bootstrap):
+            # Add node to ring
+            self.id = 0
+            self.add_node_to_ring(self.id, self.ip, self.port, self.wallet.address, total_bbc)
+            self.create_genesis_block()
+        else:
+            self.advertise_to_bootstrap()
+
+    # Checks if all nodes have been added to the ring (up until now)
+    def check_full_ring(self, ring_nodes_count): 
+        if (ring_nodes_count == total_nodes):
+            #Checks that nodes are ready to listen to requests before broadcasting
+            while not self.check_all_nodes_are_up():
+                #This sleep is here because we want to make sure that all nodes are up before broadcasting
+                #We wait so that the API of all nodes are up
+                time.sleep(0.5)
+            self.broadcast_ring()
+            self.broadcast_blockchain()
+            self.broadcast_initial_bcc()
+            
+    # Function that creates genesis block
+    @call_once
+    def create_genesis_block(self):
+
+        # BOOTSTRAP: Create the first block of the blockchain (GENESIS BLOCK)
+        gen_block = self.create_new_block() # previous_hash autogenerates
+        
+        # Create first transaction
+        first_transaction = Transaction(
+            sender_address = '0',
+            receiver_address = self.wallet.address, 
+            type_of_transaction = TransactionType.COINS,
+            payload = total_bbc,
+            nonce = 1
+        )	
+        #Calculate hash of first transaction
+        first_transaction.calculate_hash()
+        # Add transaction to genesis block
+        gen_block.transactions.append(first_transaction)
+        gen_block.calculate_hash()
+        # Add genesis block to blockchain
+        self.blockchain.chain.append(gen_block)
+        # Create new empty block
+        self.current_block = self.create_new_block()
+        return
