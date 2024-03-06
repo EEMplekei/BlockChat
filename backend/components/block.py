@@ -72,7 +72,8 @@ class Block:
 				transactions.append({
 					"type": "Stake",
 					"sender_id": node.ring[str(transaction.sender_address)]['id'],
-					"amount": transaction.amount
+					"receiver_id": "0",
+					"payload": transaction.amount
 				})
 			else:
 				if(transaction.type_of_transaction == TransactionType.COINS):
@@ -80,14 +81,21 @@ class Block:
 					"type": "Coins Transfer",
 					"sender_id": node.ring[str(transaction.sender_address)]['id'],
 					"receiver_id": node.ring[str(transaction.receiver_address)]['id'],
-					"amount": transaction.amount
+					"payload": transaction.amount
 					})
 				elif (transaction.type_of_transaction == TransactionType.MESSAGE):
 					transactions.append({
 					"type": "Message",
 					"sender_id": node.ring[str(transaction.sender_address)]['id'],
 					"receiver_id": node.ring[str(transaction.receiver_address)]['id'],
-					"message": transaction.message
+					"payload": transaction.message
+					})
+				elif (transaction.type_of_transaction == TransactionType.FEE):
+					transactions.append({
+					"type": "Fee",
+					"sender_id": node.ring[str(transaction.sender_address)]['id'],
+					"receiver_id": node.ring[str(transaction.receiver_address)]['id'],
+					"payload": transaction.amount
 					})
 				else:
 					print(f"{Fore.YELLOW} get_transactions_from_block{Fore.RESET}:{Fore.RED}Invalid transaction type found in block!{Fore.RESET}")
@@ -103,7 +111,8 @@ def get_genesis_block_transactions(self, node):
 			transactions.append({
 				"type": "Genesis",
 				"receiver_id": node.ring[str(transaction.receiver_address)]['id'],
-				"amount": transaction.amount
+				"sender_id": "-",
+				"payload": transaction.amount
 			})
 		else:
 			print(f"{Fore.YELLOW}get_genesis_block_transactions{Fore.RESET}: {Fore.RED}Invalid transaction type found in genesis block!{Fore.RESET}")
