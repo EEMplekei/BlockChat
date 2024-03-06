@@ -18,7 +18,8 @@ except ImportError:
 
 # Initialize environment variables
 load_dotenv()
-total_nodes = int(try_load_env('TOTAL_NODES'))
+TOTAL_NODES = int(try_load_env('TOTAL_NODES'))
+FEE_RATE = int(try_load_env('FEE_RATE'))
 
 #Initialize FastAPI
 app = FastAPI()
@@ -53,7 +54,7 @@ async def create_transaction(request: Request):
 	payload = data.get("payload")
 	type_of_transaction = data.get("type_of_transaction")
 
-	if receiver_id > (total_nodes - 1) or receiver_id < 0:
+	if receiver_id > (TOTAL_NODES - 1) or receiver_id < 0:
 		return JSONResponse('Invalid receiver ID', status_code=status.HTTP_400_BAD_REQUEST)
 
 	# Check the type
