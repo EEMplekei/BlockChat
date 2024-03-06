@@ -79,9 +79,15 @@ class Node:
         # If it is valid we will add it to the pending list
         # Validate it here because here we reach and for other's transactions
         
-        #TESTED (!)
-        if not transaction.validate_transaction(self.ring[str(transaction.sender_address)]['temp_balance']):
-            return False
+        # FOR STAKE CASE
+        if transaction.receiver_address == 0 and transaction.type_of_transaction == TransactionType.COINS:
+            old_stake = self.ring[str(transaction.sender_address)]['stake']
+            temp_balance = self.ring[str(transaction.sender_address)]['temp_balance']
+            if not transaction.validate_transaction(temp_balance + old_stake):
+                return False
+        else:
+            if not transaction.validate_transaction(self.ring[str(transaction.sender_address)]['temp_balance']):
+                return False
         
         self.pending_transactions.appendleft(transaction)
         self.update_temp_balance(transaction)
