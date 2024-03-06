@@ -143,6 +143,10 @@ async def create_transaction(request: Request):
 	#     "payload": str,
 	#     "type_of_transaction": str
 	# }
+	
+	# It shouldnt be here, but just in case
+	if node.current_validator is None:
+		node.find_next_validator()
 
 	# Get the parameters
 	data = await request.json()
@@ -170,7 +174,7 @@ async def create_transaction(request: Request):
 
 	# Get the validator address
 	validator_address = node.current_validator
-
+	print(f"Validator address: {validator_address[1]} 🧑")
 	if receiver_address != None:
 		try:
 			# Create transaction function also signs it and validates it inside
@@ -257,6 +261,10 @@ def get_balance():
 		return JSONResponse('Could not get balance', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 	return JSONResponse({'balance': balance}, status_code=status.HTTP_200_OK)
+
+@app.get("/api")
+def get_api():
+	return JSONResponse({'message': 'API UP AND READY!'}, status_code=status.HTTP_200_OK)
 
 @app.get("/api/get_temp_balance")
 def get_temp_balance():
