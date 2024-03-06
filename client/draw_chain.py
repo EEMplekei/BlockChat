@@ -45,7 +45,7 @@ def draw_blockchain(blockchain_data):
 	# Draw the blockchain
 	for i,block in enumerate(blockchain_data):
 		
-		line = "Block "+str(i)+":  "+block['hash']+""
+		line = "Block:  "+block['hash']+""
 		print(f"    ┌──────────────────────────────────────────────────────────────────┐")
 		print(f"    │ {Fore.GREEN}{line}{Fore.RESET}{fix_spaces(line)}│")
 		print(f"    ├──────────────────────────────────────────────────────────────────┤")
@@ -56,15 +56,16 @@ def draw_blockchain(blockchain_data):
 		print(f"    │ {Fore.GREEN}{line}{Fore.RESET}{fix_spaces(line)}│")
 		for transaction in block["transactions"]:
 			print(f"    ├++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++┤")
-			print(f"    │ {Fore.LIGHTMAGENTA_EX}Transaction Details{Fore.RESET}{fix_spaces("Transaction Details")}│")
+			line = "Transaction Details"
+			print(f"    │ {Fore.LIGHTMAGENTA_EX}{line}{Fore.RESET}{fix_spaces(line)}│")
 			line = "Transaction Type: "+transaction['type']+""
-			print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces("   "+line+"")}│") 
+			print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces('   '+line+'')}│")
 			line = "Sender: "+transaction['sender_id']+""
-			print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces("   "+line+"")}│") 
+			print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces('   '+line+'')}│")
 			line = "Receiver: "+transaction['receiver_id']+""
-			print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces("   "+line+"")}│")
-			line = "Payload: "+str(transaction['amount'])+""
-			print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces("   "+line+"")}│")
+			print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces('   '+line+'')}│")
+			line = "Payload: "+str(transaction['payload'])+""
+			print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces('   '+line+'')}│")
 		print("    └──────────────────────────────────────────────────────────────────┘")
 		if (block == blockchain_data[len(blockchain_data) - 1]):
 			print()
@@ -83,8 +84,8 @@ blockchain_data = [
 		"previous_hash": "0",
 		"validator": "validator1",
 		"transactions": [
-			{"type": "Coins Transfer", "sender_id": "sender1", "receiver_id": "receiver1", "amount": 10},
-			{"type": "Coins Transfer", "sender_id": "sender2", "receiver_id": "receiver2", "amount": 5}
+			{"type": "Coins Transfer", "sender_id": "sender1", "receiver_id": "receiver1", "payload": 10},
+			{"type": "Coins Transfer", "sender_id": "sender2", "receiver_id": "receiver2", "payload": 5}
 		]
 	},
 	{
@@ -92,8 +93,8 @@ blockchain_data = [
 		"previous_hash": "hash1",
 		"validator": "validator2",
 		"transactions": [
-			{"type": "Coins Transfer", "sender_id": "sender3", "receiver_id": "receiver3", "amount": 7},
-			{"type": "Coins Transfer", "sender_id": "sender4", "receiver_id": "receiver4", "amount": 3}
+			{"type": "Coins Transfer", "sender_id": "sender3", "receiver_id": "receiver3", "payload": 7},
+			{"type": "Coins Transfer", "sender_id": "sender4", "receiver_id": "receiver4", "payload": 3}
 		]
 	},
 	{
@@ -101,8 +102,8 @@ blockchain_data = [
 		"previous_hash": "hash2",
 		"validator": "validator3",
 		"transactions": [
-			{"type": "Coins Transfer", "sender_id": "sender5", "receiver_id": "receiver5", "amount": 12},
-			{"type": "Coins Transfer", "sender_id": "sender6", "receiver_id": "receiver6", "amount": 8}
+			{"type": "Coins Transfer", "sender_id": "sender5", "receiver_id": "receiver5", "payload": 12},
+			{"type": "Coins Transfer", "sender_id": "sender6", "receiver_id": "receiver6", "payload": 8}
 		]
 	}
 ]

@@ -140,17 +140,21 @@ def view_last_block_transactions():
 	
 	if (len(node.blockchain.chain) < 1):
 		return Response(status_code = status.HTTP_204_NO_CONTENT)
-	
 	# Get last block in the chain
 	latest_block = node.blockchain.chain[-1]
- 
+	data = []
 	# Return a list of transactions
 	try:
-		transactions = latest_block.get_transactions_from_block(node)
+		data.append({
+			"hash": str(latest_block.hash)[:7],
+			"previous_hash": str(latest_block.previous_hash)[:7],
+			"validator": str(node.ring[str(latest_block.validator)]['id']),
+			"transactions": latest_block.get_transactions_from_block(node),
+		})
 	except Exception as e:
 		print(f"{Fore.YELLOW}view_last_block_transactions{Fore.RESET}: {Fore.RED}Error: {e}{Fore.RESET}")
 		return JSONResponse('Could not get transactions from block', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-	return JSONResponse(transactions, status_code=status.HTTP_200_OK)
+	return JSONResponse(data, status_code=status.HTTP_200_OK)
 
 @app.get("/api/get_balance")
 def get_balance():
@@ -188,12 +192,11 @@ def get_chain():
 	data = []
 	# Iterate through the blockchain and get the transactions, hash and previous hash and get the validator of each block
 	for block in node.blockchain.chain:
-		transactions = block.get_transactions_from_block(node)
 		data.append({
-			'transactions': transactions,
-			'hash': block.hash,
-			'previous_hash': block.previous_hash,
-			'validator': block.validator
+			"hash": str(block.hash)[:7],
+			"previous_hash": str(block.previous_hash)[:7],
+			"validator": str(node.ring[str(block.validator)]['id']),
+			"transactions": block.get_transactions_from_block(node),
 		})
 	return JSONResponse(data, status_code=status.HTTP_200_OK)
 
