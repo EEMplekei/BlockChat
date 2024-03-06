@@ -61,3 +61,22 @@ Text should be added here
 Text should be added here 
 
 ## Testing 🔬
+To run the given transactions from the txt files [here](./testing/). Do the following:
+
+```bash
+cd BlockChat/testing
+python3 run_tests.py -t test
+```
+> [!IMPORTANT]  
+> test: Test to be run. (eg 0 --> trans0.txt)
+
+- `trans0.txt` : Transactions that are made from node0
+- `trans1.txt` : Transactions that are made from node1
+- `trans2.txt` : Transactions that are made from node2
+- `trans3.txt` : Transactions that are made from node3
+- `trans4.txt` : Transactions that are made from node4
+- `trans5.txt` : Transactions that are made from node5
+- `trans6.txt` : Transactions that are made from node6
+- `trans7.txt` : Transactions that are made from node7
+- `trans8.txt` : Transactions that are made from node8
+- `trans9.txt` : Transactions that are made from node9
