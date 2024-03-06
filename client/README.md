@@ -11,7 +11,7 @@ Send a message to another user
 #### Set Stake 🎰
 Set your stake for the Proof of Stake protocol
 
-> [!INFO]  
+> [!NOTE]  
 > The Proof of Stake (PoS) protocol calculates the validator for the current block based on a probabilistic algorithm in which every node has a probability of becoming the validator proportional to the last stake in the last validated block. This means that the stake you declare on block i will account for the probability of becoming the validator of block i+1.
 
 #### View last block 📦
