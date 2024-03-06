@@ -159,10 +159,7 @@ def client():
 				# api client call to view last block
 				response = requests.get(address+'/api/view_last_block')
 				data = response.json()
-				
-				print(data)
-				#draw_blockchain(data)
-					
+				draw_blockchain(data)
 			except requests.exceptions.HTTPError:
 				print("Node is not active. Try again later.")
 			input("Press any key to go back...")
@@ -174,9 +171,9 @@ def client():
 			try:
 				# api client call to view last block
 				chain = requests.get(address+'/api/get_chain')
-				print(chain)
-				#draw_blockchain(chain)
-				
+				chain = chain.json()
+				#print(chain)
+				draw_blockchain(chain)
 			except requests.exceptions.HTTPError:
 				print("Node is not active. Try again later.")
 			input("Press any key to go back...")
