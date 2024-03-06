@@ -116,7 +116,7 @@ async def set_stake(request: Request):
 
 	# Broadcast transaction
 	node.broadcast_transaction(staking_transaction)
-	return JSONResponse('Successful Staking !', status_code=status.HTTP_200_OK)
+	return JSONResponse('Successful Staking!', status_code=status.HTTP_200_OK)
 
 @app.get("/api/view_last_block")
 def view_last_block_transactions():
@@ -265,4 +265,4 @@ async def let_me_in(request: Request):
 	return JSONResponse({'id': id})
 
 # WEB SERVER RUN
-uvicorn.run(app, host = None, port = node.port)
+uvicorn.run(app, host = None, port = int(node.port))

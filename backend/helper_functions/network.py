@@ -23,7 +23,7 @@ def get_ip_and_port():
 		print(f"{Fore.YELLOW}get_ip_and_port{Fore.RESET}: {Fore.RED} Could not get provided{Fore.RESET}")
 		exit()
   
-	return ip, port
+	return ip, str(port)
 
 #Get the IPv4 address of a specific interface
 def get_ip_linux(interface: str) -> str:
