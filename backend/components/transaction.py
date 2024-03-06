@@ -155,12 +155,25 @@ class Transaction:
 			print(f"{Fore.YELLOW}validate_transaction{Fore.RESET}: {Fore.RED}Transaction not validated, not valid signature{Fore.RESET}")
 			return False
 		
-		if (self.type_of_transaction == TransactionType.COINS):
+		# Check if the sender has enough coins to send the transaction
+
+		# COINS CASE
+		if (self.type_of_transaction == TransactionType.COINS and self.receiver_address != 0):
 			transaction_cost = self.amount+self.amount*FEE_RATE
+		
+		# MESSAGE CASE
 		elif (self.type_of_transaction == TransactionType.MESSAGE):
 			transaction_cost = len(self.message)+len(self.message)*FEE_RATE
+		
+		# FEE CASE
 		elif (self.type_of_transaction == TransactionType.FEE):
 			transaction_cost = self.amount
+		
+		# STAKE CASE
+		elif (self.type_of_transaction == TransactionType.COINS and self.receiver_address == 0):
+			transaction_cost = self.amount
+		
+		# INVALID CASE
 		else:
 			# THE BELOW CODE SHOULD NEVER BE REACHED, IT IS HERE FOR SAFETY. OTHER CHECKS SHOULD CATCH THIS
 			print(f"{Fore.YELLOW}validate_transaction{Fore.RESET}: {Fore.RED}Transaction not validated, invalid transaction type{Fore.RESET}")
