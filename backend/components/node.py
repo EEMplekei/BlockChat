@@ -389,7 +389,7 @@ class Node:
 
     def check_if_bootstrap(self):
         if (self.ip, self.port) == (try_load_env('BOOTSTRAP_IP'), str(try_load_env('BOOTSTRAP_PORT'))):
-            print(f"I am boostrap. Node: {self.id}")
+            print(f"{Fore.CYAN}I am bootstrap.{Fore.RESET}")
             return True
         else:
             return False
