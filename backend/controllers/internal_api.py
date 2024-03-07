@@ -26,9 +26,13 @@ async def receive_ring(request: Request):
 	print("Ring received successfully!")
 	return JSONResponse('OK')
 
+# Gets the latest version of the blockchain from the Bootstrap node
 @internal_api.post("/get_blockchain")
 async def get_blockchain(request: Request):
-	# Gets the latest version of the blockchain from the Bootstrap node
+
+	if (node.is_bootstrap):
+		return JSONResponse('Cannot post blockchain to bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
+	
 	data = await request.body()
 	node.blockchain = pickle.loads(data)
 
@@ -38,9 +42,9 @@ async def get_blockchain(request: Request):
 async def get_body(request: Request):
 	return await request.body()
 
+# Gets an incoming transaction and adds it in the block.
 @internal_api.post("/get_transaction")
 def get_transaction(data: bytes = Depends(get_body)):
-	# Gets an incoming transaction and adds it in the block.
 
 	# data = request.body()
 	new_transaction = pickle.loads(data)
@@ -51,9 +55,9 @@ def get_transaction(data: bytes = Depends(get_body)):
 
 	return JSONResponse('OK')
 
+# Gets an incoming mined block and adds it to the blockchain.
 @internal_api.post("/get_block")
 def get_block(data: bytes = Depends(get_body)):
-	# Gets an incoming mined block and adds it to the blockchain.
 	
 	# Deserialize the data received in the request body using pickle.loads()
 	new_block = pickle.loads(data)
@@ -74,10 +78,10 @@ def get_block(data: bytes = Depends(get_body)):
 
 		return JSONResponse('Error validating block', status_code=status.HTTP_400_BAD_REQUEST)
 
+# Asks bootstrap node to enter the network, api endpoint accessed by non-bootstrap nodes
 @internal_api.post("/let_me_in")
 async def let_me_in(request: Request):
-	# ! BOOTSTRAP ONLY !
-	# Adds a new node to the cluster
+	
 	if not node.is_bootstrap:
 		return JSONResponse('Cannot post to let-me-in to a non-bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
 
