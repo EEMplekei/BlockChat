@@ -9,6 +9,9 @@ import json
 public_api = FastAPI(root_path="/api")
 
 # Client routes 
+@public_api.get("/")
+def get_api():
+	return JSONResponse({'message': f'Node {node,id} is up and running!'}, status_code=status.HTTP_200_OK)
 
 @public_api.post("/create_transaction")
 async def create_transaction(request: Request):
@@ -148,10 +151,6 @@ def get_balance():
 		return JSONResponse('Could not get balance', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 	return JSONResponse({'balance': balance}, status_code=status.HTTP_200_OK)
-
-@public_api.get("/")
-def get_api():
-	return JSONResponse({'message': f'Node {node,id} is up and running!'}, status_code=status.HTTP_200_OK)
 
 @public_api.get("/get_temp_balance")
 def get_temp_balance():

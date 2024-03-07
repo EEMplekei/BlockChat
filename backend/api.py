@@ -9,6 +9,7 @@ try:
 	from controllers.shared_recourses import node
 except ImportError as e:
 	print(f"{Fore.RED}Could not import required classes{Fore.RESET}")
+	input("Press any key to exit...")
 	exit()
 
 app = FastAPI()
