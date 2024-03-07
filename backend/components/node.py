@@ -312,15 +312,25 @@ class Node:
         serialized_data = pickle.dumps(data_to_send)
 
         # Send the serialized data via POST request
-        response = requests.post(bootstrap_address + '/let_me_in', data=serialized_data)
+        # Make the call 3 times if cannot connet with delay of 1 second
+        for _ in range(3):
+            try:
+                response = requests.post(bootstrap_address + '/let_me_in', data=serialized_data)
 
-        if response.status_code == 200:
-            print("Node added successfully !")
-            self.id = response.json()['id']
-            print('My ID is: ', self.id)
-        else:
-            print("Initialization failed")
-    
+                if response.status_code == 200:
+                    self.id = response.json()['id']
+                    print(f"Node added successfully!\n{Fore.CYAN}My ID is:{Fore.RESET} {Fore.MAGENTA}{self.id}{Fore.RESET}")
+                    return
+                else:
+                    print("Initialization failed")
+            except requests.exceptions.RequestException as e:
+                print(f"{Fore.YELLOW}Can't connect to bootstrap, retrying in 1 second...{Fore.RESET}")
+                time.sleep(1)
+                continue
+        
+        print(f"{Fore.RED}Can't connect to bootstrap, please check if the bootstrap node is up and running{Fore.RESET}")
+        exit()
+
     # Send the current ring information to a specific node via HTTP POST request.
     def unicast_ring(self, node):
         request_address = 'http://' + node['ip'] + ':' + node['port']
