@@ -168,7 +168,7 @@ def get_balance():
 
 @app.get("/api")
 def get_api():
-	return JSONResponse({'message': 'API UP AND READY!'}, status_code=status.HTTP_200_OK)
+	return JSONResponse({'message': f'Node {node,id} is up and running!'}, status_code=status.HTTP_200_OK)
 
 @app.get("/api/get_temp_balance")
 def get_temp_balance():
