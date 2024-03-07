@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request, Depends, status, Response
 from fastapi.responses import JSONResponse
+import json
 from colorama import Fore
 from dotenv import load_dotenv
 import uvicorn
@@ -44,23 +45,31 @@ async def create_transaction(request: Request):
 	#     "type_of_transaction": str
 	# }
 	
-	# It shouldnt be here, but just in case
+	# It shouldn't be here, but just in case
 	if node.current_validator is None:
 		node.find_next_validator()
 
 	# Get the parameters
-	data = await request.json()
-	receiver_id = data.get("receiver_id")
-	payload = data.get("payload")
-	type_of_transaction = data.get("type_of_transaction")
+	try:
+		data = await request.json()
+		receiver_id = data.get("receiver_id")
+		payload = data.get("payload")
+		type_of_transaction = data.get("type_of_transaction")
+	except json.decoder.JSONDecodeError:
+		return JSONResponse('Invalid JSON', status_code=status.HTTP_400_BAD_REQUEST)
 
 	if receiver_id > (TOTAL_NODES - 1) or receiver_id < 0:
 		return JSONResponse('Invalid receiver ID', status_code=status.HTTP_400_BAD_REQUEST)
+	if payload == None:
+		return JSONResponse('Payload cannot be empty', status_code=status.HTTP_400_BAD_REQUEST)
 
 	# Check the type
 	if type_of_transaction == "COINS":
 		type_of_transaction = TransactionType.COINS
-		payload = int(payload)
+		try:
+			payload = int(payload)
+		except ValueError:
+			return JSONResponse('Payload must be an integer number', status_code=status.HTTP_400_BAD_REQUEST)
 	elif type_of_transaction == "MESSAGE":
 		type_of_transaction = TransactionType.MESSAGE
 	else:
@@ -98,7 +107,7 @@ async def create_transaction(request: Request):
 			# Broadcast transaction			
 			node.broadcast_transaction(transaction_fee)
 			
-			return JSONResponse('Successful Transaction !', status_code=status.HTTP_200_OK)
+			return JSONResponse('Successful Transaction!', status_code=status.HTTP_200_OK)
 		except Exception as e:
 			print(f"{Fore.RED}Error create_transaction: {e}{Fore.RESET}")
 			return JSONResponse("Could not create transaction", status_code=status.HTTP_400_BAD_REQUEST)
@@ -213,7 +222,7 @@ async def receive_ring(request: Request):
 	data = await request.body()
 	node.ring = pickle.loads(data)
 
-	print("Ring received successfully !")
+	print("Ring received successfully!")
 	return JSONResponse('OK')
 
 @app.post("/get_blockchain")
@@ -222,7 +231,7 @@ async def get_blockchain(request: Request):
 	data = await request.body()
 	node.blockchain = pickle.loads(data)
 
-	print("Blockchain received successfully !")
+	print("Blockchain received successfully!")
 	return JSONResponse('OK')
 
 async def get_body(request: Request):
@@ -234,7 +243,7 @@ def get_transaction(data: bytes = Depends(get_body)):
 
 	# data = request.body()
 	new_transaction = pickle.loads(data)
-	print("New transaction received successfully !")
+	print("New transaction received successfully!")
 
 	# Add transaction to block
 	node.add_transaction_to_pending(new_transaction)
@@ -248,7 +257,7 @@ def get_block(data: bytes = Depends(get_body)):
 	# Deserialize the data received in the request body using pickle.loads()
 	new_block = pickle.loads(data)
 
-	print(f"{Fore.GREEN}NEWS{Fore.RESET}: Got new block, now lets validate it !")
+	print(f"{Fore.GREEN}NEWS{Fore.RESET}: Got new block, now lets validate it!")
 
 	# Wait until incoming block has finished processing
 	with (node.processing_block_lock):
