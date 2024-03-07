@@ -35,8 +35,9 @@ args = argParser.parse_args()
 t = args.test
 
 # Networking Configuration
-address = nodes_config.get(f'node{t}') if t in range(10) else print("Invalid node number") and exit()
-
+# address = nodes_config.get(f'node{t}') if t in range(10) else print("Invalid node number") and exit()
+# For debugging purposes
+address = "http://snf-43775.ok-kno.grnetcloud.net:8000"
 # Read to the correct trans.txt file according to the node number
 with open('trans'+str(t)+'.txt', 'r') as file:
 	text = file.read()
@@ -63,8 +64,15 @@ with open('trans'+str(t)+'.txt', 'r') as file:
 					"type_of_transaction": "MESSAGE"
 				})
 			
-			except:
+			 	# Check if the status code is not 200 OK
+				if response.status_code != requests.codes.ok:
+					# If the status code is not OK, raise an exception
+					response.raise_for_status()
+
+			except requests.exceptions.RequestException as e:
+				# Handle exceptions
 				print("❌ Test Failed ❌")
+				print(f"Exception: {e}")
 				exit()
 
 # All tests passed
@@ -72,10 +80,10 @@ print("✅ All tests passed ✅")
 
 # Get remaining balance
 response = requests.get(address+'/api/get_balance')
-print(f'🗃️ The wallet balance (from last validated block is): {response.json().get('balance')}')
+#print(f'🗃️ The wallet balance (from last validated block is): {response.json().get('balance')}')
 
 # Get remaining temp_balance
 response = requests.get(address+'/api/get_temp_balance')
-print(f'💵 The temp_balance (from last verified transaction): {response.json().get('temp_balance')}')
+#print(f'💵 The temp_balance (from last verified transaction): {response.json().get('temp_balance')}')
 
 # Draw Blockchain
