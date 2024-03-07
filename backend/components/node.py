@@ -147,7 +147,7 @@ class Node:
         
         elif(transaction.type_of_transaction == TransactionType.MESSAGE):
             print(f"{Fore.LIGHTBLUE_EX}=========== NEW MESSAGE 💬 ============={Fore.RESET}")
-            print(f"Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> {self.ring[str(transaction.receiver_address)]['id']} : {len(transaction.message)} characters")
+            print(f"Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> {self.ring[str(transaction.receiver_address)]['id']} {str(transaction.message)} : {len(transaction.message)} characters")
             # Update the balance of sender and receiver in the ring.
             self.ring[str(transaction.sender_address)]['balance'] -=  len(transaction.message)
         
