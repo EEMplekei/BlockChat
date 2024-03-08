@@ -53,7 +53,8 @@ class Node:
         self.incoming_block = False
         self.processing_block = False
         self.pending_transactions = deque()
-        self.current_validator = None
+        self.current_validator = {}
+        self.block_counter = 1
         self.incoming_block_lock = threading.Lock()
         self.processing_block_lock = threading.Lock()
         self.nonce = random.randint(0, 10000)
@@ -160,7 +161,7 @@ class Node:
         
         elif (transaction.type_of_transaction == TransactionType.FEE):
             print(f"{Fore.LIGHTBLUE_EX}=========== TRANSACTION FEE 💰 ==========={Fore.RESET}")
-            print(f"Transaction FEE added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> {self.ring[str(self.current_validator)]['id']} : {transaction.amount} BBCs")
+            print(f"Transaction FEE added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> {self.ring[str(transaction.receiver_address)]['id']} : {transaction.amount} BBCs")
             # Update the balance of sender and receiver in the ring.
             self.ring[str(transaction.sender_address)]['balance'] -= transaction.amount
             self.ring[str(transaction.receiver_address)]['balance'] += transaction.amount
@@ -188,21 +189,23 @@ class Node:
         # Select a validator
         validator = protocol.select_validator()
         # If the current node is the validator, mint a block
-        self.current_validator = validator[0]
+        self.current_validator[self.block_counter] = validator[0]
         # Output what random generator selected
         print(f"🎲 Randomly selected validator for the next Block: {validator[1]}")
 
     def mint_block(self):
         time.sleep(1)
-        # If the current_validator is None, find one: (Edge case for the first block -excluding genesis block-)
-        if self.current_validator is None:
-            self.find_next_validator()
         with (self.processing_block_lock):
+            # If the current_validator is None, find one: (Edge case for the first block -excluding genesis block-)
+            if not self.current_validator:
+                self.find_next_validator()
             if len(self.pending_transactions) >= block_size:
                 # If the current node is the validator, mint a block
-                if self.current_validator == str(self.wallet.address):
+                if self.current_validator[self.block_counter] == str(self.wallet.address):
+                    #self.current_validator.pop()
                     print("🔒 I am the validator")
-                    new_block = self.create_new_block()  
+                    new_block = self.create_new_block()
+                    self.block_counter += 1  
                     # Add transactions to the new block
                     for _ in range(block_size):
                         new_block.transactions.append(self.pending_transactions.pop())

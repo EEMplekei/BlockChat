@@ -44,75 +44,74 @@ async def create_transaction(request: Request):
 	#     "payload": str,
 	#     "type_of_transaction": str
 	# }
-	
-	# It shouldn't be here, but just in case
-	if node.current_validator is None:
-		node.find_next_validator()
+	with (node.processing_block_lock):
+		# It shouldn't be here, but just in case
+		if not node.current_validator:
+			node.find_next_validator()
 
-	# Get the parameters
-	try:
-		data = await request.json()
-		receiver_id = data.get("receiver_id")
-		payload = data.get("payload")
-		type_of_transaction = data.get("type_of_transaction")
-	except json.decoder.JSONDecodeError:
-		return JSONResponse('Invalid JSON', status_code=status.HTTP_400_BAD_REQUEST)
-
-	if receiver_id > (TOTAL_NODES - 1) or receiver_id < 0:
-		return JSONResponse('Invalid receiver ID', status_code=status.HTTP_400_BAD_REQUEST)
-	if payload == None:
-		return JSONResponse('Payload cannot be empty', status_code=status.HTTP_400_BAD_REQUEST)
-
-	# Check the type
-	if type_of_transaction == "COINS":
-		type_of_transaction = TransactionType.COINS
+		# Get the parameters
 		try:
-			payload = int(payload)
-		except ValueError:
-			return JSONResponse('Payload must be an integer number', status_code=status.HTTP_400_BAD_REQUEST)
-	elif type_of_transaction == "MESSAGE":
-		type_of_transaction = TransactionType.MESSAGE
-	else:
-		return JSONResponse('Invalid type of transaction', status_code=status.HTTP_400_BAD_REQUEST)
+			data = await request.json()
+			receiver_id = data.get("receiver_id")
+			payload = data.get("payload")
+			type_of_transaction = data.get("type_of_transaction")
+		except json.decoder.JSONDecodeError:
+			return JSONResponse('Invalid JSON', status_code=status.HTTP_400_BAD_REQUEST)
 
-	# Find public key (address) corresponding to receiver_id
-	receiver_address = None
-	for key, value in node.ring.items():
-		if value['id'] == receiver_id:
-			receiver_address = key
+		if receiver_id > (TOTAL_NODES - 1) or receiver_id < 0:
+			return JSONResponse('Invalid receiver ID', status_code=status.HTTP_400_BAD_REQUEST)
+		if payload == None:
+			return JSONResponse('Payload cannot be empty', status_code=status.HTTP_400_BAD_REQUEST)
 
-	# Get the validator address
-	validator_address = node.current_validator
-	#print(f"Validator address: {validator_address[1]} 🧑")
-	if receiver_address != None:
-		try:
-			# Create transaction function also signs it and validates it inside
-			transaction = node.create_transaction(receiver_address, type_of_transaction, payload)
+		# Check the type
+		if type_of_transaction == "COINS":
+			type_of_transaction = TransactionType.COINS
+			try:
+				payload = int(payload)
+			except ValueError:
+				return JSONResponse('Payload must be an integer number', status_code=status.HTTP_400_BAD_REQUEST)
+		elif type_of_transaction == "MESSAGE":
+			type_of_transaction = TransactionType.MESSAGE
+		else:
+			return JSONResponse('Invalid type of transaction', status_code=status.HTTP_400_BAD_REQUEST)
 
-			# Create transaction fee
-			if type_of_transaction == TransactionType.COINS:
-				transaction_fee = node.create_transaction(validator_address, TransactionType.FEE, payload*FEE_RATE)
-			elif (type_of_transaction == TransactionType.MESSAGE):
-				transaction_fee = node.create_transaction(validator_address, TransactionType.FEE, len(payload)*FEE_RATE)
+		# Find public key (address) corresponding to receiver_id
+		receiver_address = None
+		for key, value in node.ring.items():
+			if value['id'] == receiver_id:
+				receiver_address = key
 
-   			# Add to pending transactions list and check that it should pass
-			if not node.add_transaction_to_pending(transaction):
-				return JSONResponse('Transaction is not valid', status_code=status.HTTP_400_BAD_REQUEST)
-			# Broadcast transaction			
-			node.broadcast_transaction(transaction)
+		# Get the validator address
+		validator_address = node.current_validator[node.block_counter]
+		if receiver_address != None:
+			try:
+				# Create transaction function also signs it and validates it inside
+				transaction = node.create_transaction(receiver_address, type_of_transaction, payload)
 
-			# Add to pending transactions list and check that it should pass
-			if not node.add_transaction_to_pending(transaction_fee):
-				return JSONResponse('Transaction is not valid', status_code=status.HTTP_400_BAD_REQUEST)
-			# Broadcast transaction			
-			node.broadcast_transaction(transaction_fee)
-			
-			return JSONResponse('Successful Transaction!', status_code=status.HTTP_200_OK)
-		except Exception as e:
-			print(f"{Fore.RED}Error create_transaction: {e}{Fore.RESET}")
-			return JSONResponse("Could not create transaction", status_code=status.HTTP_400_BAD_REQUEST)
-	else:
-		return JSONResponse('Receiver not found', status_code=status.HTTP_400_BAD_REQUEST)
+				# Create transaction fee
+				if type_of_transaction == TransactionType.COINS:
+					transaction_fee = node.create_transaction(validator_address, TransactionType.FEE, payload*FEE_RATE)
+				elif (type_of_transaction == TransactionType.MESSAGE):
+					transaction_fee = node.create_transaction(validator_address, TransactionType.FEE, len(payload)*FEE_RATE)
+
+				# Add to pending transactions list and check that it should pass
+				if not node.add_transaction_to_pending(transaction):
+					return JSONResponse('Transaction is not valid', status_code=status.HTTP_400_BAD_REQUEST)
+				# Broadcast transaction			
+				node.broadcast_transaction(transaction)
+
+				# Add to pending transactions list and check that it should pass
+				if not node.add_transaction_to_pending(transaction_fee):
+					return JSONResponse('Transaction is not valid', status_code=status.HTTP_400_BAD_REQUEST)
+				# Broadcast transaction			
+				node.broadcast_transaction(transaction_fee)
+				
+				return JSONResponse('Successful Transaction!', status_code=status.HTTP_200_OK)
+			except Exception as e:
+				print(f"{Fore.RED}Error create_transaction: {e}{Fore.RESET}")
+				return JSONResponse("Could not create transaction", status_code=status.HTTP_400_BAD_REQUEST)
+		else:
+			return JSONResponse('Receiver not found', status_code=status.HTTP_400_BAD_REQUEST)
 
 @app.post("/api/set_stake")
 async def set_stake(request: Request):
@@ -262,7 +261,8 @@ def get_block(data: bytes = Depends(get_body)):
 	# Wait until incoming block has finished processing
 	with (node.processing_block_lock):
 		# Check validity of block		
-		if (new_block.validate_block(node.blockchain.chain[-1].hash, node.current_validator)):
+		if (new_block.validate_block(node.blockchain.chain[-1].hash, node.current_validator[node.block_counter])):
+			node.block_counter += 1
 			print("Incoming block is valid")
 			print("Block was ⛏️  by someone else 🧑")
 			# Add block to the blockchain
