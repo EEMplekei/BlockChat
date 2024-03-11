@@ -45,7 +45,7 @@ def client():
 		menu = [ 
 			inquirer.List('menu', 
 			message= "BlockChat Client", 
-			choices= ['💸 New transaction', '💬 New message', '🎰 Set Stake','📦 View last block', '⛓️  View blockchain', '💰 Show balance', '💁 Help', '🌙 Exit'], 
+			choices= ['💸 New transaction', '💬 New message', '🎰 Set Stake','📬 Incoming Messages','📦 View last block', '🔗 View blockchain', '💰 Show balance', '💁 Help', '🌙 Exit'], 
 			),
 		]
 		choice = inquirer.prompt(menu)['menu']
@@ -139,7 +139,34 @@ def client():
 			os.system('cls||clear')
 			continue
 		
-		
+		# INCOMING MESSAGES CLIENT CALL ======================================== (DONE)
+		if choice == '📬 Incoming Messages':
+			try:
+				# api client call to view last block
+				chain = requests.get(address+'/api/get_chain')
+				chain = chain.json()
+				count = 1
+				
+				print()
+				print('📬 Incoming Messages')
+				print()
+				print(f"{Fore.LIGHTMAGENTA_EX}---------------------{Fore.RESET}")
+				# Print incoming messages
+				for block in chain:
+					for transaction in block['transactions']:
+						if transaction['type'] == "Message":
+							print(f"{count}.")  
+							print(f"  {Fore.GREEN}FROM: {Fore.RESET}"+transaction['sender_id']+"")
+							print(f"  {Fore.LIGHTBLUE_EX}MESSAGE: {Fore.RESET}"+transaction['payload']+"")
+							print(f"{Fore.LIGHTMAGENTA_EX}---------------------{Fore.RESET}")
+							count += 1
+				
+			except requests.exceptions.HTTPError:
+				print("Node is not active. Try again later.")
+			input("Press any key to go back...")
+			os.system('cls||clear')
+			continue
+
 		# VIEW LAST BLOCK CLIENT CALL ========================================
 		if choice == '📦 View last block':
 			try:
@@ -154,7 +181,7 @@ def client():
 			continue
 
 		# VIEW BLOCKCHAIN CLIENT CALL ======================================== (DONE)
-		if choice == '⛓️  View blockchain':
+		if choice == '🔗 View blockchain':
 			try:
 				# api client call to view last block
 				chain = requests.get(address+'/api/get_chain')
@@ -195,10 +222,13 @@ def client():
 			print('🎰 Set Stake:')
 			print('Set the stake for the client wallet.\n\n')
 
+			print('📬 Incoming Messages:')
+			print('View incoming messages from other nodes.\n\n')
+
 			print('📦 View last block:')
 			print('View the last block in the blockchain.\n\n')
 			
-			print('⛓️ View blockchain:')
+			print('🔗 View blockchain:')
 			print('A visual representation of the blockchain.\n\n')
 
 			print('💰 Show balance')
