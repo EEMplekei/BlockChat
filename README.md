@@ -39,12 +39,11 @@ For other operating systems different than Linux-Debian you will have to fill in
 ## High Level Software Description 🔍
 
 #### Genesis Block
-
-Text should be added here 
+The Genesis block is the first block of the blockchain and  it is the only block that does not get validated. The genesis block has only 1 transaction that is (TOTAL_NODES*1000) Coins to Bootstrap Node.
 
 #### Initial State
 
-Text should be added here 
+
 
 #### Create Transaction
 
