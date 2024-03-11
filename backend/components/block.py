@@ -1,8 +1,10 @@
 from time import time
 from hashlib import sha256
 from colorama import Fore
-from backend.api import FEE_RATE
 from components.transaction import TransactionType
+
+FEE_RATE = 0.03
+
 
 class Block:
 	
