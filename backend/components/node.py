@@ -312,10 +312,10 @@ class Node:
         serialized_data = pickle.dumps(data_to_send)
 
         # Send the serialized data via POST request
-        # Make the call 3 times if cannot connet with delay of 1 second
+        # Make the call 3 times if cannot connect with delay of 1 second
         for _ in range(3):
             try:
-                response = requests.post(bootstrap_address + '/let_me_in', data=serialized_data)
+                response = requests.post(bootstrap_address + '/let_me_in', data=serialized_data, timeout = 2)
 
                 if response.status_code == 200:
                     self.id = response.json()['id']
