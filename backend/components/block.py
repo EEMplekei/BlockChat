@@ -76,7 +76,14 @@ class Block:
 					"payload": str(transaction.amount)
 				})
 			else:
-				if(transaction.type_of_transaction == TransactionType.COINS):
+				if(transaction.type_of_transaction == TransactionType.INITIAL):
+					transactions.append({
+					"type": "Initial Transaction",
+					"sender_id": str(node.ring[str(transaction.sender_address)]['id']),
+					"receiver_id": str(node.ring[str(transaction.receiver_address)]['id']),
+					"payload": str(transaction.amount)
+					})
+				elif(transaction.type_of_transaction == TransactionType.COINS):
 					transactions.append({
 					"type": "Coins Transfer",
 					"sender_id": str(node.ring[str(transaction.sender_address)]['id']),
@@ -89,13 +96,6 @@ class Block:
 					"sender_id": str(node.ring[str(transaction.sender_address)]['id']),
 					"receiver_id": str(node.ring[str(transaction.receiver_address)]['id']),
 					"payload": transaction.message
-					})
-				elif (transaction.type_of_transaction == TransactionType.FEE):
-					transactions.append({
-					"type": "Fee",
-					"sender_id": str(node.ring[str(transaction.sender_address)]['id']),
-					"receiver_id": str(node.ring[str(transaction.receiver_address)]['id']),
-					"payload": str(transaction.amount)
 					})
 				else:
 					print(f"{Fore.YELLOW} get_transactions_from_block{Fore.RESET}:{Fore.RED}Invalid transaction type found in block!{Fore.RESET}")

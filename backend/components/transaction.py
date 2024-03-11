@@ -17,9 +17,9 @@ except Exception as e:
 	FEE_RATE = 0.03
 
 class TransactionType(Enum):
+	INITIAL = 0
 	COINS = 1
 	MESSAGE = 2
-	FEE = 3
 
 class Transaction:
 
@@ -36,19 +36,19 @@ class Transaction:
 	def __init__(self, sender_address, receiver_address, type_of_transaction: TransactionType, payload, nonce):
 					
 		#Check valid type and payload
+		# INITIAL Transaction (It refers to the transactions that the bootstrap sends to the new node to give it coins.)
+		if type_of_transaction == TransactionType.INITIAL:
+			if not ((isinstance(payload, (int, float))) and (payload > 0)):
+				raise ValueError("Transaction amount must be a positive number")
+			self.amount = payload
+			self.message = None
 		#COINS
-		if type_of_transaction == TransactionType.COINS:
+		elif type_of_transaction == TransactionType.COINS:
 			if not ((isinstance(payload, (int, float))) and (payload > 0)):
 				raise ValueError("Transaction amount must be a positive number")
 			if (str(receiver_address) == str(sender_address)):
 				raise ValueError("Sender and receiver address can't be the same")
 			self.amount = payload                           # amount of coins to send
-			self.message = None
-		# FEE (can have sender and receiver as the same address, as it is a fee for the sender's transaction)
-		elif type_of_transaction == TransactionType.FEE:
-			if not ((isinstance(payload, (int, float))) and (payload > 0)):
-				raise ValueError("Transaction fee must be a positive number")
-			self.amount = payload
 			self.message = None
 		# MESSAGE
 		elif type_of_transaction == TransactionType.MESSAGE:
@@ -161,17 +161,17 @@ class Transaction:
 		
 		# Check if the sender has enough coins to send the transaction
 
+		# INITIAL CASE
+		if (self.type_of_transaction == TransactionType.INITIAL):
+			transaction_cost = self.amount
+			
 		# COINS CASE
-		if (self.type_of_transaction == TransactionType.COINS and self.receiver_address != 0):
+		elif (self.type_of_transaction == TransactionType.COINS and self.receiver_address != 0):
 			transaction_cost = self.amount+self.amount*FEE_RATE
-		
+	
 		# MESSAGE CASE
 		elif (self.type_of_transaction == TransactionType.MESSAGE):
-			transaction_cost = len(self.message)+len(self.message)*FEE_RATE
-		
-		# FEE CASE
-		elif (self.type_of_transaction == TransactionType.FEE):
-			transaction_cost = self.amount
+			transaction_cost = len(self.message)
 		
 		# STAKE CASE
 		elif (self.type_of_transaction == TransactionType.COINS and self.receiver_address == 0):
