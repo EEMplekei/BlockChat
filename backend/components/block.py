@@ -2,9 +2,19 @@ from time import time
 from hashlib import sha256
 from colorama import Fore
 from components.transaction import TransactionType
+from dotenv import load_dotenv
 
-FEE_RATE = 0.03
+try:
+	from helper_functions.env_variables import *
+except ImportError:
+	print(f"{Fore.RED}Could not import required classes{Fore.RESET}")
+	exit()
 
+# ======================== MAIN ===========================
+
+# Initialize environment variables
+load_dotenv()
+FEE_RATE = float(try_load_env('FEE_RATE'))
 
 class Block:
 	
