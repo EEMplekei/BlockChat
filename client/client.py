@@ -154,10 +154,11 @@ def client():
 				# Print incoming messages
 				for block in chain:
 					for transaction in block['transactions']:
-						if transaction['type'] == "Message":
-							print(f"{count}.")  
-							print(f"  {Fore.GREEN}FROM: {Fore.RESET}"+transaction['sender_id']+"")
-							print(f"  {Fore.LIGHTBLUE_EX}MESSAGE: {Fore.RESET}"+transaction['payload']+"")
+						if transaction['type'] == "Message" and int(transaction['receiver_id']) == int(node):
+							print(f"{count}.")
+							print()
+							print(f"    {Fore.GREEN}FROM: {Fore.RESET}"+transaction['sender_id']+"")
+							print(f"    {Fore.LIGHTBLUE_EX}MESSAGE: {Fore.RESET}"+transaction['payload']+"")
 							print(f"{Fore.LIGHTMAGENTA_EX}---------------------{Fore.RESET}")
 							count += 1
 				
