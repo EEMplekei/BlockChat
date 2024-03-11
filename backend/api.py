@@ -3,13 +3,12 @@ from colorama import Fore
 import uvicorn
 
 try:
-	from helper_functions.api_middleware import restrict_internal_routes, add_process_time_header
+	from helper_functions.api_middleware import restrict_internal_routes
 	from controllers.internal_api import internal_api
 	from controllers.public_api import public_api
 	from controllers.shared_recourses import node
 except ImportError as e:
 	print(f"{Fore.RED}Could not import required classes{Fore.RESET}")
-	input("Press any key to exit...")
 	exit()
 
 app = FastAPI()

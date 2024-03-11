@@ -20,7 +20,6 @@ try:
     from helper_functions.wrappers import call_once, bootstrap_required
 except Exception as e:
     print(f"{Fore.YELLOW}node{Fore.RESET}: {Fore.RED}Error loading modules: {e}{Fore.RESET}")
-    input("Press any key to exit...")
     raise ImportError
 
 # Get environment variables for blocksize, total nodes and bootstrap node

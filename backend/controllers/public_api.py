@@ -11,7 +11,7 @@ public_api = FastAPI(root_path="/api")
 # Client routes 
 @public_api.get("/")
 def get_api():
-	return JSONResponse({'message': f'Node {node,id} is up and running!'}, status_code=status.HTTP_200_OK)
+	return JSONResponse({'message': f'Node {node.id} is up and running!'}, status_code=status.HTTP_200_OK)
 
 @public_api.post("/create_transaction")
 async def create_transaction(request: Request):
