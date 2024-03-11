@@ -227,9 +227,10 @@ class Node:
             # Update the balance of the validator in the ring (if it is a normal COINS transaction)
             if transaction.receiver_address != 0 and transaction.type_of_transaction == TransactionType.COINS:
                 self.ring[str(block.validator)]['balance'] += transaction.amount*FEE_RATE
-            # Make the temp_balance of the sender and the receiver equal to the balance
+                # Make the temp_balance of the receiver equal to the balance 
+                self.ring[str(transaction.receiver_address)]['temp_balance'] = self.ring[str(transaction.receiver_address)]['balance']
+            # Make the temp_balance of the sender equal to the balance
             self.ring[str(transaction.sender_address)]['temp_balance'] = self.ring[str(transaction.sender_address)]['balance']
-            self.ring[str(transaction.receiver_address)]['temp_balance'] = self.ring[str(transaction.receiver_address)]['balance']
         # Make the temp_balance of the validator equal to the balance
         self.ring[str(block.validator)]['temp_balance'] = self.ring[str(block.validator)]['balance']
         # Update pending_transactions list
@@ -400,7 +401,7 @@ class Node:
 
     def check_if_bootstrap(self):
         if (self.ip, self.port) == (try_load_env('BOOTSTRAP_IP'), str(try_load_env('BOOTSTRAP_PORT'))):
-            print(f"I am boostrap. Node: {self.id}")
+            print(f"I am boostrap. {Fore.CYAN}My ID is:{Fore.RESET} {Fore.MAGENTA}0 {Fore.RESET}")
             return True
         else:
             return False

@@ -255,15 +255,17 @@ def get_transaction(data: bytes = Depends(get_body)):
 
 	return JSONResponse('OK')
 
-
+# Gets an incoming mined block and adds it to the blockchain.
 @app.post("/get_block")
 def get_block(data: bytes = Depends(get_body)):
-	# Gets an incoming mined block and adds it to the blockchain.
 	
 	# Deserialize the data received in the request body using pickle.loads()
 	new_block = pickle.loads(data)
 
 	print(f"{Fore.GREEN}NEWS{Fore.RESET}: Got new block, now lets validate it!")
+
+	if not node.current_validator:
+		node.find_next_validator()
 
 	# Wait until incoming block has finished processing
 	with (node.processing_block_lock):
