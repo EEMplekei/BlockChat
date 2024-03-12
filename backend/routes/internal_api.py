@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, Depends, status
 from fastapi.responses import JSONResponse
-from controllers.shared_recourses import node, TOTAL_NODES, FEE_RATE
+from routes.shared_recourses import node, TOTAL_NODES, FEE_RATE
 from colorama import Fore
 import threading
 import pickle
@@ -76,10 +76,8 @@ def get_block(data: bytes = Depends(get_body)):
 		# Check validity of block		
 		if (new_block.validate_block(node.blockchain.chain[-1].hash, node.current_validator[node.block_counter])):
 			node.block_counter += 1
-			print("Incoming block is valid")
-			print("Block was ⛏️  by someone else 🧑")
+			print(f"{Fore.LIGHTGREEN_EX}Block was mined by someone else\n✅📦 Adding it to the chain{Fore.RESET}")
 			# Add block to the blockchain
-			print("✅📦! Adding it to the chain")
 			node.add_block_to_chain(new_block)
 			return JSONResponse('OK')
 		print("❌📦 Something went wrong with validation 🙁")

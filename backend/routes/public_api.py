@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
-from controllers.shared_recourses import node, TOTAL_NODES, FEE_RATE
+from routes.shared_recourses import node, TOTAL_NODES, FEE_RATE
 from components.transaction import TransactionType
 from colorama import Fore
 import json
