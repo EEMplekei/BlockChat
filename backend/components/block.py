@@ -10,8 +10,6 @@ except ImportError:
 	print(f"{Fore.RED}Could not import required classes{Fore.RESET}")
 	exit()
 
-# ======================== MAIN ===========================
-
 # Initialize environment variables
 load_dotenv()
 FEE_RATE = float(try_load_env('FEE_RATE'))
