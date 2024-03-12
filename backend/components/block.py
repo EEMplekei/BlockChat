@@ -2,6 +2,17 @@ from time import time
 from hashlib import sha256
 from colorama import Fore
 from components.transaction import TransactionType
+from dotenv import load_dotenv
+
+try:
+	from helper_functions.env_variables import *
+except ImportError:
+	print(f"{Fore.RED}Could not import required classes{Fore.RESET}")
+	exit()
+
+# Initialize environment variables
+load_dotenv()
+FEE_RATE = float(try_load_env('FEE_RATE'))
 
 class Block:
 	
@@ -58,6 +69,16 @@ class Block:
 		print(f"{Fore.GREEN}Block validation passed!{Fore.RESET}")
 		return True
 
+	# Get total amount of fees from a block 
+	def get_total_fees(self): 
+		# Initialize total_fees 
+		total_fees = 0 
+		for transaction in self.transactions: 
+			if transaction.type_of_transaction == TransactionType.COINS: 
+				total_fees += (transaction.amount)*FEE_RATE 
+		
+		return total_fees
+
 	#Get the transactions from a block
 	def get_transactions_from_block(self, node):
 
@@ -76,7 +97,14 @@ class Block:
 					"payload": str(transaction.amount)
 				})
 			else:
-				if(transaction.type_of_transaction == TransactionType.COINS):
+				if(transaction.type_of_transaction == TransactionType.INITIAL):
+					transactions.append({
+					"type": "Initial Transaction",
+					"sender_id": str(node.ring[str(transaction.sender_address)]['id']),
+					"receiver_id": str(node.ring[str(transaction.receiver_address)]['id']),
+					"payload": str(transaction.amount)
+					})
+				elif(transaction.type_of_transaction == TransactionType.COINS):
 					transactions.append({
 					"type": "Coins Transfer",
 					"sender_id": str(node.ring[str(transaction.sender_address)]['id']),
@@ -89,13 +117,6 @@ class Block:
 					"sender_id": str(node.ring[str(transaction.sender_address)]['id']),
 					"receiver_id": str(node.ring[str(transaction.receiver_address)]['id']),
 					"payload": transaction.message
-					})
-				elif (transaction.type_of_transaction == TransactionType.FEE):
-					transactions.append({
-					"type": "Fee",
-					"sender_id": str(node.ring[str(transaction.sender_address)]['id']),
-					"receiver_id": str(node.ring[str(transaction.receiver_address)]['id']),
-					"payload": str(transaction.amount)
 					})
 				else:
 					print(f"{Fore.YELLOW} get_transactions_from_block{Fore.RESET}:{Fore.RED}Invalid transaction type found in block!{Fore.RESET}")
