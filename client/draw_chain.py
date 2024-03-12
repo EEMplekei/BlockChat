@@ -54,6 +54,8 @@ def draw_blockchain(blockchain_data):
 		print(f"    ├──────────────────────────────────────────────────────────────────┤")
 		line = "Validator: "+block['validator']+""
 		print(f"    │ {Fore.GREEN}{line}{Fore.RESET}{fix_spaces(line)}│")
+		line = "Total Fees: "+block['total_fees']+""
+		print(f"    │ {Fore.GREEN}{line}{Fore.RESET}{fix_spaces(line)}│")
 		for transaction in block["transactions"]:
 			print(f"    ├++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++┤")
 			line = "Transaction Details"

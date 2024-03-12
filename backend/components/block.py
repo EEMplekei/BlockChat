@@ -2,6 +2,19 @@ from time import time
 from hashlib import sha256
 from colorama import Fore
 from components.transaction import TransactionType
+from dotenv import load_dotenv
+
+try:
+	from helper_functions.env_variables import *
+except ImportError:
+	print(f"{Fore.RED}Could not import required classes{Fore.RESET}")
+	exit()
+
+# ======================== MAIN ===========================
+
+# Initialize environment variables
+load_dotenv()
+FEE_RATE = float(try_load_env('FEE_RATE'))
 
 class Block:
 	
@@ -57,6 +70,16 @@ class Block:
 
 		print(f"{Fore.GREEN}Block validation passed!{Fore.RESET}")
 		return True
+
+	# Get total amount of fees from a block 
+	def get_total_fees(self): 
+		# Initialize total_fees 
+		total_fees = 0 
+		for transaction in self.transactions: 
+			if transaction.type_of_transaction == TransactionType.COINS: 
+				total_fees += (transaction.amount)*FEE_RATE 
+		
+		return total_fees
 
 	#Get the transactions from a block
 	def get_transactions_from_block(self, node):

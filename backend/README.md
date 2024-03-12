@@ -14,10 +14,23 @@ add stuff here
 The following endpoints are available in the API:
 
 #### <span style="color:#d7bf6c">POST</span> `/api/create_transaction`
-Sample Text
+
+```javascript
+request.body = {
+    "receiver_id": int,
+    "payload": str,
+    "type_of_transaction": str
+}
+```
 
 #### <span style="color:#d7bf6c">POST</span> `/api/set_stake`
-Sample Text
+
+Maybe should do it in string
+```javascript
+request.body = {
+    "stake": str
+}
+```
 
 #### <span style="color:#63bc86">GET</span> `/api/view_last_block`
 Sample Text
@@ -36,8 +49,6 @@ Sample Text
 
 ## Internal Endpoints
 The following internal endpoints are available in the API in order for the nodes to communicate with each other:
-
- 
 
 #### <span style="color:#d7bf6c">POST</span> `/receive_ring`
 Sample Text

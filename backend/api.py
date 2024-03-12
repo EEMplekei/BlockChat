@@ -144,6 +144,7 @@ def view_last_block_transactions():
 			"hash": str(latest_block.hash)[:7],
 			"previous_hash": str(latest_block.previous_hash)[:7],
 			"validator": str(node.ring[str(latest_block.validator)]['id']),
+			"total_fees": str(latest_block.get_total_fees()),
 			"transactions": latest_block.get_transactions_from_block(node),
 		})
 	except Exception as e:
@@ -191,6 +192,7 @@ def get_chain():
 			"hash": str(block.hash)[:7],
 			"previous_hash": str(block.previous_hash)[:7],
 			"validator": str(node.ring[str(block.validator)]['id']),
+			"total_fees": str(block.get_total_fees()),
 			"transactions": block.get_transactions_from_block(node),
 		})
 	return JSONResponse(data, status_code=status.HTTP_200_OK)
