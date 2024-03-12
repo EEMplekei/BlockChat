@@ -97,7 +97,7 @@ async def set_stake(request: Request):
 	# {
 	#     "stake": int,
 	# }
- 
+	
 	# Get the parameters
 	data = await request.json()
 	amount = data.get("stake")

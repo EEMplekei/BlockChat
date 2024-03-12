@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, Depends, status
 from fastapi.responses import JSONResponse
 from controllers.shared_recourses import node, TOTAL_NODES, FEE_RATE
-from helper_functions.api_middleware import restrict_internal_routes, add_process_time_header
+from backend.helper_functions.middleware import restrict_internal_routes, add_process_time_header
 from colorama import Fore
 import threading
 import pickle
@@ -46,7 +46,6 @@ async def get_body(request: Request):
 @internal_api.post("/get_transaction")
 def get_transaction(data: bytes = Depends(get_body)):
 
-	# data = request.body()
 	new_transaction = pickle.loads(data)
 	print("New transaction received successfully!")
 
@@ -83,7 +82,7 @@ def get_block(data: bytes = Depends(get_body)):
 async def let_me_in(request: Request):
 	
 	if not node.is_bootstrap:
-		return JSONResponse('Cannot post to let-me-in to a non-bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
+		return JSONResponse('Cannot post to let_mein to a non-bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
 
   	# Deserialize the data received in the request body using pickle.loads()
 	data = await request.body()
