@@ -17,9 +17,9 @@ try:
     from components.block import Block
     from helper_functions.network import get_ip_and_port
     from helper_functions.env_variables import try_load_env
-    from helper_functions.call_once import call_once
+    from helper_functions.wrappers import call_once, bootstrap_required
 except Exception as e:
-    print(f"{Fore.RED}Node: Error loading modules: {e}{Fore.RESET}")
+    print(f"{Fore.YELLOW}node{Fore.RESET}: {Fore.RED}Error loading modules: {e}{Fore.RESET}")
     raise ImportError
 
 # Get environment variables for blocksize, total nodes and bootstrap node
@@ -200,7 +200,6 @@ class Node:
             if len(self.pending_transactions) >= block_size:
                 # If the current node is the validator, mint a block
                 if self.current_validator[self.block_counter] == str(self.wallet.address):
-                    #self.current_validator.pop()
                     print("🔒 I am the validator")
                     new_block = self.create_new_block()
                     self.block_counter += 1  
@@ -289,23 +288,22 @@ class Node:
             if (self.id != node['id']):
                 self.unicast_transaction(node, transaction)
 
-
-    ##### Bootstrap Node #####
-    # The following methods are used only by the bootstrap node
-    
-    # Adds a new node to the cluster
-    def add_node_to_ring(self, id, ip, port, address, balance):
-        self.ring[str(address)] = {
-                'id': id,
-                'ip': ip,
-                'port': port,
-                'stake': 0, # stake is 0 for new nodes
-                'balance': balance,
-                'temp_balance': balance, # temp_balance to keep track balance while transactions are on pending list
-            }
+    def check_if_bootstrap(self):
+        if (self.ip, self.port) == (try_load_env('BOOTSTRAP_IP'), str(try_load_env('BOOTSTRAP_PORT'))):
+            print(f"I am bootstrap. {Fore.CYAN}My ID is:{Fore.RESET} {Fore.MAGENTA}0 {Fore.RESET}")
+            return True
+        else:
+            return False
         
-        return
-    
+    def register_node_to_cluster(self):
+        if (self.is_bootstrap):
+            # Add node to ring
+            self.id = 0
+            self.add_node_to_ring(self.id, self.ip, self.port, self.wallet.address, total_bbc)
+            self.create_genesis_block()
+        else:
+            self.advertise_to_bootstrap()
+
     # Sends information about self to the bootstrap node
     def advertise_to_bootstrap(self):
         try:
@@ -324,10 +322,10 @@ class Node:
         serialized_data = pickle.dumps(data_to_send)
 
         # Send the serialized data via POST request
-        # Make the call 3 times if cannot connet with delay of 1 second
+        # Make the call 3 times if cannot connect with delay of 1 second
         for _ in range(3):
             try:
-                response = requests.post(bootstrap_address + '/let_me_in', data=serialized_data)
+                response = requests.post(bootstrap_address + '/let_me_in', data=serialized_data, timeout = 2)
 
                 if response.status_code == 200:
                     self.id = response.json()['id']
@@ -343,35 +341,53 @@ class Node:
         print(f"{Fore.RED}Can't connect to bootstrap, please check if the bootstrap node is up and running{Fore.RESET}")
         exit()
 
-    # Send the current ring information to a specific node via HTTP POST request.
+    ##### Bootstrap Node #####
+    # The following methods are used only by the bootstrap node
+    
+    # Adds a new node to the cluster
+    @bootstrap_required
+    def add_node_to_ring(self, id, ip, port, address, balance):
+        self.ring[str(address)] = {
+                'id': id,
+                'ip': ip,
+                'port': port,
+                'stake': 0, # stake is 0 for new nodes
+                'balance': balance,
+                'temp_balance': balance, # temp_balance to keep track balance while transactions are on pending list
+            }
+        
+        return
+    
+    # Send the current ring information to a specific node via HTTP POST request.    
+    @bootstrap_required
     def unicast_ring(self, node):
         request_address = 'http://' + node['ip'] + ':' + node['port']
         request_url = request_address + '/receive_ring'
         requests.post(request_url, pickle.dumps(self.ring))
 
     # Broadcast the current ring information to all nodes
+    @bootstrap_required
     def broadcast_ring(self):
         for node in self.ring.values():
             if (self.id != node['id']):
                 self.unicast_ring(node)
 
     # Send the current state of the blockchain to a specific node
+    @bootstrap_required
     def unicast_blockchain(self, node):
         request_address = 'http://' + node['ip'] + ':' + node['port']
         request_url = request_address + '/get_blockchain'
         requests.post(request_url, pickle.dumps(self.blockchain))
 
     # Broadcast the current state of the blockchain to all nodes
+    @bootstrap_required
     def broadcast_blockchain(self):
-        """
-        ! BOOTSTRAP ONLY !
-        Broadcast the current state of the blockchain to all nodes
-        """
         for node in self.ring.values():
             if (self.id != node['id']):
                 self.unicast_blockchain(node)
     
     # Send the initial amount of 1000 BlockChat coins to a specific node
+    @bootstrap_required
     def unicast_initial_bcc(self, node_address):
         # Create initial transaction
         transaction = self.create_transaction(node_address,TransactionType.INITIAL, 1000)
@@ -383,12 +399,14 @@ class Node:
         self.broadcast_transaction(transaction)
     
     # Send the initial amount of 1000 BlockChat coins to all nodes
+    @bootstrap_required
     def broadcast_initial_bcc(self):
         for node_address in self.ring:
             if (self.id != self.ring[str(node_address)]['id']):
                 self.unicast_initial_bcc(node_address)
     
     # Check if all nodes are up
+    @bootstrap_required
     def check_all_nodes_are_up(self):
         for node in self.ring.values():
             try:
@@ -398,31 +416,9 @@ class Node:
             except requests.RequestException as e:
                 return False
         return True
-
-    def check_if_bootstrap(self):
-        if (self.ip, self.port) == (try_load_env('BOOTSTRAP_IP'), str(try_load_env('BOOTSTRAP_PORT'))):
-            print(f"I am boostrap. {Fore.CYAN}My ID is:{Fore.RESET} {Fore.MAGENTA}0 {Fore.RESET}")
-            return True
-        else:
-            return False
-        
-    def register_node_to_cluster(self):
-        if (self.is_bootstrap):
-            # Add node to ring
-            self.id = 0
-            self.add_node_to_ring(self.id, self.ip, self.port, self.wallet.address, total_bbc)
-            self.create_genesis_block()
-        else:
-            self.advertise_to_bootstrap()
-
-    def broadcast_order_for_validator(self):
-        for node in self.ring.values():
-            if (self.id != node['id']):
-                request_address = 'http://' + node['ip'] + ':' + node['port']
-                request_url = request_address + '/find_validator'
-                requests.post(request_url, data=None)
-
+    
     # Checks if all nodes have been added to the ring (up until now)
+    @bootstrap_required
     def check_full_ring(self, ring_nodes_count): 
         if (ring_nodes_count == total_nodes):
             #Checks that nodes are ready to listen to requests before broadcasting
@@ -437,7 +433,14 @@ class Node:
             self.find_next_validator()
             # Broadcast the order for the validator
             self.broadcast_order_for_validator()
-            
+    
+    @bootstrap_required
+    def broadcast_order_for_validator(self):
+        for node in self.ring.values():
+            if (self.id != node['id']):
+                request_address = 'http://' + node['ip'] + ':' + node['port']
+                request_url = request_address + '/find_validator'
+                requests.post(request_url, data=None)
     # Function that creates genesis block
     @call_once
     def create_genesis_block(self):
