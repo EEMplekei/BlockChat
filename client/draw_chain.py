@@ -72,15 +72,15 @@ def draw_blockchain(blockchain_data):
 			# if line is too long, split it into multiple lines
 			if len(line) > 65:
 				# first line
-				print(f"    │    {Fore.LIGHTBLUE_EX}{line[:61]}{Fore.RESET}{fix_spaces(line[:61])}│")
+				print(f"    │    {Fore.LIGHTBLUE_EX}{line[:61]}{Fore.RESET}{fix_spaces('   '+line[:61])+''}│")
 				
 				line = line[61:]
-				while len(line) > 65:
+				while len(line) > 52:
 					# middle lines
-					print(f"    │    {Fore.LIGHTBLUE_EX}{line[:61]}{Fore.RESET}{fix_spaces(line[:61])}│")
-					line = line[61:]
+					print(f"    │             {Fore.LIGHTBLUE_EX}{line[:52]}{Fore.RESET} │")
+					line = line[52:]
 				# last line
-				print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces('   '+line+'')}│")
+				print(f"    │             {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces('            '+line+'')}│")
 
 			else:
 				print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces('   '+line+'')}│")
