@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, Depends, status
 from fastapi.responses import JSONResponse
 from controllers.shared_recourses import node, TOTAL_NODES, FEE_RATE
-from backend.helper_functions.middleware import restrict_internal_routes, add_process_time_header
+from helper_functions.middleware import restrict_internal_routes, add_process_time_header
 from colorama import Fore
 import threading
 import pickle
