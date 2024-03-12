@@ -44,9 +44,6 @@ async def create_transaction(request: Request):
 	#     "payload": str,
 	#     "type_of_transaction": str
 	# }
-		# It shouldn't be here, but just in case
-		if not node.current_validator:
-			node.find_next_validator()
 
 		# Get the parameters
 		try:
@@ -266,9 +263,6 @@ def get_block(data: bytes = Depends(get_body)):
 
 	print(f"{Fore.GREEN}NEWS{Fore.RESET}: Got new block, now lets validate it!")
 
-	if not node.current_validator:
-		node.find_next_validator()
-
 	# Wait until incoming block has finished processing
 	with (node.processing_block_lock):
 		# Check validity of block		
@@ -283,6 +277,14 @@ def get_block(data: bytes = Depends(get_body)):
 		print("❌📦 Something went wrong with validation 🙁")
 
 		return JSONResponse('Error validating block', status_code=status.HTTP_400_BAD_REQUEST)
+
+# Gets the order to find validator from the Bootstrap node
+@app.post("/find_validator")
+async def find_validator():
+    # Gets the order to find the next validator from the Bootstrap node
+    node.find_next_validator()
+    return {"message": "Validator search initiated"}
+
 
 @app.post("/let_me_in")
 async def let_me_in(request: Request):

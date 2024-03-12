@@ -196,9 +196,6 @@ class Node:
 
     def mint_block(self):
         time.sleep(1)
-        # If the current_validator is None, find one: (Edge case for the first block -excluding genesis block-)
-        if not self.current_validator:
-            self.find_next_validator()
         with (self.processing_block_lock):
             if len(self.pending_transactions) >= block_size:
                 # If the current node is the validator, mint a block
@@ -418,6 +415,13 @@ class Node:
         else:
             self.advertise_to_bootstrap()
 
+    def broadcast_order_for_validator(self):
+        for node in self.ring.values():
+            if (self.id != node['id']):
+                request_address = 'http://' + node['ip'] + ':' + node['port']
+                request_url = request_address + '/find_validator'
+                requests.post(request_url, data=None)
+
     # Checks if all nodes have been added to the ring (up until now)
     def check_full_ring(self, ring_nodes_count): 
         if (ring_nodes_count == total_nodes):
@@ -429,6 +433,10 @@ class Node:
             self.broadcast_ring()
             self.broadcast_blockchain()
             self.broadcast_initial_bcc()
+            # Select a validator for the first block
+            self.find_next_validator()
+            # Broadcast the order for the validator
+            self.broadcast_order_for_validator()
             
     # Function that creates genesis block
     @call_once
@@ -441,7 +449,7 @@ class Node:
         first_transaction = Transaction(
             sender_address = '0',
             receiver_address = self.wallet.address, 
-            type_of_transaction = TransactionType.COINS,
+            type_of_transaction = TransactionType.INITIAL,
             payload = total_bbc,
             nonce = 1
         )	
