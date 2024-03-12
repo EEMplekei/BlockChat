@@ -54,6 +54,8 @@ def draw_blockchain(blockchain_data):
 		print(f"    ├──────────────────────────────────────────────────────────────────┤")
 		line = "Validator: "+block['validator']+""
 		print(f"    │ {Fore.GREEN}{line}{Fore.RESET}{fix_spaces(line)}│")
+		line = "Total Fees: "+block['total_fees']+""
+		print(f"    │ {Fore.GREEN}{line}{Fore.RESET}{fix_spaces(line)}│")
 		for transaction in block["transactions"]:
 			print(f"    ├++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++┤")
 			line = "Transaction Details"
@@ -64,9 +66,26 @@ def draw_blockchain(blockchain_data):
 			print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces('   '+line+'')}│")
 			line = "Receiver: "+transaction['receiver_id']+""
 			print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces('   '+line+'')}│")
+			
+
 			line = "Payload: "+str(transaction['payload'])+""
-			print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces('   '+line+'')}│")
+			# if line is too long, split it into multiple lines
+			if len(line) > 65:
+				# first line
+				print(f"    │    {Fore.LIGHTBLUE_EX}{line[:61]}{Fore.RESET}{fix_spaces(line[:61])}│")
+				
+				line = line[61:]
+				while len(line) > 65:
+					# middle lines
+					print(f"    │    {Fore.LIGHTBLUE_EX}{line[:61]}{Fore.RESET}{fix_spaces(line[:61])}│")
+					line = line[61:]
+				# last line
+				print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces('   '+line+'')}│")
+
+			else:
+				print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces('   '+line+'')}│")
 		print("    └──────────────────────────────────────────────────────────────────┘")
+		
 		if (block == blockchain_data[len(blockchain_data) - 1]):
 			print()
 			print("    Here is a visual representation of the blockchain")
@@ -75,35 +94,3 @@ def draw_blockchain(blockchain_data):
 			print()
 			break
 		draw_chain()
-	
-
-# Sample blockchain data
-blockchain_data = [
-	{
-		"hash": "hash1",
-		"previous_hash": "0",
-		"validator": "validator1",
-		"transactions": [
-			{"type": "Coins Transfer", "sender_id": "sender1", "receiver_id": "receiver1", "payload": 10},
-			{"type": "Coins Transfer", "sender_id": "sender2", "receiver_id": "receiver2", "payload": 5}
-		]
-	},
-	{
-		"hash": "hash2",
-		"previous_hash": "hash1",
-		"validator": "validator2",
-		"transactions": [
-			{"type": "Coins Transfer", "sender_id": "sender3", "receiver_id": "receiver3", "payload": 7},
-			{"type": "Coins Transfer", "sender_id": "sender4", "receiver_id": "receiver4", "payload": 3}
-		]
-	},
-	{
-		"hash": "hash3",
-		"previous_hash": "hash2",
-		"validator": "validator3",
-		"transactions": [
-			{"type": "Coins Transfer", "sender_id": "sender5", "receiver_id": "receiver5", "payload": 12},
-			{"type": "Coins Transfer", "sender_id": "sender6", "receiver_id": "receiver6", "payload": 8}
-		]
-	}
-]

@@ -28,7 +28,7 @@ async def receive_ring(request: Request):
 # Gets the latest version of the blockchain from the Bootstrap node
 @internal_api.post("/get_blockchain")
 async def get_blockchain(request: Request):
-    
+	
 	if len(node.ring) < TOTAL_NODES:
 		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
  
@@ -74,7 +74,8 @@ def get_block(data: bytes = Depends(get_body)):
 	# Wait until incoming block has finished processing
 	with (node.processing_block_lock):
 		# Check validity of block		
-		if (new_block.validate_block(node.blockchain.chain[-1].hash, node.current_validator)):
+		if (new_block.validate_block(node.blockchain.chain[-1].hash, node.current_validator[node.block_counter])):
+			node.block_counter += 1
 			print("Incoming block is valid")
 			print("Block was ⛏️  by someone else 🧑")
 			# Add block to the blockchain
@@ -85,12 +86,21 @@ def get_block(data: bytes = Depends(get_body)):
 
 		return JSONResponse('Error validating block', status_code=status.HTTP_400_BAD_REQUEST)
 
+# Gets the order to find validator from the Bootstrap node
+@internal_api.post("/find_validator")
+async def find_validator():
+	if len(node.ring) < TOTAL_NODES:
+		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
+
+	node.find_next_validator()
+	return {"message": "Validator search initiated"}
+
 # Asks bootstrap node to enter the network, api endpoint accessed by non-bootstrap nodes
 @internal_api.post("/let_me_in")
 async def let_me_in(request: Request):
 	
 	if not node.is_bootstrap:
-		return JSONResponse('Cannot post to let_mein to a non-bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
+		return JSONResponse('Cannot post to let_me_in to a non-bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
 
   	# Deserialize the data received in the request body using pickle.loads()
 	data = await request.body()
