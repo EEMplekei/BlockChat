@@ -21,7 +21,10 @@ async def create_transaction(request: Request):
 	#     "payload": str,
 	#     "type_of_transaction": str
 	# }
-	
+
+	if len(node.ring) < TOTAL_NODES:
+		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
+
 	# It shouldn't be here, but just in case
 	if node.current_validator is None:
 		node.find_next_validator()
@@ -97,7 +100,10 @@ async def set_stake(request: Request):
 	# {
 	#     "stake": int,
 	# }
-	
+
+	if len(node.ring) < TOTAL_NODES:
+		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)	
+ 
 	# Get the parameters
 	data = await request.json()
 	amount = data.get("stake")
@@ -124,6 +130,9 @@ async def set_stake(request: Request):
 @public_api.get("/view_last_block")
 def view_last_block_transactions():
 	
+	if len(node.ring) < TOTAL_NODES:
+		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)	
+ 
 	if (len(node.blockchain.chain) < 1):
 		return JSONResponse(status_code = status.HTTP_204_NO_CONTENT)
 	# Get last block in the chain
@@ -144,6 +153,10 @@ def view_last_block_transactions():
 
 @public_api.get("/get_balance")
 def get_balance():
+	
+	if len(node.ring) < TOTAL_NODES:
+		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
+ 
 	try:
 		balance = node.ring[str(node.wallet.address)]['balance'] # Alternative
 	except Exception as e:
@@ -154,6 +167,10 @@ def get_balance():
 
 @public_api.get("/get_temp_balance")
 def get_temp_balance():
+	
+	if len(node.ring) < TOTAL_NODES:
+		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
+
 	try:
 		temp_balance = node.ring[str(node.wallet.address)]['temp_balance'] # Alternative
 	except Exception as e:
@@ -163,14 +180,27 @@ def get_temp_balance():
 
 @public_api.get("/get_chain_length")
 def get_chain_length():
+	
+	if len(node.ring) < TOTAL_NODES:
+		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
+
 	return JSONResponse({'chain_length': len(node.blockchain.chain)}, status_code=status.HTTP_200_OK)
 
 @public_api.get("/get_pending_list_length")
 def get_pending_list_length():
+	
+	if len(node.ring) < TOTAL_NODES:
+		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)	
+	
 	return JSONResponse({'pending_list_length': len(node.pending_transactions)}, status_code=status.HTTP_200_OK)
 
+# @full_ring_required(len(node.ring))
 @public_api.get("/get_chain")
 def get_chain():
+	
+	if len(node.ring) < TOTAL_NODES:
+		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
+
 	data = []
 	# Iterate through the blockchain and get the transactions, hash and previous hash and get the validator of each block
 	for block in node.blockchain.chain:

@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Request, Depends, status
 from fastapi.responses import JSONResponse
 from controllers.shared_recourses import node, TOTAL_NODES, FEE_RATE
-from helper_functions.middleware import restrict_internal_routes, add_process_time_header
 from colorama import Fore
 import threading
 import pickle
@@ -29,7 +28,10 @@ async def receive_ring(request: Request):
 # Gets the latest version of the blockchain from the Bootstrap node
 @internal_api.post("/get_blockchain")
 async def get_blockchain(request: Request):
-
+    
+	if len(node.ring) < TOTAL_NODES:
+		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
+ 
 	if (node.is_bootstrap):
 		return JSONResponse('Cannot post blockchain to bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
 	
@@ -46,6 +48,9 @@ async def get_body(request: Request):
 @internal_api.post("/get_transaction")
 def get_transaction(data: bytes = Depends(get_body)):
 
+	if len(node.ring) < TOTAL_NODES:
+		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
+
 	new_transaction = pickle.loads(data)
 	print("New transaction received successfully!")
 
@@ -57,6 +62,9 @@ def get_transaction(data: bytes = Depends(get_body)):
 # Gets an incoming mined block and adds it to the blockchain.
 @internal_api.post("/get_block")
 def get_block(data: bytes = Depends(get_body)):
+	
+	if len(node.ring) < TOTAL_NODES:
+		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
 	
 	# Deserialize the data received in the request body using pickle.loads()
 	new_block = pickle.loads(data)
