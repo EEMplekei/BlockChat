@@ -187,6 +187,48 @@ def get_pending_list_length():
 	
 	return JSONResponse({'pending_list_length': len(node.pending_transactions)}, status_code=status.HTTP_200_OK)
 
+@public_api.get("/get_transaction_list")
+def get_transaction_list():
+    if len(node.ring) < TOTAL_NODES:
+        return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        my_transactions = []
+        for transaction in node.wallet.transactions:
+            if (transaction.type_of_transaction == TransactionType.COINS and transaction.receiver_address != 0) or transaction.type_of_transaction == TransactionType.INITIAL:
+                my_transactions.append({
+                    "sender_address": str(node.ring[str(transaction.sender_address)]['id']),
+                    "receiver_address": str(node.ring[str(transaction.receiver_address)]['id']),
+                    "type_of_transaction": str(transaction.type_of_transaction)[16:],
+                    "amount": str(transaction.amount),
+                    "nonce": str(transaction.nonce),
+                    "transaction_id": str(transaction.transaction_id),
+                })
+            elif transaction.type_of_transaction == TransactionType.COINS and transaction.receiver_address == 0:
+                my_transactions.append({
+                    "sender_address": str(node.ring[str(transaction.sender_address)]['id']),
+                    "type_of_transaction": "STAKE",
+                    "amount": str(transaction.amount),
+                    "nonce": str(transaction.nonce),
+                    "transaction_id": str(transaction.transaction_id),
+                })
+            elif transaction.type_of_transaction == TransactionType.MESSAGE:
+                my_transactions.append({
+                    "sender_address": str(node.ring[str(transaction.sender_address)]['id']),
+                    "receiver_address": str(node.ring[str(transaction.receiver_address)]['id']),
+                    "type_of_transaction": str(transaction.type_of_transaction)[16:],
+                    "message": str(transaction.message),
+                    "amount": str(len(transaction.message)),
+                    "nonce": str(transaction.nonce),
+                    "transaction_id": str(transaction.transaction_id),
+                })
+            else:
+                return JSONResponse('Invalid type of transaction', status_code=status.HTTP_400_BAD_REQUEST)
+        return JSONResponse({'My transactions': my_transactions}, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        print(f"{Fore.RED}Error get_transaction_list: {e}{Fore.RESET}")
+        return JSONResponse('Could not get transaction list', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 # @full_ring_required(len(node.ring))
 @public_api.get("/get_chain")
 def get_chain():
