@@ -1,9 +1,7 @@
 from collections import deque
-from dotenv import load_dotenv
 from colorama import Fore
 import requests
 import pickle
-import os
 import random
 import threading
 import time
@@ -17,7 +15,7 @@ try:
     from components.block import Block
     from helper_functions.network import get_ip_and_port
     from helper_functions.wrappers import call_once, bootstrap_required
-    from shared_recourses import BLOCK_SIZE, TOTAL_NODES, FEE_RATE
+    from helper_functions.env_variables import BLOCK_SIZE, TOTAL_NODES, FEE_RATE, BOOTSTRAP_IP, BOOTSTRAP_PORT
 except Exception as e:
     print(f"{Fore.YELLOW}node{Fore.RESET}: {Fore.RED}Error loading modules: {e}{Fore.RESET}")
     raise ImportError
@@ -301,7 +299,7 @@ class Node:
 
 
     def check_if_bootstrap(self):
-        if (self.ip, self.port) == (try_load_env('BOOTSTRAP_IP'), str(try_load_env('BOOTSTRAP_PORT'))):
+        if (self.ip, self.port) == (BOOTSTRAP_IP, BOOTSTRAP_PORT):
             print(f"I am bootstrap. {Fore.CYAN}My ID is:{Fore.RESET} {Fore.MAGENTA}0 {Fore.RESET}")
             return True
         else:
@@ -319,7 +317,7 @@ class Node:
     # Sends information about self to the bootstrap node
     def advertise_to_bootstrap(self):
         try:
-            bootstrap_address = 'http://' + str(try_load_env('BOOTSTRAP_IP')) + ':' + str(try_load_env('BOOTSTRAP_PORT'))
+            bootstrap_address = 'http://' + BOOTSTRAP_IP + ':' + BOOTSTRAP_PORT
         except Exception as e:
             print(f"{Fore.RED}Error loading bootstrap ip and port from .env files{Fore.RESET}")
             raise e
@@ -478,3 +476,8 @@ class Node:
         # Create new empty block
         self.current_block = self.create_new_block()
         return
+
+# Initialize the new node and set it's IP and port (happens in the constructor)
+# The node will be a bootstrap node if it's ip and port match the bootstrap node's ip and port
+node = Node()
+node.register_node_to_cluster()
