@@ -287,6 +287,20 @@ class Node:
         for node in self.ring.values():
             if (self.id != node['id']):
                 self.unicast_transaction(node, transaction)
+    
+    # check if transaction already exists in transactions_hashes of blockchain
+    def is_transaction_replayed(self, transaction: Transaction):
+        # Create a set of transaction IDs in the pending list for faster lookup
+        pending_transaction_ids = {tx.transaction_id for tx in self.pending_transactions}
+        
+        transaction_hash = transaction.transaction_id
+        
+        # Check if the transaction exists in either blockchain transactions or pending transactions
+        if transaction_hash in self.blockchain.transactions_hashes or transaction_hash in pending_transaction_ids:
+            return True
+        else:
+            return False
+
 
     def check_if_bootstrap(self):
         if (self.ip, self.port) == (try_load_env('BOOTSTRAP_IP'), str(try_load_env('BOOTSTRAP_PORT'))):
