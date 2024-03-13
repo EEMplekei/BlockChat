@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from shared_recourses import node, TOTAL_NODES
@@ -119,12 +120,20 @@ def view_last_block_transactions():
 		return JSONResponse(status_code = status.HTTP_204_NO_CONTENT)
 	# Get last block in the chain
 	latest_block = node.blockchain.chain[-1]
+	
+	# For timestamp
+	# Convert the time to a datetime object
+	timestamp = datetime.fromtimestamp(latest_block.timestamp)
+	# Format the datetime object as a string
+	timestamp_string = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+
 	data = []
 	# Return a list of transactions
 	try:
 		data.append({
 			"hash": str(latest_block.hash)[:7],
 			"previous_hash": str(latest_block.previous_hash)[:7],
+			"timestamp": timestamp_string,
 			"validator": str(node.ring[str(latest_block.validator)]['id']),
 			"total_fees": str(latest_block.get_total_fees()),
 			"transactions": latest_block.get_transactions_from_block(node),
@@ -187,10 +196,18 @@ def get_chain():
 	data = []
 	# Iterate through the blockchain and get the transactions, hash and previous hash and get the validator of each block
 	for block in node.blockchain.chain:
+		
+		# For timestamp
+		# Convert the time to a datetime object
+		timestamp = datetime.fromtimestamp(block.timestamp)
+		# Format the datetime object as a string
+		timestamp_string = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+
 		data.append({
 			"hash": str(block.hash)[:7],
 			"previous_hash": str(block.previous_hash)[:7],
 			"validator": str(node.ring[str(block.validator)]['id']),
+			"timestamp": timestamp_string,
 			"total_fees": str(block.get_total_fees()),
 			"transactions": block.get_transactions_from_block(node),
 		})

@@ -34,8 +34,27 @@ def draw_chain():
 {Fore.RESET}"""
 	print(chain)
 
+# Helper function to fix the spaces in the blockchain
 def fix_spaces(string):
 	return " " * (65 - len(string))
+
+# Helper function to wrap a string
+def wrap_string(input_string, max_length=61):
+	lines = []
+	words = input_string.split()
+	current_line = ''
+	for word in words:
+		if len(current_line) + len(word) <= max_length:
+			current_line += word + ' '
+		else:
+			lines.append(current_line.strip())
+			current_line = word + ' '
+	if current_line:
+		lines.append(current_line.strip())
+	for line in lines:
+		print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces('   '+line+'')}│")
+			
+	return '\n'.join(lines)
 
 def draw_blockchain(blockchain_data):
 	brand()
@@ -50,7 +69,10 @@ def draw_blockchain(blockchain_data):
 		print(f"    │ {Fore.GREEN}{line}{Fore.RESET}{fix_spaces(line)}│")
 		print(f"    ├──────────────────────────────────────────────────────────────────┤")
 		line = "Previous Hash: "+block['previous_hash']+""
-		print(f"    │ {Fore.GREEN}{line}{Fore.RESET}{fix_spaces(line)}│")  
+		print(f"    │ {Fore.GREEN}{line}{Fore.RESET}{fix_spaces(line)}│") 
+		print(f"    ├──────────────────────────────────────────────────────────────────┤")
+		line = "Timestamp: "+block['timestamp']+""
+		print(f"    │ {Fore.GREEN}{line}{Fore.RESET}{fix_spaces(line)}│")
 		print(f"    ├──────────────────────────────────────────────────────────────────┤")
 		line = "Validator: "+block['validator']+""
 		print(f"    │ {Fore.GREEN}{line}{Fore.RESET}{fix_spaces(line)}│")
@@ -69,21 +91,8 @@ def draw_blockchain(blockchain_data):
 			
 
 			line = "Payload: "+str(transaction['payload'])+""
-			# if line is too long, split it into multiple lines
-			if len(line) > 65:
-				# first line
-				print(f"    │    {Fore.LIGHTBLUE_EX}{line[:61]}{Fore.RESET}{fix_spaces('   '+line[:61])+''}│")
-				
-				line = line[61:]
-				while len(line) > 52:
-					# middle lines
-					print(f"    │             {Fore.LIGHTBLUE_EX}{line[:52]}{Fore.RESET} │")
-					line = line[52:]
-				# last line
-				print(f"    │             {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces('            '+line+'')}│")
+			wrap_string(line)
 
-			else:
-				print(f"    │    {Fore.LIGHTBLUE_EX}{line}{Fore.RESET}{fix_spaces('   '+line+'')}│")
 		print("    └──────────────────────────────────────────────────────────────────┘")
 		
 		if (block == blockchain_data[len(blockchain_data) - 1]):
