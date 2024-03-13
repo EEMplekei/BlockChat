@@ -1,15 +1,5 @@
-import os
 from colorama import Fore
-from dotenv import load_dotenv
-
-try:
-	load_dotenv()
-	block_size = int(os.getenv('BLOCK_SIZE'))
-except Exception as e:
-	#Either there is no such env var so we get None or it is not int castable
-	print(f"{Fore.RED}Cannot get BLOCK_SIZE from environment variable: {e}{Fore.RESET}")
-	print(f"{Fore.YELLOW}Using default block size of 10{Fore.RESET}")
-	block_size = 10
+from shared_recourses import BLOCK_SIZE
 
 # Blockchain class 
 class Blockchain:
@@ -22,7 +12,7 @@ class Blockchain:
 	def __init__(self):
 		
 		self.chain = [] 						# List of blocks in the blockchain (list<block>)
-		self.block_capacity = block_size  		# Capacity of a single block
+		self.block_capacity = BLOCK_SIZE  		# Capacity of a single block
 		self.transactions_hashes = set()		# Set of transaction hashes in the original blockchain (to avoid double transactions)
 	
 	# Validate the chain from the bootstrap node

@@ -2,17 +2,7 @@ from time import time
 from hashlib import sha256
 from colorama import Fore
 from components.transaction import TransactionType
-from dotenv import load_dotenv
-
-try:
-	from helper_functions.env_variables import *
-except ImportError:
-	print(f"{Fore.RED}Could not import required classes{Fore.RESET}")
-	exit()
-
-# Initialize environment variables
-load_dotenv()
-FEE_RATE = float(try_load_env('FEE_RATE'))
+from shared_recourses import FEE_RATE
 
 class Block:
 	
@@ -84,7 +74,7 @@ class Block:
 
 		#Special case for the genesis block
 		if self.previous_hash == 1:
-			return get_genesis_block_transactions(self, node)
+			return self.get_genesis_block_transactions(node)
 
 		#General case for any other block
 		transactions = []
@@ -123,19 +113,19 @@ class Block:
 					raise ValueError("Invalid transaction type found in block")
 		return transactions
 
-def get_genesis_block_transactions(self, node):
-	transactions = []
+	def get_genesis_block_transactions(self, node):
+		transactions = []
 
-	for transaction in self.transactions:
-		#print(transaction.sender_address, transaction.receiver_address, transaction.amount, transaction.type_of_transaction)
-		if transaction.sender_address == '0':
-			transactions.append({
-				"type": "Genesis",
-				"receiver_id": str(node.ring[str(transaction.receiver_address)]['id']),
-				"sender_id": "-",
-				"payload": str(transaction.amount)
-			})
-		else:
-			print(f"{Fore.YELLOW}get_genesis_block_transactions{Fore.RESET}: {Fore.RED}Invalid transaction type found in genesis block!{Fore.RESET}")
-			raise ValueError("Invalid transaction type found in genesis block")
-	return transactions
+		for transaction in self.transactions:
+			#print(transaction.sender_address, transaction.receiver_address, transaction.amount, transaction.type_of_transaction)
+			if transaction.sender_address == '0':
+				transactions.append({
+					"type": "Genesis",
+					"receiver_id": str(node.ring[str(transaction.receiver_address)]['id']),
+					"sender_id": "-",
+					"payload": str(transaction.amount)
+				})
+			else:
+				print(f"{Fore.YELLOW}get_genesis_block_transactions{Fore.RESET}: {Fore.RED}Invalid transaction type found in genesis block!{Fore.RESET}")
+				raise ValueError("Invalid transaction type found in genesis block")
+		return transactions

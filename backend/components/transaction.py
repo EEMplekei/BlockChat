@@ -1,20 +1,11 @@
 from enum import Enum
 from hashlib import sha256
-import os
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ( padding, utils)
 from cryptography.hazmat.primitives import serialization
 from cryptography import exceptions
 from colorama import Fore
-from dotenv import load_dotenv
-
-try:
-	load_dotenv()
-	FEE_RATE = float(os.getenv('FEE_RATE'))
-except Exception as e:
-	print(f"{Fore.RED}Error loading environment variables: {e}{Fore.RESET}")
-	print(f"{Fore.YELLOW}Using default FEE_RATE: 3%{Fore.RESET}")
-	FEE_RATE = 0.03
+from shared_recourses import FEE_RATE
 
 class TransactionType(Enum):
 	INITIAL = 0
