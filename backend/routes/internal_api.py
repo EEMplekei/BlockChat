@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, Depends, status
 from fastapi.responses import JSONResponse
-from routes.shared_recourses import node, TOTAL_NODES, FEE_RATE
+from shared_recourses import node, TOTAL_NODES
 from colorama import Fore
 import threading
 import pickle
