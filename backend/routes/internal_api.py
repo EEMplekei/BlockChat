@@ -27,8 +27,8 @@ async def receive_ring(request: Request):
 	return JSONResponse('OK')
 
 # Gets the latest version of the blockchain from the Bootstrap node
-@internal_api.post("/get_blockchain")
-async def get_blockchain(request: Request):
+@internal_api.post("/receive_blockchain")
+async def receive_blockchain(request: Request):
 	
 	if len(node.ring) < TOTAL_NODES:
 		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
@@ -46,8 +46,8 @@ async def get_body(request: Request):
 	return await request.body()
 
 # Gets an incoming transaction and adds it in the block.
-@internal_api.post("/get_transaction")
-def get_transaction(data: bytes = Depends(get_body)):
+@internal_api.post("/receive_transaction")
+def receive_transaction(data: bytes = Depends(get_body)):
     if len(node.ring) < TOTAL_NODES:
         return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
 
@@ -65,8 +65,8 @@ def get_transaction(data: bytes = Depends(get_body)):
 
 
 # Gets an incoming mined block and adds it to the blockchain.
-@internal_api.post("/get_block")
-def get_block(data: bytes = Depends(get_body)):
+@internal_api.post("/receive_block")
+def receive_block(data: bytes = Depends(get_body)):
 	
 	if len(node.ring) < TOTAL_NODES:
 		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
@@ -99,11 +99,11 @@ async def find_validator():
 	return {"message": "Validator search initiated"}
 
 # Asks bootstrap node to enter the network, api endpoint accessed by non-bootstrap nodes
-@internal_api.post("/let_me_in")
-async def let_me_in(request: Request):
+@internal_api.post("/join_request")
+async def join_request(request: Request):
 	
 	if not node.is_bootstrap:
-		return JSONResponse('Cannot post to let_me_in to a non-bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
+		return JSONResponse('Cannot post to join_request to a non-bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
 
   	# Deserialize the data received in the request body using pickle.loads()
 	data = await request.body()

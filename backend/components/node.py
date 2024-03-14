@@ -100,7 +100,6 @@ class Node:
             mint_thread.start()
         return
 
-    
     # Send the current state of the blockchain to a specific node via HTTP POST request.
     def update_temp_balance(self, transaction: Transaction):
         if (transaction.type_of_transaction == TransactionType.INITIAL): 
@@ -253,7 +252,7 @@ class Node:
     # Unicast a validated block
     def unicast_block(self, node, block):
         request_address = 'http://' + node['ip'] + ':' + node['port']
-        request_url = request_address + '/get_block'
+        request_url = request_address + '/receive_block'
         requests.post(request_url, pickle.dumps(block))
     
     # Broadcast a validated block
@@ -276,7 +275,7 @@ class Node:
         
     def unicast_transaction(self, node, transaction):
         request_address = 'http://' + node['ip'] + ':' + node['port']
-        request_url = request_address + '/get_transaction'
+        request_url = request_address + '/receive_transaction'
         requests.post(request_url, pickle.dumps(transaction))
         
     def broadcast_transaction(self, transaction):
@@ -296,7 +295,6 @@ class Node:
             return True
         else:
             return False
-
 
     def check_if_bootstrap(self):
         if (self.ip, self.port) == (BOOTSTRAP_IP, BOOTSTRAP_PORT):
@@ -335,7 +333,7 @@ class Node:
         # Make the call 3 times if cannot connect with delay of 1 second
         for _ in range(3):
             try:
-                response = requests.post(bootstrap_address + '/let_me_in', data=serialized_data, timeout = 2)
+                response = requests.post(bootstrap_address + '/join_request', data=serialized_data, timeout = 2)
 
                 if response.status_code == 200:
                     self.id = response.json()['id']
@@ -386,7 +384,7 @@ class Node:
     @bootstrap_required
     def unicast_blockchain(self, node):
         request_address = 'http://' + node['ip'] + ':' + node['port']
-        request_url = request_address + '/get_blockchain'
+        request_url = request_address + '/receive_blockchain'
         requests.post(request_url, pickle.dumps(self.blockchain))
 
     # Broadcast the current state of the blockchain to all nodes

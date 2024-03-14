@@ -179,14 +179,6 @@ def get_chain_length():
 
 	return JSONResponse({'chain_length': len(node.blockchain.chain)}, status_code=status.HTTP_200_OK)
 
-@public_api.get("/get_pending_list_length")
-def get_pending_list_length():
-	
-	if len(node.ring) < TOTAL_NODES:
-		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)	
-	
-	return JSONResponse({'pending_list_length': len(node.pending_transactions)}, status_code=status.HTTP_200_OK)
-
 @public_api.get("/get_transaction_list")
 def get_transaction_list():
     if len(node.ring) < TOTAL_NODES:
@@ -229,7 +221,6 @@ def get_transaction_list():
         print(f"{Fore.RED}Error get_transaction_list: {e}{Fore.RESET}")
         return JSONResponse('Could not get transaction list', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-# @full_ring_required(len(node.ring))
 @public_api.get("/get_chain")
 def get_chain():
 	
@@ -256,6 +247,7 @@ def get_chain():
 		})
 	return JSONResponse(data, status_code=status.HTTP_200_OK)
 
+#Debug routes
 @public_api.get("/view_ring")
 async def view_ring():
     try:
@@ -273,3 +265,11 @@ async def view_ring():
         return JSONResponse(ring_details, status_code=status.HTTP_200_OK)
     except Exception as e:
         return JSONResponse('Could not get ring details', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@public_api.get("/get_pending_list_length")
+def get_pending_list_length():
+	
+	if len(node.ring) < TOTAL_NODES:
+		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)	
+	
+	return JSONResponse({'pending_list_length': len(node.pending_transactions)}, status_code=status.HTTP_200_OK)
