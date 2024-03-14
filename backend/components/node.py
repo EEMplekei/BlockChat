@@ -13,9 +13,9 @@ try:
     from components.transaction import TransactionType, Transaction
     from components.proof_of_stake import PoSProtocol
     from components.block import Block
-    from helper_functions.network import get_ip_and_port
-    from helper_functions.wrappers import call_once, bootstrap_required
-    from helper_functions.env_variables import BLOCK_SIZE, TOTAL_NODES, FEE_RATE, BOOTSTRAP_IP, BOOTSTRAP_PORT
+    from utils.network import get_ip_and_port
+    from utils.wrappers import call_once, bootstrap_required
+    from utils.env_variables import BLOCK_SIZE, TOTAL_NODES, FEE_RATE, BOOTSTRAP_IP, BOOTSTRAP_PORT
 except Exception as e:
     print(f"{Fore.YELLOW}node{Fore.RESET}: {Fore.RED}Error loading modules: {e}{Fore.RESET}")
     raise ImportError

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, Depends, status
 from fastapi.responses import JSONResponse
 from components.node import node
-from helper_functions.env_variables import TOTAL_NODES
+from utils.env_variables import TOTAL_NODES
 from colorama import Fore
 import threading
 import pickle

@@ -2,7 +2,7 @@ from datetime import datetime
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from components.node import node
-from helper_functions.env_variables import TOTAL_NODES
+from utils.env_variables import TOTAL_NODES
 from components.transaction import TransactionType
 from colorama import Fore
 import json

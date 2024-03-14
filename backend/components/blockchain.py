@@ -1,5 +1,5 @@
 from colorama import Fore
-from helper_functions.env_variables import BLOCK_SIZE
+from utils.env_variables import BLOCK_SIZE
 
 # Blockchain class 
 class Blockchain:

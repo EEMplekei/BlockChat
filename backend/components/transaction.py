@@ -5,7 +5,7 @@ from cryptography.hazmat.primitives.asymmetric import ( padding, utils)
 from cryptography.hazmat.primitives import serialization
 from cryptography import exceptions
 from colorama import Fore
-from helper_functions.env_variables import FEE_RATE
+from utils.env_variables import FEE_RATE
 
 class TransactionType(Enum):
 	INITIAL = 0

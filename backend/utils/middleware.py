@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi import Response
 from typing import Callable
 from colorama import Fore
-from helper_functions.env_variables import INTERNAL_CIDR
+from utils.env_variables import INTERNAL_CIDR
 import time
 
 #Initialize CIDR range for internal access

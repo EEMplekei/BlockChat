@@ -2,7 +2,7 @@ from time import time
 from hashlib import sha256
 from colorama import Fore
 from components.transaction import TransactionType
-from helper_functions.env_variables import FEE_RATE
+from utils.env_variables import FEE_RATE
 
 class Block:
 	

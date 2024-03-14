@@ -3,7 +3,7 @@ from colorama import Fore
 import uvicorn
 
 try:
-	from helper_functions.middleware import restrict_internal_routes
+	from utils.middleware import restrict_internal_routes
 	from routes.internal_api import internal_api
 	from routes.public_api import public_api
 	#Import node instance	
