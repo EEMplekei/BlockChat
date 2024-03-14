@@ -53,16 +53,16 @@ The following internal endpoints are available in the API in order for the nodes
 #### <span style="color:#d7bf6c">POST</span> `/receive_ring`
 Sample Text
 
-#### <span style="color:#d7bf6c">POST</span> `/get_blockchain`
+#### <span style="color:#d7bf6c">POST</span> `/receive_blockchain`
 Sample Text
 
-#### <span style="color:#d7bf6c">POST</span> `/get_transaction`
+#### <span style="color:#d7bf6c">POST</span> `/receive_transaction`
 Sample Text
 
-#### <span style="color:#d7bf6c">POST</span> `/get_block`
+#### <span style="color:#d7bf6c">POST</span> `/receive_block`
 Sample Text
 
-#### <span style="color:#d7bf6c">POST</span> `/let_me_in`
+#### <span style="color:#d7bf6c">POST</span> `/join_request`
 Sample Text
 
 
