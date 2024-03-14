@@ -5,7 +5,7 @@ def parse_input_files(node_number: int):
 	receiver_id = []
 	message = []
 	# Read to the correct trans.txt file according to the node number
-	with open('trans'+str(node_number)+'.txt', 'r') as file:
+	with open('../test_inputs/trans'+str(node_number)+'.txt', 'r') as file:
 		text = file.read()
 		lines = text.strip().split('\n')
 		for line in lines:
