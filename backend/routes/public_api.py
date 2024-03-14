@@ -14,7 +14,7 @@ class Stake(BaseModel):
     stake: int
 
 class CreateTransaction(BaseModel):
-    recipient_id: int
+    receiver_id: int
     type_of_transaction: str
     payload: str
 
