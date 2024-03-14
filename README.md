@@ -1,5 +1,8 @@
-# BlockChat ⛓️
+# BlockChat
 A blockchain from scratch built for the purposes of the course Distributed Systems ([School of Electrical and Computer Engineering NTUA](https://www.ece.ntua.gr)). 
+
+<br/>
+<img src="https://cdn-icons-png.flaticon.com/512/2152/2152539.png" alt="blocks" height="250"/>
 
 ## Installation 🖥️
 The deployment process (for Linux-Debian) is described below:

@@ -1,9 +1,7 @@
 from collections import deque
-from dotenv import load_dotenv
 from colorama import Fore
 import requests
 import pickle
-import os
 import random
 import threading
 import time
@@ -16,15 +14,13 @@ try:
     from components.proof_of_stake import PoSProtocol
     from components.block import Block
     from helper_functions.network import get_ip_and_port
-    from helper_functions.env_variables import try_load_env
     from helper_functions.wrappers import call_once, bootstrap_required
+    from helper_functions.env_variables import BLOCK_SIZE, TOTAL_NODES, FEE_RATE, BOOTSTRAP_IP, BOOTSTRAP_PORT
 except Exception as e:
     print(f"{Fore.YELLOW}node{Fore.RESET}: {Fore.RED}Error loading modules: {e}{Fore.RESET}")
     raise ImportError
 
-# Get environment variables for blocksize, total nodes and bootstrap node
-block_size, total_nodes, FEE_RATE = int(try_load_env('BLOCK_SIZE')), int(try_load_env('TOTAL_NODES')), float(try_load_env('FEE_RATE'))
-total_bbc = total_nodes * 1000
+total_bbc = TOTAL_NODES * 1000
 
 class Node:
 
@@ -98,7 +94,7 @@ class Node:
         return True
     
     def check_if_block_is_full_to_mint(self):
-        if len(self.pending_transactions) >= block_size:
+        if len(self.pending_transactions) >= BLOCK_SIZE:
             # Create a thread to mint the block
             mint_thread = threading.Thread(target=self.mint_block)
             mint_thread.start()
@@ -138,7 +134,7 @@ class Node:
     # Updates the balance for each node given a validated transaction
     def update_wallet_state(self, transaction: Transaction):         
         # If the transaction is related to node, update wallet
-        if (transaction.receiver_address == self.wallet.address or 
+        if (transaction.receiver_address == str(self.wallet.address) or 
             transaction.sender_address == self.wallet.address):
             self.wallet.transactions.append(transaction)
         # info message
@@ -197,14 +193,14 @@ class Node:
     def mint_block(self):
         time.sleep(1)
         with (self.processing_block_lock):
-            if len(self.pending_transactions) >= block_size:
+            if len(self.pending_transactions) >= BLOCK_SIZE:
                 # If the current node is the validator, mint a block
                 if self.current_validator[self.block_counter] == str(self.wallet.address):
                     print("🔒 I am the validator")
                     new_block = self.create_new_block()
                     self.block_counter += 1  
                     # Add transactions to the new block
-                    for _ in range(block_size):
+                    for _ in range(BLOCK_SIZE):
                         new_block.transactions.append(self.pending_transactions.pop())
                     # Calculate hash
                     new_block.calculate_hash()
@@ -287,9 +283,23 @@ class Node:
         for node in self.ring.values():
             if (self.id != node['id']):
                 self.unicast_transaction(node, transaction)
+    
+    # check if transaction already exists in transactions_hashes of blockchain
+    def is_transaction_replayed(self, transaction: Transaction):
+        # Create a set of transaction IDs in the pending list for faster lookup
+        pending_transaction_ids = {tx.transaction_id for tx in self.pending_transactions}
+        
+        transaction_hash = transaction.transaction_id
+        
+        # Check if the transaction exists in either blockchain transactions or pending transactions
+        if transaction_hash in self.blockchain.transactions_hashes or transaction_hash in pending_transaction_ids:
+            return True
+        else:
+            return False
+
 
     def check_if_bootstrap(self):
-        if (self.ip, self.port) == (try_load_env('BOOTSTRAP_IP'), str(try_load_env('BOOTSTRAP_PORT'))):
+        if (self.ip, self.port) == (BOOTSTRAP_IP, BOOTSTRAP_PORT):
             print(f"I am bootstrap. {Fore.CYAN}My ID is:{Fore.RESET} {Fore.MAGENTA}0 {Fore.RESET}")
             return True
         else:
@@ -307,7 +317,7 @@ class Node:
     # Sends information about self to the bootstrap node
     def advertise_to_bootstrap(self):
         try:
-            bootstrap_address = 'http://' + str(try_load_env('BOOTSTRAP_IP')) + ':' + str(try_load_env('BOOTSTRAP_PORT'))
+            bootstrap_address = 'http://' + BOOTSTRAP_IP + ':' + BOOTSTRAP_PORT
         except Exception as e:
             print(f"{Fore.RED}Error loading bootstrap ip and port from .env files{Fore.RESET}")
             raise e
@@ -420,7 +430,7 @@ class Node:
     # Checks if all nodes have been added to the ring (up until now)
     @bootstrap_required
     def check_full_ring(self, ring_nodes_count): 
-        if (ring_nodes_count == total_nodes):
+        if (ring_nodes_count == TOTAL_NODES):
             #Checks that nodes are ready to listen to requests before broadcasting
             while not self.check_all_nodes_are_up():
                 #This sleep is here because we want to make sure that all nodes are up before broadcasting
@@ -466,3 +476,8 @@ class Node:
         # Create new empty block
         self.current_block = self.create_new_block()
         return
+
+# Initialize the new node and set it's IP and port (happens in the constructor)
+# The node will be a bootstrap node if it's ip and port match the bootstrap node's ip and port
+node = Node()
+node.register_node_to_cluster()

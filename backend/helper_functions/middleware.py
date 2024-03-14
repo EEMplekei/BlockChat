@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi import Response
 from typing import Callable
 from colorama import Fore
-from helper_functions.env_variables import try_load_env
+from helper_functions.env_variables import INTERNAL_CIDR
 import time
 
 #Initialize CIDR range for internal access
@@ -13,7 +13,6 @@ import time
 # HACK: This is a hack to avoid circular imports, use https://docs.python.org/3/library/ipaddress.html
 
 try:
-    INTERNAL_CIDR = try_load_env('INTERNAL_CIDR')
     internal_network = ip_network(INTERNAL_CIDR)
 except ValueError:
     print(f"{Fore.YELLOW}restrict_internal_routes{Fore.RESET}: {Fore.RED}Invalid CIDR range: {INTERNAL_CIDR}{Fore.RESET}")

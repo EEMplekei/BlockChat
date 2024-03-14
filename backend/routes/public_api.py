@@ -1,6 +1,8 @@
+from datetime import datetime
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
-from controllers.shared_recourses import node, TOTAL_NODES, FEE_RATE
+from components.node import node
+from helper_functions.env_variables import TOTAL_NODES
 from components.transaction import TransactionType
 from colorama import Fore
 import json
@@ -119,12 +121,20 @@ def view_last_block_transactions():
 		return JSONResponse(status_code = status.HTTP_204_NO_CONTENT)
 	# Get last block in the chain
 	latest_block = node.blockchain.chain[-1]
+	
+	# For timestamp
+	# Convert the time to a datetime object
+	timestamp = datetime.fromtimestamp(latest_block.timestamp)
+	# Format the datetime object as a string
+	timestamp_string = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+
 	data = []
 	# Return a list of transactions
 	try:
 		data.append({
 			"hash": str(latest_block.hash)[:7],
 			"previous_hash": str(latest_block.previous_hash)[:7],
+			"timestamp": timestamp_string,
 			"validator": str(node.ring[str(latest_block.validator)]['id']),
 			"total_fees": str(latest_block.get_total_fees()),
 			"transactions": latest_block.get_transactions_from_block(node),
@@ -177,6 +187,48 @@ def get_pending_list_length():
 	
 	return JSONResponse({'pending_list_length': len(node.pending_transactions)}, status_code=status.HTTP_200_OK)
 
+@public_api.get("/get_transaction_list")
+def get_transaction_list():
+    if len(node.ring) < TOTAL_NODES:
+        return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        my_transactions = []
+        for transaction in node.wallet.transactions:
+            if (transaction.type_of_transaction == TransactionType.COINS and transaction.receiver_address != 0) or transaction.type_of_transaction == TransactionType.INITIAL:
+                my_transactions.append({
+                    "sender_address": str(node.ring[str(transaction.sender_address)]['id']),
+                    "receiver_address": str(node.ring[str(transaction.receiver_address)]['id']),
+                    "type_of_transaction": str(transaction.type_of_transaction)[16:],
+                    "amount": str(transaction.amount),
+                    "nonce": str(transaction.nonce),
+                    "transaction_id": str(transaction.transaction_id),
+                })
+            elif transaction.type_of_transaction == TransactionType.COINS and transaction.receiver_address == 0:
+                my_transactions.append({
+                    "sender_address": str(node.ring[str(transaction.sender_address)]['id']),
+                    "type_of_transaction": "STAKE",
+                    "amount": str(transaction.amount),
+                    "nonce": str(transaction.nonce),
+                    "transaction_id": str(transaction.transaction_id),
+                })
+            elif transaction.type_of_transaction == TransactionType.MESSAGE:
+                my_transactions.append({
+                    "sender_address": str(node.ring[str(transaction.sender_address)]['id']),
+                    "receiver_address": str(node.ring[str(transaction.receiver_address)]['id']),
+                    "type_of_transaction": str(transaction.type_of_transaction)[16:],
+                    "message": str(transaction.message),
+                    "amount": str(len(transaction.message)),
+                    "nonce": str(transaction.nonce),
+                    "transaction_id": str(transaction.transaction_id),
+                })
+            else:
+                return JSONResponse('Invalid type of transaction', status_code=status.HTTP_400_BAD_REQUEST)
+        return JSONResponse({'My transactions': my_transactions}, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        print(f"{Fore.RED}Error get_transaction_list: {e}{Fore.RESET}")
+        return JSONResponse('Could not get transaction list', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 # @full_ring_required(len(node.ring))
 @public_api.get("/get_chain")
 def get_chain():
@@ -187,10 +239,18 @@ def get_chain():
 	data = []
 	# Iterate through the blockchain and get the transactions, hash and previous hash and get the validator of each block
 	for block in node.blockchain.chain:
+		
+		# For timestamp
+		# Convert the time to a datetime object
+		timestamp = datetime.fromtimestamp(block.timestamp)
+		# Format the datetime object as a string
+		timestamp_string = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+
 		data.append({
 			"hash": str(block.hash)[:7],
 			"previous_hash": str(block.previous_hash)[:7],
 			"validator": str(node.ring[str(block.validator)]['id']),
+			"timestamp": timestamp_string,
 			"total_fees": str(block.get_total_fees()),
 			"transactions": block.get_transactions_from_block(node),
 		})

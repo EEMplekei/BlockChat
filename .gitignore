@@ -1,3 +1,5 @@
 _pycache__
 *.pyc
 *.DS_STORE
+*.bak_*
+*.vpp.lck

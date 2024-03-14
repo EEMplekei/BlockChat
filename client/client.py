@@ -45,7 +45,7 @@ def client():
 		menu = [ 
 			inquirer.List('menu', 
 			message= "BlockChat Client", 
-			choices= ['💸 New transaction', '💬 New message', '🎰 Set Stake','📬 Incoming Messages','📦 View last block', '🔗 View blockchain', '💰 Show balance', '💁 Help', '🌙 Exit'], 
+			choices= ['💸 New transaction', '💬 New message', '🎰 Set Stake','📬 Incoming Messages','📋 View all of my transactions','📦 View last block', '🔗 View blockchain', '💰 Show balance', '💁 Help', '🌙 Exit'], 
 			),
 		]
 		choice = inquirer.prompt(menu)['menu']
@@ -168,6 +168,26 @@ def client():
 			os.system('cls||clear')
 			continue
 
+		if choice == '📋 View all of my transactions':
+			try:
+				# api client call to view last block
+				response = requests.get(address+'/api/get_transaction_list')
+				data = response.json()
+				table = Texttable()
+				table.add_row(["Sender", "Receiver", "Type", "Message", "Amount", "Nonce", "Transaction ID"])
+				for transaction in data["My transactions"]:
+					if transaction["type_of_transaction"] == "COINS" and transaction["sender_address"] == "0":
+						table.add_row([transaction["sender_address"], transaction["receiver_address"], "STAKE", "None", transaction["amount"], transaction["nonce"], transaction["transaction_id"]])
+					elif transaction["type_of_transaction"] == "COINS" or transaction["type_of_transaction"] == "INITIAL":
+						table.add_row([transaction["sender_address"], transaction["receiver_address"], transaction["type_of_transaction"],"None", transaction["amount"], transaction["nonce"], transaction["transaction_id"]])
+					elif transaction["type_of_transaction"] == "MESSAGE":
+						table.add_row([transaction["sender_address"], transaction["receiver_address"], transaction["type_of_transaction"], transaction["message"], transaction["amount"], transaction["nonce"], transaction["transaction_id"]])
+				print(table.draw())
+			except requests.exceptions.HTTPError:
+				print("Node is not active. Try again later.")
+			input("Press any key to go back...")
+			os.system('cls||clear')
+			continue
 		# VIEW LAST BLOCK CLIENT CALL ========================================
 		if choice == '📦 View last block':
 			try:
@@ -225,6 +245,9 @@ def client():
 
 			print('📬 Incoming Messages:')
 			print('View incoming messages from other nodes.\n\n')
+
+			print('📋 View all of my transactions:')
+			print('View all transactions from the client wallet.\n\n')
 
 			print('📦 View last block:')
 			print('View the last block in the blockchain.\n\n')
