@@ -9,12 +9,12 @@ import pickle
 #Initialize FastAPI and add internal network access middleware
 internal_api = FastAPI()
 
-@internal_api.get("/")
+@internal_api.get("/", tags=["Internal Routes"])
 async def root():
 	return JSONResponse({"message": f"Welcome to BlockChat. Node: {node.id}"}, status_code=status.HTTP_200_OK)
 
 # Gets the completed list of nodes from Bootstrap node after all nodes have joined
-@internal_api.post("/receive_ring")
+@internal_api.post("/receive_ring", tags=["Internal Routes"])
 async def receive_ring(request: Request):
 	
 	if (node.is_bootstrap):
@@ -27,7 +27,7 @@ async def receive_ring(request: Request):
 	return JSONResponse('OK')
 
 # Gets the latest version of the blockchain from the Bootstrap node
-@internal_api.post("/receive_blockchain")
+@internal_api.post("/receive_blockchain", tags=["Internal Routes"])
 async def receive_blockchain(request: Request):
 	
 	if len(node.ring) < TOTAL_NODES:
@@ -46,7 +46,7 @@ async def get_body(request: Request):
 	return await request.body()
 
 # Gets an incoming transaction and adds it in the block.
-@internal_api.post("/receive_transaction")
+@internal_api.post("/receive_transaction", tags=["Internal Routes"])
 def receive_transaction(data: bytes = Depends(get_body)):
     if len(node.ring) < TOTAL_NODES:
         return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
@@ -65,7 +65,7 @@ def receive_transaction(data: bytes = Depends(get_body)):
 
 
 # Gets an incoming mined block and adds it to the blockchain.
-@internal_api.post("/receive_block")
+@internal_api.post("/receive_block", tags=["Internal Routes"])
 def receive_block(data: bytes = Depends(get_body)):
 	
 	if len(node.ring) < TOTAL_NODES:
@@ -90,7 +90,7 @@ def receive_block(data: bytes = Depends(get_body)):
 		return JSONResponse('Error validating block', status_code=status.HTTP_400_BAD_REQUEST)
 
 # Gets the order to find validator from the Bootstrap node
-@internal_api.post("/find_validator")
+@internal_api.post("/find_validator", tags=["Internal Routes"])
 async def find_validator():
 	if len(node.ring) < TOTAL_NODES:
 		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
@@ -99,7 +99,7 @@ async def find_validator():
 	return {"message": "Validator search initiated"}
 
 # Asks bootstrap node to enter the network, api endpoint accessed by non-bootstrap nodes
-@internal_api.post("/join_request")
+@internal_api.post("/join_request", tags=["Internal Routes"])
 async def join_request(request: Request):
 	
 	if not node.is_bootstrap:
