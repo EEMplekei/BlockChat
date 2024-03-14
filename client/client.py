@@ -1,46 +1,30 @@
 from colorama import Fore
 import inquirer
-import os
 import time
-import argparse
 import requests
-from requests.exceptions import RequestException
 import json
-from draw_chain import brand
-from draw_chain import draw_blockchain
-from texttable import Texttable
+from utils import utils, drawers
 
 # Opening JSON file
-f = open('../nodes_config.json')
-nodes_config = json.load(f)
-f.close()
-
-# ARGUMENTS
-argParser = argparse.ArgumentParser()
-argParser.add_argument("-n", "--node", help="Node you want to connect to")
-args = argParser.parse_args()
-# Address of node
-node = args.node
+with open('../nodes_config.json') as f:
+    nodes_config = json.load(f)
+    
+#Parse arguments
+node = utils.parse_arguments()
 
 # Networking Configuration
-address = nodes_config.get(f'node{node}', lambda: (print("Invalid node number") or exit())) if node in map(str, range(10)) else (print("Invalid node number") or exit())
+address = utils.get_node_address(nodes_config, node)
 
 # Command Line Interface client
 def client():
-	try:
-		response = requests.get(address+'/api/')
-		response.raise_for_status()
-		if not response.status_code == 200:
-			# Handle the error condition here
-			print("❌ API is not available. Try again later ❌")
-			exit()
-	except requests.exceptions.RequestException as e:
-		print()
-		print("❌ API is not available. Try again later ❌")
+    
+	if not utils.check_api_availability(address):
 		exit()
+	
+	#Clear terminal and show brand name
+	drawers.clear_terminal()
+	drawers.brand()
 
-	os.system('cls||clear')
-	brand()
 	while(True):
 		menu = [ 
 			inquirer.List('menu', 
@@ -49,7 +33,7 @@ def client():
 			),
 		]
 		choice = inquirer.prompt(menu)['menu']
-		os.system('cls||clear')
+		drawers.clear_terminal()
 
 
 		# NEW TRANSACTION CLIENT CALL ======================================== (DONE)
@@ -78,7 +62,7 @@ def client():
 				else:
 					print("Node is not active. Try again later.")
 			input("Press any key to go back...")
-			os.system('cls||clear')
+			drawers.clear_terminal()
 			continue
 
 
@@ -108,7 +92,7 @@ def client():
 				else:
 					print("Node is not active. Try again later.")
 			input("Press any key to go back...")
-			os.system('cls||clear')
+			drawers.clear_terminal()
 			continue
 
 
@@ -136,7 +120,7 @@ def client():
 				else:
 					print("Node is not active. Try again later.")
 			input("Press any key to go back...")
-			os.system('cls||clear')
+			drawers.clear_terminal()
 			continue
 		
 		# INCOMING MESSAGES CLIENT CALL ======================================== (DONE)
@@ -165,7 +149,7 @@ def client():
 			except requests.exceptions.HTTPError:
 				print("Node is not active. Try again later.")
 			input("Press any key to go back...")
-			os.system('cls||clear')
+			drawers.clear_terminal()
 			continue
 
 		if choice == '📋 View all of my transactions':
@@ -186,7 +170,7 @@ def client():
 			except requests.exceptions.HTTPError:
 				print("Node is not active. Try again later.")
 			input("Press any key to go back...")
-			os.system('cls||clear')
+			drawers.clear_terminal()
 			continue
 		# VIEW LAST BLOCK CLIENT CALL ========================================
 		if choice == '📦 View last block':
@@ -198,7 +182,7 @@ def client():
 			except requests.exceptions.HTTPError:
 				print("Node is not active. Try again later.")
 			input("Press any key to go back...")
-			os.system('cls||clear')
+			drawers.clear_terminal()
 			continue
 
 		# VIEW BLOCKCHAIN CLIENT CALL ======================================== (DONE)
@@ -212,7 +196,7 @@ def client():
 			except requests.exceptions.HTTPError:
 				print("Node is not active. Try again later.")
 			input("Press any key to go back...")
-			os.system('cls||clear')
+			drawers.clear_terminal()
 			continue
 
 
@@ -228,12 +212,12 @@ def client():
 			except requests.exceptions.HTTPError:
 				print("Node is not active. Try again later.")
 			input("Press any key to go back...")
-			os.system('cls||clear')
+			drawers.clear_terminal()
 			continue
 
 		# HELP =======================================
 		if choice == '💁 Help':
-			os.system('cls||clear')
+			drawers.clear_terminal()
 			print('💸 New transaction:')
 			print('Send transaction to a node. Select node id and amount.\n\n')
 
@@ -260,14 +244,15 @@ def client():
 
 			input("Press any key to go back...")
 			# Go back to main client menu after help
-			os.system('cls||clear')
+			drawers.clear_terminal()
 			# Remove the break statement to go back to the client menu
 			continue
 		# EXIT =======================================
 		if choice == '🌙 Exit':
-			os.system('cls||clear')
+			drawers.clear_terminal()
 			print("We will miss you 💋")
 			time.sleep(0.7)
-			os.system('cls||clear')
+			drawers.clear_terminal()
 			break
+
 client()

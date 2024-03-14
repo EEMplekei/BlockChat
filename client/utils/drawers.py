@@ -1,4 +1,5 @@
 from colorama import Fore
+from os import system
 
 def brand():
 	print(f"""{Fore.GREEN}
@@ -103,3 +104,6 @@ def draw_blockchain(blockchain_data):
 			print()
 			break
 		draw_chain()
+  
+def clear_terminal():
+    os.system('cls||clear')
