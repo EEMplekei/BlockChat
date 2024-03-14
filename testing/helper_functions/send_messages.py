@@ -2,7 +2,7 @@ import requests
 import json
 
 # Function that sends the messages to the receiver from the parsed lists
-def send_messages(node_number, receiver_id_list, message_list, address):
+def send_messages(node_number, receiver_id_list, message_list):
 	# Opening JSON file
 	f = open('../../nodes_config.json')
 	nodes_config = json.load(f)
