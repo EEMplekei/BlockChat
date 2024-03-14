@@ -42,36 +42,34 @@ async def receive_blockchain(request: Request):
 	print("Blockchain received successfully!")
 	return JSONResponse('OK')
 
-async def get_body(request: Request):
-	return await request.body()
-
 # Gets an incoming transaction and adds it in the block.
 @internal_api.post("/receive_transaction", tags=["Internal Routes"])
-def receive_transaction(data: bytes = Depends(get_body)):
-    if len(node.ring) < TOTAL_NODES:
-        return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
-
-    new_transaction = pickle.loads(data)
-    if not node.is_transaction_replayed(new_transaction):
-        if node.add_transaction_to_pending(new_transaction):
-            print("New transaction received successfully!")
-            return JSONResponse('OK')
-        else:
-            print("Transaction could not be added to pending transactions. Maybe the sender does not have enough BCCs")
-            return JSONResponse('Error adding transaction. Not enough coins!', status_code=status.HTTP_400_BAD_REQUEST)
-    else:
-        print("Transaction is already seen. Ignoring it.")
-        return JSONResponse('Error adding transaction. Transaction is already seen!', status_code=status.HTTP_400_BAD_REQUEST)
-
+async def receive_transaction(request: Request):
+	if len(node.ring) < TOTAL_NODES:
+		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
+	
+	data = await request.body()
+	new_transaction = pickle.loads(data)
+	if not node.is_transaction_replayed(new_transaction):
+		if node.add_transaction_to_pending(new_transaction):
+			print("New transaction received successfully!")
+			return JSONResponse('OK')
+		else:
+			print("Transaction could not be added to pending transactions. Maybe the sender does not have enough BCCs")
+			return JSONResponse('Error adding transaction. Not enough coins!', status_code=status.HTTP_400_BAD_REQUEST)
+	else:
+		print("Transaction is already seen. Ignoring it.")
+		return JSONResponse('Error adding transaction. Transaction is already seen!', status_code=status.HTTP_400_BAD_REQUEST)
 
 # Gets an incoming mined block and adds it to the blockchain.
 @internal_api.post("/receive_block", tags=["Internal Routes"])
-def receive_block(data: bytes = Depends(get_body)):
+async def receive_block(request: Request):
 	
 	if len(node.ring) < TOTAL_NODES:
 		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
 	
 	# Deserialize the data received in the request body using pickle.loads()
+	data = await request.body()
 	new_block = pickle.loads(data)
 
 	print(f"{Fore.GREEN}NEWS{Fore.RESET}: Got new block, now lets validate it!")
@@ -105,7 +103,7 @@ async def join_request(request: Request):
 	if not node.is_bootstrap:
 		return JSONResponse('Cannot post to join_request to a non-bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
 
-  	# Deserialize the data received in the request body using pickle.loads()
+	  # Deserialize the data received in the request body using pickle.loads()
 	data = await request.body()
 	node_data = pickle.loads(data)
 

@@ -8,15 +8,14 @@ from colorama import Fore
 import json
 from pydantic import BaseModel
 
-
 # Define Pydantic model for request body
 class Stake(BaseModel):
-    stake: int
+	stake: int
 
 class CreateTransaction(BaseModel):
-    receiver_id: int
-    type_of_transaction: str
-    payload: str
+	receiver_id: int
+	type_of_transaction: str
+	payload: str
 
 #Initialize FastAPI fro public routes (all starting with "/api")
 public_api = FastAPI(root_path="/api")
@@ -186,45 +185,45 @@ def get_chain_length():
 
 @public_api.get("/get_transaction_list", tags=["Public Routes"])
 def get_transaction_list():
-    if len(node.ring) < TOTAL_NODES:
-        return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
-    
-    try:
-        my_transactions = []
-        for transaction in node.wallet.transactions:
-            if (transaction.type_of_transaction == TransactionType.COINS and transaction.receiver_address != 0) or transaction.type_of_transaction == TransactionType.INITIAL:
-                my_transactions.append({
-                    "sender_address": str(node.ring[str(transaction.sender_address)]['id']),
-                    "receiver_address": str(node.ring[str(transaction.receiver_address)]['id']),
-                    "type_of_transaction": str(transaction.type_of_transaction)[16:],
-                    "amount": str(transaction.amount),
-                    "nonce": str(transaction.nonce),
-                    "transaction_id": str(transaction.transaction_id),
-                })
-            elif transaction.type_of_transaction == TransactionType.COINS and transaction.receiver_address == 0:
-                my_transactions.append({
-                    "sender_address": str(node.ring[str(transaction.sender_address)]['id']),
-                    "type_of_transaction": "STAKE",
-                    "amount": str(transaction.amount),
-                    "nonce": str(transaction.nonce),
-                    "transaction_id": str(transaction.transaction_id),
-                })
-            elif transaction.type_of_transaction == TransactionType.MESSAGE:
-                my_transactions.append({
-                    "sender_address": str(node.ring[str(transaction.sender_address)]['id']),
-                    "receiver_address": str(node.ring[str(transaction.receiver_address)]['id']),
-                    "type_of_transaction": str(transaction.type_of_transaction)[16:],
-                    "message": str(transaction.message),
-                    "amount": str(len(transaction.message)),
-                    "nonce": str(transaction.nonce),
-                    "transaction_id": str(transaction.transaction_id),
-                })
-            else:
-                return JSONResponse('Invalid type of transaction', status_code=status.HTTP_400_BAD_REQUEST)
-        return JSONResponse({'My transactions': my_transactions}, status_code=status.HTTP_200_OK)
-    except Exception as e:
-        print(f"{Fore.RED}Error get_transaction_list: {e}{Fore.RESET}")
-        return JSONResponse('Could not get transaction list', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+	if len(node.ring) < TOTAL_NODES:
+		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
+	
+	try:
+		my_transactions = []
+		for transaction in node.wallet.transactions:
+			if (transaction.type_of_transaction == TransactionType.COINS and transaction.receiver_address != 0) or transaction.type_of_transaction == TransactionType.INITIAL:
+				my_transactions.append({
+					"sender_address": str(node.ring[str(transaction.sender_address)]['id']),
+					"receiver_address": str(node.ring[str(transaction.receiver_address)]['id']),
+					"type_of_transaction": str(transaction.type_of_transaction)[16:],
+					"amount": str(transaction.amount),
+					"nonce": str(transaction.nonce),
+					"transaction_id": str(transaction.transaction_id),
+				})
+			elif transaction.type_of_transaction == TransactionType.COINS and transaction.receiver_address == 0:
+				my_transactions.append({
+					"sender_address": str(node.ring[str(transaction.sender_address)]['id']),
+					"type_of_transaction": "STAKE",
+					"amount": str(transaction.amount),
+					"nonce": str(transaction.nonce),
+					"transaction_id": str(transaction.transaction_id),
+				})
+			elif transaction.type_of_transaction == TransactionType.MESSAGE:
+				my_transactions.append({
+					"sender_address": str(node.ring[str(transaction.sender_address)]['id']),
+					"receiver_address": str(node.ring[str(transaction.receiver_address)]['id']),
+					"type_of_transaction": str(transaction.type_of_transaction)[16:],
+					"message": str(transaction.message),
+					"amount": str(len(transaction.message)),
+					"nonce": str(transaction.nonce),
+					"transaction_id": str(transaction.transaction_id),
+				})
+			else:
+				return JSONResponse('Invalid type of transaction', status_code=status.HTTP_400_BAD_REQUEST)
+		return JSONResponse({'My transactions': my_transactions}, status_code=status.HTTP_200_OK)
+	except Exception as e:
+		print(f"{Fore.RED}Error get_transaction_list: {e}{Fore.RESET}")
+		return JSONResponse('Could not get transaction list', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @public_api.get("/get_chain", tags=["Public Routes"])
 def get_chain():
@@ -255,21 +254,21 @@ def get_chain():
 #Debug routes
 @public_api.get("/view_ring", tags=["Public Routes"])
 async def view_ring():
-    try:
-        ring_details = []
-        for address, details in node.ring.items():
-            ring_details.append({
-                "address": address,
-                "id": details['id'],
-                "ip": details['ip'],
-                "port": details['port'],
-                "stake": details['stake'],
-                "balance": details['balance'],
-                "temp_balance": details['temp_balance']
-            })
-        return JSONResponse(ring_details, status_code=status.HTTP_200_OK)
-    except Exception as e:
-        return JSONResponse('Could not get ring details', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+	try:
+		ring_details = []
+		for address, details in node.ring.items():
+			ring_details.append({
+				"address": address,
+				"id": details['id'],
+				"ip": details['ip'],
+				"port": details['port'],
+				"stake": details['stake'],
+				"balance": details['balance'],
+				"temp_balance": details['temp_balance']
+			})
+		return JSONResponse(ring_details, status_code=status.HTTP_200_OK)
+	except Exception as e:
+		return JSONResponse('Could not get ring details', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @public_api.get("/get_pending_list_length", tags=["Public Routes"])
 def get_pending_list_length():
