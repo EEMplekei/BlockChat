@@ -134,7 +134,7 @@ class Node:
     # Updates the balance for each node given a validated transaction
     def update_wallet_state(self, transaction: Transaction):         
         # If the transaction is related to node, update wallet
-        if (transaction.receiver_address == self.wallet.address or 
+        if (transaction.receiver_address == str(self.wallet.address) or 
             transaction.sender_address == self.wallet.address):
             self.wallet.transactions.append(transaction)
         # info message
