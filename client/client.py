@@ -3,6 +3,7 @@ import inquirer
 import time
 import requests
 import json
+from texttable import Texttable
 from utils import utils, drawers
 
 # Opening JSON file
@@ -178,7 +179,7 @@ def client():
 				# api client call to view last block
 				response = requests.get(address+'/api/view_last_block')
 				data = response.json()
-				draw_blockchain(data)
+				drawers.draw_blockchain(data)
 			except requests.exceptions.HTTPError:
 				print("Node is not active. Try again later.")
 			input("Press any key to go back...")
@@ -192,7 +193,7 @@ def client():
 				chain = requests.get(address+'/api/get_chain')
 				chain = chain.json()
 				#print(chain)
-				draw_blockchain(chain)
+				drawers.draw_blockchain(chain)
 			except requests.exceptions.HTTPError:
 				print("Node is not active. Try again later.")
 			input("Press any key to go back...")
