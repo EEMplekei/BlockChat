@@ -12,7 +12,7 @@ The deployment process (for Linux-Debian) is described below:
 git clone git@github.com:EEMplekei/BlockChat.git
 ```
 
-##### Install requirements
+#### Install requirements
 ```bash
 sudo apt install python3
 sudo apt install pip3
@@ -20,7 +20,16 @@ cd BlockChat/api
 pip3 install -r requirements.txt
 ```
 
-##### Run the [API](./backend/README.md) (you have to do this in every node of the blockchain)
+#### Run the [API](./backend/README.md) (you have to do this in every node of the blockchain)
+
+<img src="https://static1.smartbear.co/swagger/media/assets/images/swagger_logo.svg" alt="blocks" height="80"/>
+
+Detailed API documentation is implemented in OpenAPI 3.0 specifications and you can view the routes and calls in Swagger 
+
+###### [API DOCUMENTATION SWAGGER HERE](https://app.swaggerhub.com/apis-docs/EEMplekei/BlockChatAPI/0.1.0)
+
+
+
 ```bash
 cd BlockChat/api
 python3 api --i eth --port p
