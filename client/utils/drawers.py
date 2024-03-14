@@ -1,5 +1,5 @@
 from colorama import Fore
-from os import system
+import os
 
 def brand():
 	print(f"""{Fore.GREEN}

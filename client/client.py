@@ -8,8 +8,8 @@ from utils import utils, drawers
 
 # Opening JSON file
 with open('../nodes_config.json') as f:
-    nodes_config = json.load(f)
-    
+	nodes_config = json.load(f)
+	
 #Parse arguments
 node = utils.parse_arguments()
 
@@ -18,10 +18,10 @@ address = utils.get_node_address(nodes_config, node)
 
 # Command Line Interface client
 def client():
-    
+	
 	if not utils.check_api_availability(address):
 		exit()
-	
+
 	#Clear terminal and show brand name
 	drawers.clear_terminal()
 	drawers.brand()
