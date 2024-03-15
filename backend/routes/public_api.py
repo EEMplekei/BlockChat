@@ -5,6 +5,7 @@ from components.node import node
 from utils.env_variables import TOTAL_NODES
 from components.transaction import TransactionType
 from colorama import Fore
+import threading
 import json
 from pydantic import BaseModel
 
@@ -72,8 +73,12 @@ async def create_transaction(request: Request, transaction: CreateTransaction):
 				# Add to pending transactions list and check that it should pass
 				if not node.add_transaction_to_pending(transaction):
 					return JSONResponse('Transaction is not valid', status_code=status.HTTP_400_BAD_REQUEST)
-				# Broadcast transaction			
-				node.broadcast_transaction(transaction)
+				# Broadcast transaction	
+				# print(f"{Fore.GREEN}I will broadcast it{Fore.RESET}")
+				thread = threading.Thread(target=node.broadcast_transaction, args=(transaction,))
+				thread.start()			
+				#node.broadcast_transaction(transaction)
+				# print(f"{Fore.GREEN}I broadcasted it{Fore.RESET}")
 				
 				return JSONResponse('Successful Transaction!', status_code=status.HTTP_200_OK)
 			except Exception as e:

@@ -49,7 +49,7 @@ print(f"{Fore.GREEN}Starting the threads{Fore.RESET}")
 print()
 # Create and start five threads
 threads = []
-for i in range(2):
+for i in range(5):
     address_i = address[i]  # Provide the address here
     trans_folder = f'trans{i + 10}'  # Assuming you have folders trans1 to trans5
     thread = threading.Thread(target=threading_function, args=(address_i, trans_folder), name=f"Thread-{i}")
@@ -57,8 +57,8 @@ for i in range(2):
     threads.append(thread)
 
 # Wait for all threads to finish
-for thread in threads:
-    thread.join()
+# for thread in threads:
+#     thread.join()
 
 print("All threads have finished execution.")
 

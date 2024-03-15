@@ -207,7 +207,7 @@ class Node:
                     self.add_block_to_chain(new_block)
                     # Broadcast block to the network
                     self.broadcast_block(new_block)
-        print("I RELEASED THE LOCK")
+        # print("I RELEASED THE LOCK")
 
     # Adds a newly block to the chain (assuming it has been validated)
     def add_block_to_chain(self, block: Block):
