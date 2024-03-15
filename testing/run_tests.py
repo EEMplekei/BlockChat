@@ -1,31 +1,22 @@
-from helper_functions import parse_arg, parse_input, staking, send_messages
+from helper_functions import parse_arg, parse_input, staking, send_messages, utils
 import json
 from colorama import Fore
-import os
 
-os.system('cls||clear')
+utils.clear_terminal()
 print(f"{Fore.GREEN}Starting the testing process{Fore.RESET}")
 print()
 
 # Step 1. Arg Parse how many nodes to be in the chain
 nodes = int(parse_arg.parse_arguments())
 
-
 # Step 2. Get the addresses of the nodes
 print(f"{Fore.GREEN}Getting the addresses of the nodes{Fore.RESET}")
 print()
-f = open('../nodes_config.json')
-nodes_config = json.load(f)
-f.close()
-address = []
-# Networking Configuration
-for node_number in range(nodes):
-	temp = nodes_config.get(f'node{node_number}') if node_number in range(10) else print("Invalid node number") and exit()
-	address.append(temp)
+address = utils.get_nodes_address(nodes)
 
 # Step 3. Setup the nodes 
 print(f"{Fore.GREEN}Setting up the nodes{Fore.RESET}")
-print()	
+print()
 
 
 # Step 4. Setup Initial Stake on nodes 

@@ -1,5 +1,4 @@
 import requests
-import json
 
 # Function that sends the messages to the receiver from the parsed lists
 def send_messages(address: str, receiver_id_list, message_list):
@@ -16,7 +15,7 @@ def send_messages(address: str, receiver_id_list, message_list):
 		try:
 			# api client call  for message
 			response = requests.post(address+'/api/create_transaction', json={
-				"receiver_id": receiver_id,
+				"receiver_id": int(receiver_id),
 				"payload": message,
 				"type_of_transaction": "MESSAGE"
 			})
