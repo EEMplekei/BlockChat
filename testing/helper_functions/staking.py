@@ -1,17 +1,8 @@
 import requests
-import json
 
 # Function that stakes the amount of coins on the node
-def initial_stake(node_number: int, stake_amount: int):
-	# Opening JSON file
-	f = open('../../nodes_config.json')
-	nodes_config = json.load(f)
-	f.close()
-
+def initial_stake(address: str, stake_amount: int):
 	try:
-		# Networking Configuration
-		address = nodes_config.get(f'node{node_number}') if node_number in range(10) else print("Invalid node number") and exit()
-
 		# api client call  for staking
 		response = requests.post(address+'/api/set_stake', json={
 			"stake": stake_amount
