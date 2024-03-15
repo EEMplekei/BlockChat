@@ -1,6 +1,6 @@
 import requests
 
-# Function that stakes the amount of coins on the node
+# Function that stakes the amount of coins on ONE node!
 def initial_stake(address: str, stake_amount: int):
 	try:
 		# api client call  for staking
@@ -16,5 +16,5 @@ def initial_stake(address: str, stake_amount: int):
 			response.raise_for_status()
 	
 	# All tests passed
-	print("✅ Staking Successful ✅")
+	print(f"✅ Staking Successful for Node with address: {address}✅")
 	return True

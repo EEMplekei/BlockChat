@@ -18,7 +18,6 @@ address = utils.get_nodes_address(nodes)
 print(f"{Fore.GREEN}Setting up the nodes{Fore.RESET}")
 print()
 
-
 # Step 4. Setup Initial Stake on nodes 
 # Initial staking in all nodes in 10 BCC as in the example
 print(f"{Fore.GREEN}Setting up the initial stake on the nodes{Fore.RESET}")
@@ -27,14 +26,10 @@ for i in range(nodes):
 	staking.initial_stake(address[i], 10)
 print()
 
-
+# HERE IT STARTS THREADING ==========================
 print(f"{Fore.GREEN}Starting the threads{Fore.RESET}")
 print()
-
-
-# HERE IT STARTS THREADING ==========================
 # not implemented...
-
 
 # Step 5. Parsing the input files
 print(f"{Fore.GREEN}Parsing the input files{Fore.RESET}")

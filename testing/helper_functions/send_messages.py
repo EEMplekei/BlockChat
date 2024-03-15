@@ -1,6 +1,6 @@
 import requests
 
-# Function that sends the messages to the receiver from the parsed lists
+# Function that sends the messages to the receiver from the parsed lists ON ONE NODE!
 def send_messages(address: str, receiver_id_list, message_list):
 	for i in receiver_id_list:
 		# Get the receiver id
@@ -9,7 +9,7 @@ def send_messages(address: str, receiver_id_list, message_list):
 		message = message_list[receiver_id_list.index(i)]
 
 		# Debugging
-		print(f"Sending message to {receiver_id} with message: {message}")
+		#print(f"Sending message to {receiver_id} with message: {message}")
 	
 		# Send the message to the receiver
 		try:
@@ -31,5 +31,5 @@ def send_messages(address: str, receiver_id_list, message_list):
 			return False
 	
 	# All tests passed
-	print("✅ Messages were send successfully ✅")
+	print(f"✅ Messages were send successfully for Node with address: {address}✅")
 	return True
