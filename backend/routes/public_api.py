@@ -3,6 +3,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from components.node import node
 from utils.env_variables import TOTAL_NODES
+from utils.wrappers import check_ring_full
 from components.transaction import TransactionType
 from colorama import Fore
 import json
@@ -25,10 +26,10 @@ public_api = FastAPI(root_path="/api")
 def get_api():
 	return JSONResponse({'message': f'Node {node.id} is up and running!'}, status_code=status.HTTP_200_OK)
 
+
 @public_api.post("/create_transaction", tags=["Public Routes"])
+@check_ring_full(len(node.ring))
 async def create_transaction(request: Request, transaction: CreateTransaction):
-		if len(node.ring) < TOTAL_NODES:
-			return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)	
 
 		# Get the parameters
 		try:
@@ -83,15 +84,13 @@ async def create_transaction(request: Request, transaction: CreateTransaction):
 			return JSONResponse('Receiver not found', status_code=status.HTTP_400_BAD_REQUEST)
 
 @public_api.post("/set_stake", tags=["Public Routes"])
+@check_ring_full(len(node.ring))
 async def set_stake(request: Request, stake: Stake):
 	# json body request expected to be:
 	# {
 	#     "stake": int,
 	# }
 
-	if len(node.ring) < TOTAL_NODES:
-		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)	
- 
 	# Get the parameters
 	data = await request.json()
 	amount = data.get("stake")
@@ -116,11 +115,9 @@ async def set_stake(request: Request, stake: Stake):
 	return JSONResponse('Successful Staking!', status_code=status.HTTP_200_OK)
 
 @public_api.get("/view_last_block", tags=["Public Routes"])
+@check_ring_full(len(node.ring))
 def view_last_block_transactions():
 	
-	if len(node.ring) < TOTAL_NODES:
-		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)	
- 
 	if (len(node.blockchain.chain) < 1):
 		return JSONResponse(status_code = status.HTTP_204_NO_CONTENT)
 	# Get last block in the chain
@@ -149,11 +146,9 @@ def view_last_block_transactions():
 	return JSONResponse(data, status_code=status.HTTP_200_OK)
 
 @public_api.get("/get_balance", tags=["Public Routes"])
+@check_ring_full(len(node.ring))
 def get_balance():
-	
-	if len(node.ring) < TOTAL_NODES:
-		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
- 
+
 	try:
 		balance = node.ring[str(node.wallet.address)]['balance'] # Alternative
 	except Exception as e:
@@ -163,11 +158,9 @@ def get_balance():
 	return JSONResponse({'balance': balance}, status_code=status.HTTP_200_OK)
 
 @public_api.get("/get_temp_balance", tags=["Public Routes"])
+@check_ring_full(len(node.ring))
 def get_temp_balance():
 	
-	if len(node.ring) < TOTAL_NODES:
-		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
-
 	try:
 		temp_balance = node.ring[str(node.wallet.address)]['temp_balance'] # Alternative
 	except Exception as e:
@@ -176,18 +169,15 @@ def get_temp_balance():
 	return JSONResponse({'temp_balance': temp_balance}, status_code=status.HTTP_200_OK)
 
 @public_api.get("/get_chain_length", tags=["Public Routes"])
+@check_ring_full(len(node.ring))
 def get_chain_length():
-	
-	if len(node.ring) < TOTAL_NODES:
-		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
 
 	return JSONResponse({'chain_length': len(node.blockchain.chain)}, status_code=status.HTTP_200_OK)
 
 @public_api.get("/get_transaction_list", tags=["Public Routes"])
+@check_ring_full(len(node.ring))
 def get_transaction_list():
-	if len(node.ring) < TOTAL_NODES:
-		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
-	
+
 	try:
 		my_transactions = []
 		for transaction in node.wallet.transactions:
@@ -226,10 +216,8 @@ def get_transaction_list():
 		return JSONResponse('Could not get transaction list', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @public_api.get("/get_chain", tags=["Public Routes"])
+@check_ring_full(len(node.ring))
 def get_chain():
-	
-	if len(node.ring) < TOTAL_NODES:
-		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
 
 	data = []
 	# Iterate through the blockchain and get the transactions, hash and previous hash and get the validator of each block
@@ -271,9 +259,7 @@ async def view_ring():
 		return JSONResponse('Could not get ring details', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @public_api.get("/get_pending_list_length", tags=["Public Routes"])
+@check_ring_full(len(node.ring))
 def get_pending_list_length():
-	
-	if len(node.ring) < TOTAL_NODES:
-		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)	
-	
+
 	return JSONResponse({'pending_list_length': len(node.pending_transactions)}, status_code=status.HTTP_200_OK)

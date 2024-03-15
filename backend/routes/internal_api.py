@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, Depends, status
 from fastapi.responses import JSONResponse
 from components.node import node
 from utils.env_variables import TOTAL_NODES
+from utils.wrappers import check_ring_full
 from colorama import Fore
 import threading
 import pickle
@@ -28,11 +29,9 @@ async def receive_ring(request: Request):
 
 # Gets the latest version of the blockchain from the Bootstrap node
 @internal_api.post("/receive_blockchain", tags=["Internal Routes"])
+@check_ring_full(len(node.ring))
 async def receive_blockchain(request: Request):
-	
-	if len(node.ring) < TOTAL_NODES:
-		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
- 
+	 
 	if (node.is_bootstrap):
 		return JSONResponse('Cannot post blockchain to bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
 	
@@ -44,10 +43,9 @@ async def receive_blockchain(request: Request):
 
 # Gets an incoming transaction and adds it in the block.
 @internal_api.post("/receive_transaction", tags=["Internal Routes"])
+@check_ring_full(len(node.ring))
 async def receive_transaction(request: Request):
-	if len(node.ring) < TOTAL_NODES:
-		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
-	
+		
 	data = await request.body()
 	new_transaction = pickle.loads(data)
 	if not node.is_transaction_replayed(new_transaction):
@@ -63,11 +61,9 @@ async def receive_transaction(request: Request):
 
 # Gets an incoming mined block and adds it to the blockchain.
 @internal_api.post("/receive_block", tags=["Internal Routes"])
+@check_ring_full(len(node.ring))
 async def receive_block(request: Request):
-	
-	if len(node.ring) < TOTAL_NODES:
-		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
-	
+		
 	# Deserialize the data received in the request body using pickle.loads()
 	data = await request.body()
 	new_block = pickle.loads(data)
@@ -89,20 +85,17 @@ async def receive_block(request: Request):
 
 # Gets the order to find validator from the Bootstrap node
 @internal_api.post("/find_validator", tags=["Internal Routes"])
+@check_ring_full(len(node.ring))
 async def find_validator():
-	if len(node.ring) < TOTAL_NODES:
-		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
 
 	node.find_next_validator()
 	return {"message": "Validator search initiated"}
 
 # Asks bootstrap node to enter the network, api endpoint accessed by non-bootstrap nodes
 @internal_api.post("/join_request", tags=["Internal Routes"])
+@check_ring_full(len(node.ring))
 async def join_request(request: Request):
 	
-	if not node.is_bootstrap:
-		return JSONResponse('Cannot post to join_request to a non-bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
-
 	  # Deserialize the data received in the request body using pickle.loads()
 	data = await request.body()
 	node_data = pickle.loads(data)
