@@ -99,8 +99,8 @@ async def set_stake(request: Request, stake: Stake):
 		amount = int(amount)
 	except ValueError:
 		return JSONResponse('Stake must be an integer number', status_code=status.HTTP_400_BAD_REQUEST)
-	if(amount <= 0):
-		return JSONResponse('Stake must be greater than 0', status_code=status.HTTP_400_BAD_REQUEST)
+	if(amount < 0):
+		return JSONResponse('Stake must be greater or equal to 0', status_code=status.HTTP_400_BAD_REQUEST)
 
 	# Create transaction function also validates it inside
 	staking_transaction = node.create_transaction(0, TransactionType.COINS, amount)
@@ -114,7 +114,6 @@ async def set_stake(request: Request, stake: Stake):
 	return JSONResponse('Successful Staking!', status_code=status.HTTP_200_OK)
 
 @public_api.get("/view_last_block", tags=["Public Routes"])
-@check_ring_full(node)
 def view_last_block_transactions():	
  
 	if (len(node.blockchain.chain) < 1):
@@ -145,7 +144,6 @@ def view_last_block_transactions():
 	return JSONResponse(data, status_code=status.HTTP_200_OK)
 
 @public_api.get("/get_balance", tags=["Public Routes"])
-@check_ring_full(node)
 def get_balance():
 
 	try:
@@ -157,7 +155,6 @@ def get_balance():
 	return JSONResponse({'balance': balance}, status_code=status.HTTP_200_OK)
 
 @public_api.get("/get_temp_balance", tags=["Public Routes"])
-@check_ring_full(node)
 def get_temp_balance():
 	
 	try:
@@ -168,13 +165,11 @@ def get_temp_balance():
 	return JSONResponse({'temp_balance': temp_balance}, status_code=status.HTTP_200_OK)
 
 @public_api.get("/get_chain_length", tags=["Public Routes"])
-@check_ring_full(node)
 def get_chain_length():
 	
 	return JSONResponse({'chain_length': len(node.blockchain.chain)}, status_code=status.HTTP_200_OK)
 
 @public_api.get("/get_transaction_list", tags=["Public Routes"])
-@check_ring_full(node)
 def get_transaction_list():
 
 	try:
@@ -215,7 +210,6 @@ def get_transaction_list():
 		return JSONResponse('Could not get transaction list', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @public_api.get("/get_chain", tags=["Public Routes"])
-@check_ring_full(node)
 def get_chain():
 
 	data = []
@@ -258,7 +252,6 @@ async def view_ring():
 		return JSONResponse('Could not get ring details', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @public_api.get("/get_pending_list_length", tags=["Public Routes"])
-@check_ring_full(node)
 def get_pending_list_length():
 
 	return JSONResponse({'pending_list_length': len(node.pending_transactions)}, status_code=status.HTTP_200_OK)

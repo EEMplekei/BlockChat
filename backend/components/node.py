@@ -100,7 +100,7 @@ class Node:
             mint_thread.start()
         return
 
-    # Send the current state of the blockchain to a specific node via HTTP POST request.
+    # Updates the temporary balance for each node given a validated transaction
     def update_temp_balance(self, transaction: Transaction):
         if (transaction.type_of_transaction == TransactionType.INITIAL): 
             # IF IT IS INITIAL TRANSACTION (DO NOT INCLUDE FEE)
@@ -119,7 +119,7 @@ class Node:
             self.ring[str(transaction.sender_address)]['temp_balance'] -= len(transaction.message)        
         
         elif (transaction.receiver_address == 0 and transaction.type_of_transaction == TransactionType.COINS):
-            # IF IT IS STAKE CASE
+            # If it is a stake transaction, give back to the send the old stake and then add the new stake
             if self.ring[str(transaction.sender_address)]['stake'] != 0:
                 # Update Temp Balance
                 old_stake = self.ring[str(transaction.sender_address)]['stake']
@@ -222,8 +222,8 @@ class Node:
                 sum+=transaction.amount*FEE_RATE
                 # Make the temp_balance of the receiver equal to the balance 
                 self.ring[str(transaction.receiver_address)]['temp_balance'] = self.ring[str(transaction.receiver_address)]['balance']
-            # Make the temp_balance of the sender equal to the balance
-            self.ring[str(transaction.sender_address)]['temp_balance'] = self.ring[str(transaction.sender_address)]['balance']
+            # Make the temp_balance of the sender equal to the balance and remove the stake
+            self.ring[str(transaction.sender_address)]['temp_balance'] = self.ring[str(transaction.sender_address)]['balance'] - self.ring[str(transaction.sender_address)]['stake']
         # Make the temp_balance of the validator equal to the balance
         self.ring[str(block.validator)]['temp_balance'] = self.ring[str(block.validator)]['balance']
         # Update pending_transactions list
@@ -241,7 +241,8 @@ class Node:
         # Select a new validator for the next block
         self.find_next_validator()
         # After you have selected a validator, set the stake of each node in the ring equal to 0
-        self.refresh_stake()
+        # This should be left commented out because we want the stake to be the same for the next block
+        # self.refresh_stake()
 
     # Refresh the stake of each node
     def refresh_stake(self):
