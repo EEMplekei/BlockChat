@@ -35,14 +35,16 @@ print()
 # Step 5. Parsing the input files
 print(f"{Fore.GREEN}Parsing the input files{Fore.RESET}")
 print()
-receiver_id_list, messages_list = parse_input.parse_input_files('trans0')
-# print(f"Receiver id list: {receiver_id_list}")
-# print(f"Messages list: {messages_list}")
+receiver_id_list, messages_list = parse_input.parse_input_files('trans11')
 print()
 
 # Step 6. Send messages
 print(f"{Fore.GREEN}Sending the messages{Fore.RESET}")
 print()
 send_messages.send_messages(address[0], receiver_id_list, messages_list)
+print()
 
 # Collect throughput and block time and write to output files
+print(f"{Fore.GREEN}Collecting the throughput and block time{Fore.RESET}")
+print()
+# not implemented...
