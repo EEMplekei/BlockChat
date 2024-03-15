@@ -13,6 +13,7 @@ nodes = int(parse_arg.parse_arguments())
 print(f"{Fore.GREEN}Getting the addresses of the nodes{Fore.RESET}")
 print()
 address = utils.get_nodes_address(nodes)
+print()
 
 # Step 3. Setup the nodes 
 print(f"{Fore.GREEN}Setting up the nodes{Fore.RESET}")
