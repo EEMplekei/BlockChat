@@ -228,8 +228,10 @@ def show_help():
 	print('Send a message to a node. Select node id and message.\n\n')
 
 	print('🎰 Set Stake:')
-	print('Set the stake for the client wallet.\n\n')
-
+	print(f'''Set the stake for the client wallet.{Fore.CYAN}
+    This is stake will be frozen from your account from now on and will be used in the PoS algorithm.
+    You can change it anytime using a different value. Use 0 to set to zero and not take part in the PoS algorithm.{Fore.RESET}\n''')
+    
 	print('📬 Incoming Messages:')
 	print('View incoming messages from other nodes.\n\n')
 
