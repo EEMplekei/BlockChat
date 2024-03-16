@@ -27,11 +27,16 @@ def threading_function(address, trans_folder):
     print()
 
 utils.clear_terminal()
-print(f"{Fore.GREEN}Starting the testing process{Fore.RESET}")
+print(f"{Fore.GREEN}Starting the testing process for 5 clients{Fore.RESET}")
 print()
 
 # Step 1. Arg Parse how many nodes to be in the chain
 nodes = int(parse_arg.parse_arguments())
+
+# Check if the number of nodes is valid
+if nodes != 5 and nodes != 10:
+    print(f"{Fore.RED}Invalid number of nodes{Fore.RESET}")
+    exit(1)
 
 # Step 2. Get the addresses of the nodes
 print(f"{Fore.GREEN}Getting the addresses of the nodes{Fore.RESET}")
@@ -57,9 +62,15 @@ print()
 # Create and start five threads
 threads = []
 start_time = time.time()
-for i in range(5):
+for i in range(nodes):
     address_i = address[i]  # Provide the address here
-    trans_folder = f'trans{i + 10}'  # Assuming you have folders trans1 to trans5
+    if nodes == 5:
+        trans_folder = f'trans5_{i}'
+    elif nodes == 10:
+        trans_folder = f'trans10_{i}'
+    else:
+        print(f"{Fore.RED}Invalid number of nodes{Fore.RESET}")
+        exit(1)
     thread = threading.Thread(target=threading_function, args=(address_i, trans_folder), name=f"Thread-{i}")
     thread.start()
     threads.append(thread)
@@ -101,7 +112,3 @@ print(f"{Fore.GREEN}Throughput: {throughput} transactions per second{Fore.RESET}
 print(f"Chain Length: {chain_length}")
 # Output the block time excluding the genesis block
 print(f"{Fore.GREEN}Block Time: {(end_time - start_time) / (chain_length - 1)} seconds{Fore.RESET}")
-
-
-
-

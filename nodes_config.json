@@ -4,9 +4,10 @@
     "node2": "http://snf-43785.ok-kno.grnetcloud.net:8000",
     "node3": "http://snf-43787.ok-kno.grnetcloud.net:8000",
     "node4": "http://snf-43833.ok-kno.grnetcloud.net:8000",
-    "node5": "http://snf-43775.ok-kno.grnetcloud.net:8000",
-    "node6": "http://snf-43775.ok-kno.grnetcloud.net:8000",
-    "node7": "http://snf-43775.ok-kno.grnetcloud.net:8000",
-    "node8": "http://snf-43775.ok-kno.grnetcloud.net:8000",
-    "node9": "http://snf-43775.ok-kno.grnetcloud.net:8000"
+    
+    "node5": "http://snf-43775.ok-kno.grnetcloud.net:8001",
+    "node6": "http://snf-43783.ok-kno.grnetcloud.net:8001",
+    "node7": "http://snf-43785.ok-kno.grnetcloud.net:8001",
+    "node8": "http://snf-43787.ok-kno.grnetcloud.net:8001",
+    "node9": "http://snf-43833.ok-kno.grnetcloud.net:8001"
 }
