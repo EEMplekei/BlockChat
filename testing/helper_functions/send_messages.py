@@ -1,13 +1,11 @@
 import requests
 import time
 
-import requests
-
 def send_messages(address: str, receiver_id_list, message_list):
 	for receiver_id, message in zip(receiver_id_list, message_list):
 		time.sleep(1)
 		# Debugging
-		print(f"Sending message to {receiver_id} with message: {message}")
+		# print(f"Sending message to {receiver_id} with message: {message}")
 		
 		# Send the message to the receiver
 		try:
