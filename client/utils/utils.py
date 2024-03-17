@@ -19,15 +19,21 @@ def parse_arguments():
 
 #Get the address of the node
 def get_node_address(nodes_config, node):
-	if node in map(str, range(10)):
-		address = nodes_config.get(f'node{node}', lambda: (print("Invalid node number") or exit()))
-	else:
-		print(f"{Fore.YELLOW}get_node_address{Fore.RESET}: {Fore.RED}Invalid node number{Fore.RESET}")
+	try:
+		return nodes_config[node]
+	except KeyError:
+		print(f"{Fore.YELLOW}get_node_address{Fore.RESET}: {Fore.RED}Invalid node{Fore.RESET}")
 		exit()
-	return address
+	# if node in map(str, range(10)):
+	# 	print(nodes_config)
+	# 	address = nodes_config.get(f'{node}', lambda: (print("Invalid node") or exit()))
+	# else:
+	# 	print(f"{Fore.YELLOW}get_node_address{Fore.RESET}: {Fore.RED}Invalid node{Fore.RESET}")
+	# 	exit()
+	# return address
 
 #Check if the API is available
-def check_api_availability(address):
+def check_api_availability(address, node):
 	try:
 		response = requests.get(address+'/api/')
 		response.raise_for_status()
@@ -35,7 +41,7 @@ def check_api_availability(address):
 			print("❌ API is not available. Try again later ❌")
 			return False
 	except requests.exceptions.RequestException as e:
-		print(f"❌ API on node with address {address} is not available. Try again later ❌")
+		print(f"❌ API on {Style.BRIGHT}{node}{Style.NORMAL} with address {Style.BRIGHT}{address}{Style.NORMAL} is not available. Try again later ❌")
 		return False
 	
 	return True
