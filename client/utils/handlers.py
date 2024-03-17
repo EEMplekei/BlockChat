@@ -1,7 +1,7 @@
-import requests
-import inquirer
 from colorama import Fore, Style
 from texttable import Texttable
+import requests
+import inquirer
 from utils import drawers
 
 def handle_new_transaction(address):
