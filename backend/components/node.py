@@ -77,7 +77,7 @@ class Node:
         # Validate it here because here we reach and for other's transactions
         
         # FOR STAKE CASE
-        if transaction.receiver_address == 0 and transaction.type_of_transaction == TransactionType.COINS:
+        if transaction.type_of_transaction == TransactionType.STAKE:
             old_stake = self.ring[str(transaction.sender_address)]['stake']
             temp_balance = self.ring[str(transaction.sender_address)]['temp_balance']
             if not transaction.validate_transaction(temp_balance + old_stake):
@@ -103,30 +103,26 @@ class Node:
     # Updates the temporary balance for each node given a validated transaction
     def update_temp_balance(self, transaction: Transaction):
         if (transaction.type_of_transaction == TransactionType.INITIAL): 
-            # IF IT IS INITIAL TRANSACTION (DO NOT INCLUDE FEE)
-            # Update the temporary balance of the sender and receiver in the ring.
+            # Update the temporary balance of the sender and receiver in the ring. Initial transaction does not have a fee
             self.ring[str(transaction.sender_address)]['temp_balance'] -= transaction.amount
             self.ring[str(transaction.receiver_address)]['temp_balance'] += transaction.amount
 
-        elif (transaction.type_of_transaction == TransactionType.COINS and transaction.receiver_address != 0): 
-            # IF IT IS NORMAL TRANSACTION COINS
+        elif (transaction.type_of_transaction == TransactionType.COINS): 
             # Update the temporary balance of the sender and receiver in the ring.
             self.ring[str(transaction.sender_address)]['temp_balance'] -= transaction.amount + transaction.amount*FEE_RATE
             self.ring[str(transaction.receiver_address)]['temp_balance'] += transaction.amount
         
         elif (transaction.type_of_transaction == TransactionType.MESSAGE):
-            # IF IT IS message
+            # Remove the coins from the sender. No fees and no coins are added to the receiver
             self.ring[str(transaction.sender_address)]['temp_balance'] -= len(transaction.message)        
         
-        elif (transaction.receiver_address == 0 and transaction.type_of_transaction == TransactionType.COINS):
-            # If it is a stake transaction, give back to the send the old stake and then add the new stake
-            if self.ring[str(transaction.sender_address)]['stake'] != 0:
-                # Update Temp Balance
-                old_stake = self.ring[str(transaction.sender_address)]['stake']
-                self.ring[str(transaction.sender_address)]['temp_balance'] += old_stake
+        elif (transaction.type_of_transaction == TransactionType.STAKE):
+            # If it is a stake transaction, give back to the sender the old stake and then add the new stake
+            old_stake, new_stake = self.ring[str(transaction.sender_address)]['stake'], transaction.amount
 
-            self.ring[str(transaction.sender_address)]['stake'] = transaction.amount
-            self.ring[str(transaction.sender_address)]['temp_balance'] -= transaction.amount
+            #Set the new stake and remove the coins from the sender temp_balance
+            self.ring[str(transaction.sender_address)]['stake'] = new_stake
+            self.ring[str(transaction.sender_address)]['temp_balance'] += old_stake - new_stake
         
         return
 
@@ -136,30 +132,35 @@ class Node:
         if (transaction.receiver_address == str(self.wallet.address) or 
             transaction.sender_address == self.wallet.address):
             self.wallet.transactions.append(transaction)
-        # info message
+        
         if(transaction.type_of_transaction == TransactionType.INITIAL):
-            print(f"{Fore.LIGHTBLUE_EX}========= INITIAL TRANSACTION 💵 ==========={Fore.RESET}")
+            print(f"{Fore.LIGHTBLUE_EX}========= INITIAL TRANSACTION 💵 ========={Fore.RESET}")
             print(f"Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> {self.ring[str(transaction.receiver_address)]['id']} : {transaction.amount} BBCs")
             # Update the balance of sender and receiver in the ring.
             self.ring[str(transaction.sender_address)]['balance'] -=  transaction.amount
             self.ring[str(transaction.receiver_address)]['balance'] +=  transaction.amount
 
-        elif(transaction.receiver_address==0 and transaction.type_of_transaction == TransactionType.COINS):
-            print(f"{Fore.LIGHTBLUE_EX}============== STAKING 🎰 =============={Fore.RESET}")
-            print(f"Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> STAKE : {transaction.amount} BBCs")
-        
-        elif(transaction.type_of_transaction == TransactionType.MESSAGE):
-            print(f"{Fore.LIGHTBLUE_EX}=========== NEW MESSAGE 💬 ============={Fore.RESET}")
-            print(f"Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> {self.ring[str(transaction.receiver_address)]['id']} {str(transaction.message)} : {len(transaction.message)} characters")
-            # Update the balance of sender and receiver in the ring.
-            self.ring[str(transaction.sender_address)]['balance'] -=  len(transaction.message)
-        
-        elif(transaction.type_of_transaction == TransactionType.COINS and transaction.receiver_address != 0):
-            print(f"{Fore.LIGHTBLUE_EX}========= NEW TRANSACTION 💵 ==========={Fore.RESET}")
+        elif(transaction.type_of_transaction == TransactionType.COINS):
+            print(f"{Fore.LIGHTBLUE_EX}========= NEW TRANSACTION 💵 ============={Fore.RESET}")
             print(f"Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> {self.ring[str(transaction.receiver_address)]['id']} : {transaction.amount} BBCs")
             # Update the balance of sender and receiver in the ring.
             self.ring[str(transaction.sender_address)]['balance'] -=  transaction.amount + transaction.amount*FEE_RATE
             self.ring[str(transaction.receiver_address)]['balance'] +=  transaction.amount
+        
+        elif(transaction.type_of_transaction == TransactionType.MESSAGE):
+            print(f"{Fore.LIGHTBLUE_EX}========= NEW MESSAGE 💬 ================={Fore.RESET}")
+            print(f"Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> {self.ring[str(transaction.receiver_address)]['id']} {str(transaction.message)} : {len(transaction.message)} characters")
+            # Update the balance of sender and receiver in the ring.
+            self.ring[str(transaction.sender_address)]['balance'] -=  len(transaction.message)
+            
+        elif(transaction.type_of_transaction == TransactionType.STAKE):
+            print(f"{Fore.LIGHTBLUE_EX}========= STAKING 🎰 ====================={Fore.RESET}")
+            print(f"Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> STAKE : {transaction.amount} BBCs")
+        
+        else:
+            print(f"{Fore.YELLOW}update_wallet_state{Fore.RESET}:{Fore.RED}Invalid transaction type found in block!{Fore.RESET}")
+            raise ValueError("Invalid transaction type found in block")
+        
         
         return
 
@@ -217,7 +218,7 @@ class Node:
         for transaction in block.transactions:
             self.update_wallet_state(transaction)
             # Update the balance of the validator in the ring (if it is a normal COINS transaction)
-            if transaction.receiver_address != 0 and transaction.type_of_transaction == TransactionType.COINS:
+            if transaction.type_of_transaction == TransactionType.COINS:
                 self.ring[str(block.validator)]['balance'] += transaction.amount*FEE_RATE
                 sum+=transaction.amount*FEE_RATE
                 # Make the temp_balance of the receiver equal to the balance 
