@@ -1,6 +1,6 @@
 import requests
 import inquirer
-from colorama import Fore
+from colorama import Fore, Style
 from texttable import Texttable
 from utils import drawers
 
@@ -125,9 +125,9 @@ def handle_new_stake(address):
 
 		if response.status_code == 200:
 			print(f"{Fore.GREEN}Stake set successfully!{Fore.RESET}")
-   
-		data = response.json()
-		print(data)
+		else:
+			data = response.json()
+			print(data)
 	except requests.exceptions.HTTPError:
 		if (data):
 			print(f"{Fore.LIGHTRED_EX}{data}{Fore.RESET}")
@@ -166,17 +166,17 @@ def handle_view_incoming_messages(address, node):
 def handle_view_all_transactions(address):	
 	try:
 		# api client call to view last block
-		response = requests.get(address+'/api/get_transaction_list')
+		response = requests.get(address+'/api/get_wallet_transaction_list')
 		data = response.json()
 		table = Texttable()
 		table.add_row(["Sender", "Receiver", "Type", "Message", "Amount", "Nonce", "Transaction ID"])
-		for transaction in data["My transactions"]:
-			if transaction["type_of_transaction"] == "COINS" and transaction["sender_address"] == "0":
-				table.add_row([transaction["sender_address"], transaction["receiver_address"], "STAKE", "None", transaction["amount"], transaction["nonce"], transaction["transaction_id"]])
-			elif transaction["type_of_transaction"] == "COINS" or transaction["type_of_transaction"] == "INITIAL":
+		for transaction in data["Wallet transactions"]:
+			if transaction["type_of_transaction"] == "COINS" or transaction["type_of_transaction"] == "INITIAL":
 				table.add_row([transaction["sender_address"], transaction["receiver_address"], transaction["type_of_transaction"],"None", transaction["amount"], transaction["nonce"], transaction["transaction_id"]])
 			elif transaction["type_of_transaction"] == "MESSAGE":
 				table.add_row([transaction["sender_address"], transaction["receiver_address"], transaction["type_of_transaction"], transaction["message"], transaction["amount"], transaction["nonce"], transaction["transaction_id"]])
+			elif transaction["type_of_transaction"] == "STAKE":
+				table.add_row([transaction["sender_address"], 0, "STAKE", "None", transaction["amount"], transaction["nonce"], transaction["transaction_id"]])
 		print(table.draw())
 	except requests.exceptions.HTTPError:
 		print(f"{Fore.LIGHTRED_EX}Node is not active. Try again later.{Fore.RESET}")
@@ -188,7 +188,11 @@ def handle_view_last_block(address):
 		# api client call to view last block
 		response = requests.get(address+'/api/view_last_block')
 		data = response.json()
-		drawers.draw_blockchain(data)
+  
+		drawers.brand()
+		print("\n    ⛓️  BlockChat Last Block  ⛓️\n")
+		drawers.draw_block(data[0])
+		print()
 	except requests.exceptions.HTTPError:
 		print(f"{Fore.LIGHTRED_EX}Node is not active. Try again later.{Fore.RESET}")
 	input("Press any key to go back...")
@@ -211,7 +215,7 @@ def handle_show_balance(address):
 		data = requests.get(address+'/api/get_balance')
 		try:
 			coins = data.json().get('balance')              
-			print(f"Your Balance is: {Fore.GREEN}{coins} BlockChat Coins{Fore.RESET}\n")
+			print(f"Your Balance is: {Fore.GREEN}{Style.BRIGHT}{coins} BlockChat Coins{Style.NORMAL}{Fore.RESET}\n")
 		except:
 			print("Validated block not available yet. Try again later")
 	except requests.exceptions.HTTPError:
@@ -221,30 +225,30 @@ def handle_show_balance(address):
 
 def show_help():
 	drawers.clear_terminal()
-	print('💸 New transaction:')
+	print(f'{Style.BRIGHT}💸 New transaction:{Style.NORMAL}')
 	print('Send transaction to a node. Select node id and amount.\n\n')
 
-	print('💬 New message:')
+	print(f'{Style.BRIGHT}💬 New message:{Style.NORMAL}')
 	print('Send a message to a node. Select node id and message.\n\n')
 
-	print('🎰 Set Stake:')
+	print(f'{Style.BRIGHT}🎰 Set Stake:{Style.NORMAL}')
 	print(f'''Set the stake for the client wallet.{Fore.CYAN}
     This is stake will be frozen from your account from now on and will be used in the PoS algorithm.
     You can change it anytime using a different value. Use 0 to set to zero and not take part in the PoS algorithm.{Fore.RESET}\n''')
     
-	print('📬 Incoming Messages:')
+	print(f'{Style.BRIGHT}📬 Incoming Messages:{Style.NORMAL}')
 	print('View incoming messages from other nodes.\n\n')
 
-	print('📋 View all of my transactions:')
+	print(f'{Style.BRIGHT}📋 View all of my transactions:{Style.NORMAL}')
 	print('View all transactions from the client wallet.\n\n')
 
-	print('📦 View last block:')
+	print(f'{Style.BRIGHT}📦 View last block:{Style.NORMAL}')
 	print('View the last block in the blockchain.\n\n')
 	
-	print('🔗 View blockchain:')
+	print(f'{Style.BRIGHT}🔗 View blockchain:{Style.NORMAL}')
 	print('A visual representation of the blockchain.\n\n')
 
-	print('💰 Show balance:')
+	print(f'{Style.BRIGHT}💰 Show balance:{Style.NORMAL}')
 	print('View the balance of the client from the client wallet.\n\n')
 
 	input("Press any key to go back...")
