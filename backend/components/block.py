@@ -79,7 +79,30 @@ class Block:
 		#General case for any other block
 		transactions = []
 		for transaction in self.transactions:
-			if transaction.receiver_address == 0:
+			
+			if (transaction.type_of_transaction == TransactionType.INITIAL):
+				transactions.append({
+					"type": "Initial Transaction",
+					"sender_id": str(node.ring[str(transaction.sender_address)]['id']),
+					"receiver_id": str(node.ring[str(transaction.receiver_address)]['id']),
+					"payload": str(transaction.amount)
+				})
+
+			elif (transaction.type_of_transaction == TransactionType.COINS):
+				transactions.append({
+					"type": "Coins Transfer",
+					"sender_id": str(node.ring[str(transaction.sender_address)]['id']),
+					"receiver_id": str(node.ring[str(transaction.receiver_address)]['id']),
+					"payload": str(transaction.amount)
+				})
+			elif (transaction.type_of_transaction == TransactionType.MESSAGE):
+				transactions.append({
+					"type": "Message",
+					"sender_id": str(node.ring[str(transaction.sender_address)]['id']),
+					"receiver_id": str(node.ring[str(transaction.receiver_address)]['id']),
+					"payload": transaction.message
+				})
+			elif (transaction.type_of_transaction == TransactionType.STAKE):
 				transactions.append({
 					"type": "Stake",
 					"sender_id": str(node.ring[str(transaction.sender_address)]['id']),
@@ -87,30 +110,8 @@ class Block:
 					"payload": str(transaction.amount)
 				})
 			else:
-				if(transaction.type_of_transaction == TransactionType.INITIAL):
-					transactions.append({
-					"type": "Initial Transaction",
-					"sender_id": str(node.ring[str(transaction.sender_address)]['id']),
-					"receiver_id": str(node.ring[str(transaction.receiver_address)]['id']),
-					"payload": str(transaction.amount)
-					})
-				elif(transaction.type_of_transaction == TransactionType.COINS):
-					transactions.append({
-					"type": "Coins Transfer",
-					"sender_id": str(node.ring[str(transaction.sender_address)]['id']),
-					"receiver_id": str(node.ring[str(transaction.receiver_address)]['id']),
-					"payload": str(transaction.amount)
-					})
-				elif (transaction.type_of_transaction == TransactionType.MESSAGE):
-					transactions.append({
-					"type": "Message",
-					"sender_id": str(node.ring[str(transaction.sender_address)]['id']),
-					"receiver_id": str(node.ring[str(transaction.receiver_address)]['id']),
-					"payload": transaction.message
-					})
-				else:
-					print(f"{Fore.YELLOW} get_transactions_from_block{Fore.RESET}:{Fore.RED}Invalid transaction type found in block!{Fore.RESET}")
-					raise ValueError("Invalid transaction type found in block")
+				print(f"{Fore.YELLOW} get_transactions_from_block{Fore.RESET}:{Fore.RED}Invalid transaction type found in block!{Fore.RESET}")
+				raise ValueError("Invalid transaction type found in block")
 		return transactions
 
 	def get_genesis_block_transactions(self, node):

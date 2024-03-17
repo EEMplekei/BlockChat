@@ -77,18 +77,14 @@ async def create_transaction(request: Request, transaction: CreateTransaction):
 				
 				return JSONResponse('Successful Transaction!', status_code=status.HTTP_200_OK)
 			except Exception as e:
-				print(f"{Fore.RED}Error create_transaction: {e}{Fore.RESET}")
-				return JSONResponse("Could not create transaction", status_code=status.HTTP_400_BAD_REQUEST)
+				print(f"{Fore.YELLOW}Error create_transaction: {Fore.RED}{e}{Fore.RESET}")
+				return JSONResponse(f"Could not create transaction: {e}", status_code=status.HTTP_400_BAD_REQUEST)
 		else:
 			return JSONResponse('Receiver not found', status_code=status.HTTP_400_BAD_REQUEST)
 
 @public_api.post("/set_stake", tags=["Public Routes"])
 @check_ring_full(node)
 async def set_stake(request: Request, stake: Stake):
-	# json body request expected to be:
-	# {
-	#     "stake": int,
-	# }
 
 	# Get the parameters
 	data = await request.json()
@@ -98,12 +94,13 @@ async def set_stake(request: Request, stake: Stake):
 	try:
 		amount = int(amount)
 	except ValueError:
+		#Shouldn't happen because of the type of the type of Pydantic model
 		return JSONResponse('Stake must be an integer number', status_code=status.HTTP_400_BAD_REQUEST)
-	if(amount <= 0):
-		return JSONResponse('Stake must be greater than 0', status_code=status.HTTP_400_BAD_REQUEST)
+	if(amount < 0):
+		return JSONResponse('Stake must be greater or equal to 0', status_code=status.HTTP_400_BAD_REQUEST)
 
 	# Create transaction function also validates it inside
-	staking_transaction = node.create_transaction(0, TransactionType.COINS, amount)
+	staking_transaction = node.create_transaction(0, TransactionType.STAKE, amount)
 	
 	# Add to pending transactions list and check that it was added to pending
 	if not node.add_transaction_to_pending(staking_transaction):
@@ -114,7 +111,6 @@ async def set_stake(request: Request, stake: Stake):
 	return JSONResponse('Successful Staking!', status_code=status.HTTP_200_OK)
 
 @public_api.get("/view_last_block", tags=["Public Routes"])
-@check_ring_full(node)
 def view_last_block_transactions():	
  
 	if (len(node.blockchain.chain) < 1):
@@ -145,7 +141,6 @@ def view_last_block_transactions():
 	return JSONResponse(data, status_code=status.HTTP_200_OK)
 
 @public_api.get("/get_balance", tags=["Public Routes"])
-@check_ring_full(node)
 def get_balance():
 
 	try:
@@ -157,7 +152,6 @@ def get_balance():
 	return JSONResponse({'balance': balance}, status_code=status.HTTP_200_OK)
 
 @public_api.get("/get_temp_balance", tags=["Public Routes"])
-@check_ring_full(node)
 def get_temp_balance():
 	
 	try:
@@ -168,19 +162,17 @@ def get_temp_balance():
 	return JSONResponse({'temp_balance': temp_balance}, status_code=status.HTTP_200_OK)
 
 @public_api.get("/get_chain_length", tags=["Public Routes"])
-@check_ring_full(node)
 def get_chain_length():
 	
 	return JSONResponse({'chain_length': len(node.blockchain.chain)}, status_code=status.HTTP_200_OK)
 
-@public_api.get("/get_transaction_list", tags=["Public Routes"])
-@check_ring_full(node)
-def get_transaction_list():
+@public_api.get("/get_wallet_transaction_list", tags=["Public Routes"])
+def get_wallet_transaction_list():
 
 	try:
 		my_transactions = []
 		for transaction in node.wallet.transactions:
-			if (transaction.type_of_transaction == TransactionType.COINS and transaction.receiver_address != 0) or transaction.type_of_transaction == TransactionType.INITIAL:
+			if transaction.type_of_transaction == TransactionType.COINS or transaction.type_of_transaction == TransactionType.INITIAL:
 				my_transactions.append({
 					"sender_address": str(node.ring[str(transaction.sender_address)]['id']),
 					"receiver_address": str(node.ring[str(transaction.receiver_address)]['id']),
@@ -189,10 +181,10 @@ def get_transaction_list():
 					"nonce": str(transaction.nonce),
 					"transaction_id": str(transaction.transaction_id),
 				})
-			elif transaction.type_of_transaction == TransactionType.COINS and transaction.receiver_address == 0:
+			elif transaction.type_of_transaction == TransactionType.STAKE:
 				my_transactions.append({
 					"sender_address": str(node.ring[str(transaction.sender_address)]['id']),
-					"type_of_transaction": "STAKE",
+					"type_of_transaction": str(transaction.type_of_transaction)[16:],
 					"amount": str(transaction.amount),
 					"nonce": str(transaction.nonce),
 					"transaction_id": str(transaction.transaction_id),
@@ -209,13 +201,13 @@ def get_transaction_list():
 				})
 			else:
 				return JSONResponse('Invalid type of transaction', status_code=status.HTTP_400_BAD_REQUEST)
-		return JSONResponse({'My transactions': my_transactions}, status_code=status.HTTP_200_OK)
+		return JSONResponse({'Wallet transactions': my_transactions}, status_code=status.HTTP_200_OK)
+
 	except Exception as e:
 		print(f"{Fore.RED}Error get_transaction_list: {e}{Fore.RESET}")
 		return JSONResponse('Could not get transaction list', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @public_api.get("/get_chain", tags=["Public Routes"])
-@check_ring_full(node)
 def get_chain():
 
 	data = []
@@ -258,7 +250,6 @@ async def view_ring():
 		return JSONResponse('Could not get ring details', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @public_api.get("/get_pending_list_length", tags=["Public Routes"])
-@check_ring_full(node)
 def get_pending_list_length():
 
 	return JSONResponse({'pending_list_length': len(node.pending_transactions)}, status_code=status.HTTP_200_OK)

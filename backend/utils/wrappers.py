@@ -27,7 +27,6 @@ def bootstrap_required(func):
 			raise RuntimeError("Function can only be called on the bootstrap node.")
 	return wrapper
 
-#TODO: Add a check to ensure that the ring is full before calling the function, when the check is in the function it works fine, when I add it as a decorator it does not work, something has to do with the async nature of the function
 # Check if the ring is full
 def check_ring_full(node):
 	def decorator(func):

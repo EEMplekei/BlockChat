@@ -11,7 +11,7 @@ import pickle
 internal_api = FastAPI()
 
 @internal_api.get("/", tags=["Internal Routes"])
-async def root():
+def root():
 	return JSONResponse({"message": f"Welcome to BlockChat. Node: {node.id}"}, status_code=status.HTTP_200_OK)
 
 # Gets the completed list of nodes from Bootstrap node after all nodes have joined
