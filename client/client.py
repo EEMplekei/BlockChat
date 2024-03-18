@@ -2,7 +2,7 @@ from utils import utils, drawers
 import json
 
 # Opening JSON file
-with open('nodes_config.json') as f:
+with open('../nodes_config.json') as f:
 	nodes_config = json.load(f)
 	
 #Parse arguments
