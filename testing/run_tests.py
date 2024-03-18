@@ -1,9 +1,14 @@
-from helper_functions import parse_arg, parse_input, staking, send_messages, utils
-import json
+import atexit
+import signal
+from utils import utils, routines
 from colorama import Fore
 import threading
 import time
 import requests
+
+#Register the exit handlers
+routines.register_exit_handlers()
+
 
 # Define the global variable to store the total transactions
 total_transactions = 0
@@ -14,7 +19,7 @@ def threading_function(address, trans_folder):
    # Step 5. Parsing the input files
     print(f"{Fore.GREEN}[{threading.current_thread().name}] Parsing the input files{Fore.RESET}")
     print()
-    receiver_id_list, messages_list = parse_input.parse_input_files(trans_folder)
+    receiver_id_list, messages_list = utils.parse_input_files(trans_folder)
     total_transactions += len(receiver_id_list)
     #print(f"[{threading.current_thread().name}] Receiver ID List: {receiver_id_list}")
     #print(f"[{threading.current_thread().name}] Messages List: {messages_list}")
@@ -23,47 +28,30 @@ def threading_function(address, trans_folder):
     # Step 6. Send messages
     print(f"{Fore.GREEN}[{threading.current_thread().name}] Sending the messages{Fore.RESET}")
     print()
-    send_messages.send_messages(address, receiver_id_list, messages_list)
+    utils.send_messages(address, receiver_id_list, messages_list)
     print()
 
 utils.clear_terminal()
-print(f"{Fore.GREEN}Starting the testing process for 5 clients{Fore.RESET}")
-print()
 
 # Step 1. Arg Parse how many nodes to be in the chain
-nodes = int(parse_arg.parse_arguments())
-
-# Check if the number of nodes is valid
-if nodes != 5 and nodes != 10:
-    print(f"{Fore.RED}Invalid number of nodes{Fore.RESET}")
-    exit(1)
+nodes_count = utils.get_nodes_count()
 
 # Step 2. Get the addresses of the nodes
-print(f"{Fore.GREEN}Getting the addresses of the nodes{Fore.RESET}")
-print()
-address = utils.get_nodes_address(nodes)
-print()
+nodes = utils.get_nodes_from_config(nodes_count)
 
 # Step 3. Setup the nodes 
-print(f"{Fore.GREEN}Setting up the nodes{Fore.RESET}")
-print()
+routines.setup_nodes(nodes)
 
-# Step 4. Setup Initial Stake on nodes 
-# Initial staking in all nodes in 10 BCC as in the example
-print(f"{Fore.GREEN}Setting up the initial stake on the nodes{Fore.RESET}")
-print()
-for i in range(nodes):
-	staking.initial_stake(address[i], 10)
-print()
+# Step 4. Setup Initial Stake on nodes. Initial staking in all nodes in 10 BCC as in the example
+routines.set_initial_stake(nodes, 10)
 
 #================= HERE IT STARTS THREADING ==========================
-print(f"{Fore.GREEN}Starting the threads{Fore.RESET}")
-print()
+print(f"{Fore.GREEN}Starting the threads{Fore.RESET}\n")
 # Create and start five threads
 threads = []
 start_time = time.time()
 for i in range(nodes):
-    address_i = address[i]  # Provide the address here
+    address_i = addresses[i]  # Provide the address here
     if nodes == 5:
         trans_folder = f'trans5_{i}'
     elif nodes == 10:
@@ -91,7 +79,7 @@ throughput = total_transactions / (end_time - start_time)
 time.sleep(3)
 # Retrieve the Blockchain length
 try:
-    response = requests.get(address[0]+'/api/get_chain_length')
+    response = requests.get(addresses[0]+'/api/get_chain_length')
 
     # Check if the status code is not 200 OK
     if response.status_code != requests.codes.ok:
