@@ -8,9 +8,6 @@ from utils.env_variables import INTERNAL_CIDR
 import time
 
 #Initialize CIDR range for internal access
-#This could also be done to autodiscover the internal network based on the IP address of the server and the subnet mask
-#but for the sake of simplicity, we will use an environment variable
-# HACK: This is a hack to avoid circular imports, use https://docs.python.org/3/library/ipaddress.html
 
 try:
     internal_network = ip_network(INTERNAL_CIDR)
