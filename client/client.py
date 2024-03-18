@@ -1,10 +1,8 @@
 from utils import utils, drawers
-import json
 
-# Opening JSON file
-with open('../nodes_config.json') as f:
-	nodes_config = json.load(f)
-	
+#Get nodes configuration
+nodes_config = utils.get_nodes_config()
+  
 #Parse arguments
 node = utils.parse_arguments()
 

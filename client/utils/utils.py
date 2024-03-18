@@ -2,9 +2,20 @@ from argparse import ArgumentParser
 from colorama import Fore, Style
 from utils import drawers
 from utils import handlers
+import json
 import requests
 import inquirer
 import time
+
+def get_nodes_config():
+    # Opening JSON file
+	with open('../nodes_config.json') as f:
+		try:
+			nodes_config = json.load(f)
+		except json.JSONDecodeError:
+			print(f"{Fore.RED}Error: nodes_config.json is not a valid JSON file{Fore.RESET}")
+			exit()
+	return nodes_config
 
 #Parse command line arguments
 def parse_arguments():
