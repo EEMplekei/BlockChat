@@ -17,7 +17,6 @@ def brand():
 	> ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ <  > ^ < 
 	{Fore.RESET}""")
 
-
 def draw_chain():
 	chain = f"""{Fore.LIGHTBLUE_EX}
 				┌───│───┐
