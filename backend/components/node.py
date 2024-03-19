@@ -214,14 +214,14 @@ class Node:
     def add_block_to_chain(self, block: Block):
         # Add block to original chain
         self.blockchain.chain.append(block)
-        sum = 0
+        fees_sum = 0
         # Update wallet 
         for transaction in block.transactions:
             self.update_wallet_state(transaction)
             # Update the balance of the validator in the ring (if it is a normal COINS transaction)
             if transaction.type_of_transaction == TransactionType.COINS:
                 self.ring[str(block.validator)]['balance'] += transaction.amount*FEE_RATE
-                sum+=transaction.amount*FEE_RATE
+                fees_sum+=transaction.amount*FEE_RATE
                 # Make the temp_balance of the receiver equal to the balance 
                 self.ring[str(transaction.receiver_address)]['temp_balance'] = self.ring[str(transaction.receiver_address)]['balance']
             # Make the temp_balance of the sender equal to the balance and remove the stake
@@ -234,7 +234,7 @@ class Node:
         for t in block.transactions:
             self.blockchain.transactions_hashes.add(t.transaction_id)
         # Output the validator of this block and the total FEES he earned
-        print(f"🏆 Block mined by {self.ring[str(block.validator)]['id']} and earned a total of {sum} BBCs as fee")
+        print(f"🏆 Block mined by {self.ring[str(block.validator)]['id']} and earned a total of {fees_sum} BBCs as fee")
         print("🔗 BLOCKCHAIN 🔗")
         print([block.hash[:7] for block in self.blockchain.chain])
 
