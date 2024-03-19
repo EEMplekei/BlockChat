@@ -1,89 +1,120 @@
-import argparse
-import os
-import re
-import requests
+from helper_functions import parse_arg, parse_input, staking, send_messages, utils
 import json
+from colorama import Fore
+import threading
+import time
+import requests
 
-#==============================================================================================
-#==============================================================================================
-#==============================================================================================
-# THIS IS A TEST SCRIPT FOR TESTING THE BLOCKCHAIN NETWORK WITH THE GIVEN TRANSACTION
+# Define the global variable to store the total transactions
+total_transactions = 0
 
-# HOW TO RUN THIS SCRIPT:
-# 1. Open the terminal
-# 2. Navigate to the testing directory
-# 3. Run the following command to test the first node (node0) with transactions from trans0.txt: 
-# 	python test.py -t 0
-# 4. And so on for the rest of the nodes
+# Define the function that will be executed by each thread
+def threading_function(address, trans_folder, receiver_id_list, messages_list):
+    global total_transactions
+    
+    # Step 6. Send messages
+    print(f"{Fore.GREEN}[{threading.current_thread().name}] Sending the messages{Fore.RESET}")
+    print()
+    send_messages.send_messages(address, receiver_id_list, messages_list)
+    print()
 
-# IMPORTANT:
-# The addresses of the nodes are stored in the nodes_config.json file
-#==============================================================================================
-#==============================================================================================
-#==============================================================================================
+utils.clear_terminal()
+print(f"{Fore.GREEN}Starting the testing process for 5 clients{Fore.RESET}")
+print()
 
-# Opening JSON file
-f = open('../nodes_config.json')
-nodes_config = json.load(f)
-f.close()
+# Step 1. Arg Parse how many nodes to be in the chain
+nodes = int(parse_arg.parse_arguments())
 
-# ARGUMENTS
-argParser = argparse.ArgumentParser()
-argParser.add_argument("-t", "--test", help="Port in which node is running", type=int)
-args = argParser.parse_args()
-# Address of node
-t = args.test
+# Check if the number of nodes is valid
+if nodes != 5 and nodes != 10:
+    print(f"{Fore.RED}Invalid number of nodes{Fore.RESET}")
+    exit(1)
 
-# Networking Configuration
-# address = nodes_config.get(f'node{t}') if t in range(10) else print("Invalid node number") and exit()
-# For debugging purposes
-address = "http://snf-43775.ok-kno.grnetcloud.net:8000"
-# Read to the correct trans.txt file according to the node number
-with open('trans'+str(t)+'.txt', 'r') as file:
-	text = file.read()
-	lines = text.strip().split('\n')
-	for line in lines:
-		match = re.search(r'id(\d+)', line)
-		if match:
-			# Get the transaction id
-			receiver_id = (int(match.group(1)))
-			print(f"Transaction id: {receiver_id}")
-			# Get message after id and one space after
-			message = line[match.end():].lstrip()  # Remove the first space from the message
-			print(f"Message: {message}")
+# Step 2. Get the addresses of the nodes
+print(f"{Fore.GREEN}Getting the addresses of the nodes{Fore.RESET}")
+print()
+address = utils.get_nodes_address(nodes)
+print()
 
-			# TESTED UNTIL HERE   <--->   WORKS FINE
-			# Could not test the rest of the code because the API is not available (epaize allos me tis masines)
+# Step 3. Setup the nodes 
+print(f"{Fore.GREEN}Setting up the nodes{Fore.RESET}")
+print()
 
-			# Send the transaction to the node
-			try:
-				# api client call  for message
-				response = requests.post(address+'/api/create_transaction', json={
-					"receiver_id": receiver_id,
-					"payload": message,
-					"type_of_transaction": "MESSAGE"
-				})
-			
-			 	# Check if the status code is not 200 OK
-				if response.status_code != requests.codes.ok:
-					# If the status code is not OK, raise an exception
-					response.raise_for_status()
+# Step 4. Setup Initial Stake on nodes 
+# Initial staking in all nodes in 10 BCC as in the example
+print(f"{Fore.GREEN}Setting up the initial stake on the nodes{Fore.RESET}")
+print()
+for i in range(nodes):
+    staking.initial_stake(address[i], 10)
+print()
 
-			except requests.exceptions.RequestException as e:
-				# Handle exceptions
-				print("❌ Test Failed ❌")
-				print(f"Exception: {e}")
-				exit()
+#================= HERE IT STARTS THREADING ==========================
+print(f"{Fore.GREEN}Starting the threads{Fore.RESET}")
+print()
 
-# All tests passed
-print("✅ All tests passed ✅")
+# Parse input files for all threads first
+receiver_id_lists = []
+messages_lists = []
+for i in range(nodes):
+    if nodes == 5:
+        trans_folder = f'trans5_{i}'
+    elif nodes == 10:
+        trans_folder = f'trans10_{i}'
+    else:
+        print(f"{Fore.RED}Invalid number of nodes{Fore.RESET}")
+        exit(1)
+    receiver_id_list, messages_list = parse_input.parse_input_files(trans_folder)
+    receiver_id_lists.append(receiver_id_list)
+    messages_lists.append(messages_list)
+    total_transactions += len(receiver_id_list)
 
-# Get remaining balance
-response = requests.get(address+'/api/get_balance')
-#print(f'🗃️ The wallet balance (from last validated block is): {response.json().get('balance')}')
+# Create and start five threads after parsing input files
+threads = []
+start_time = time.time()
+for i in range(nodes):
+    address_i = address[i]  # Provide the address here
+    receiver_id_list = receiver_id_lists[i]
+    messages_list = messages_lists[i]
+    thread = threading.Thread(target=threading_function, args=(address_i, trans_folder, receiver_id_list, messages_list), name=f"Thread-{i}")
+    thread.start()
+    threads.append(thread)
 
-# Get remaining temp_balance
-response = requests.get(address+'/api/get_temp_balance')
-#print(f'💵 The temp_balance (from last verified transaction): {response.json().get('temp_balance')}')
+#Wait for all threads to finish
+for thread in threads:
+    thread.join()
 
-# Draw Blockchain
+end_time = time.time()
+print("All threads have finished execution.")
+print()
+
+# Collect throughput and block time and write to output files
+print(f"{Fore.GREEN}Collecting the throughput and block time{Fore.RESET}")
+throughput = total_transactions / (end_time - start_time)
+
+# Wait for 3 seconds before retrieving the chain length to ensure all transactions are processed
+time.sleep(3)
+# Retrieve the Blockchain length
+try:
+    response = requests.get(address[0]+'/api/get_chain_length')
+
+    # Check if the status code is not 200 OK
+    if response.status_code != requests.codes.ok:
+        # If the status code is not OK, raise an exception
+        response.raise_for_status()
+    else:
+        # Extract chain_length from the JSON response
+        response_json = response.json()
+        chain_length = response_json.get('chain_length')
+except requests.exceptions.RequestException as e:
+    # Handle exceptions
+    print("❌ Retrieving chain length Failed ❌")
+    print(f"Exception: {e}")
+
+print("Total Transactions: ", total_transactions)
+print(f"Succesfull Transactions: {send_messages.succesfull_transactions}")
+print()
+print(f"{Fore.GREEN}Throughput: {throughput} transactions per second{Fore.RESET}")
+
+print(f"Chain Length: {chain_length}")
+# Output the block time excluding the genesis block
+print(f"{Fore.GREEN}Block Time: {(end_time - start_time) / (chain_length - 1)} seconds{Fore.RESET}")
