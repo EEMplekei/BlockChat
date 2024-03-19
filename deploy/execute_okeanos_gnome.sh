@@ -4,6 +4,7 @@
 # The list of servers
 LIST="snf-43775 snf-43783 snf-43785 snf-43787 snf-43833"
 cmdssh=$(which ssh)
+sleep=1
 total_nodes=$1
 block_size=$2
 
