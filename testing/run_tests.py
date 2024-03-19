@@ -4,6 +4,7 @@ import time
 import requests
 from colorama import Fore
 from helper_functions import parse_arg, parse_input, staking, send_messages, utils
+import expected_balance
 
 # Define the global variable to store the total transactions
 total_transactions = 0
@@ -106,3 +107,36 @@ print(f"Successful Transactions: {send_messages.successful_transactions}\n")
 print(f"{Fore.GREEN}Throughput: {throughput} transactions per second{Fore.RESET}")
 print(f"Chain Length: {chain_length}")
 print(f"{Fore.GREEN}Block Time: {(end_time - start_time) / (chain_length - 1)} seconds{Fore.RESET}")
+
+# Write the results to the output file and name the file accordingly
+# if nodes == 5:
+#     output_file = "output5.txt"
+# elif nodes == 10:
+#     output_file = "output10.txt"
+# else:
+#     print(f"{Fore.RED}Invalid number of nodes{Fore.RESET}")
+#     exit(1)
+
+# with open(output_file, "w") as file:
+#     file.write(f"Total Transactions: {total_transactions}\n")
+#     file.write(f"Successful Transactions: {send_messages.successful_transactions}\n")
+#     file.write(f"Throughput: {throughput} transactions per second\n")
+#     file.write(f"Chain Length: {chain_length}\n")
+#     file.write(f"Block Time: {(end_time - start_time) / (chain_length - 1)} seconds\n")
+
+# Check if the temp balance is correct the expected
+print(f"{Fore.GREEN}Checking the temp balance{Fore.RESET}")
+for i in range(nodes):
+    response = requests.get(address[i]+'/api/get_temp_balance')
+    if response.status_code != requests.codes.ok:
+        response.raise_for_status()
+    else:
+        response_json = response.json()
+        temp_balance = response_json.get('temp_balance')
+
+        if temp_balance != expected_balance.expected_balance(nodes, i):
+            print(f"❌ {Fore.RED}Node {i} temp balance is incorrect{Fore.RESET}")
+            print(f"❌ Expected: {expected_balance.expected_balance(nodes, i)}")
+            print(f"❌ Actual: {temp_balance}\n")
+        else:
+            print(f"✅ Node {i} temp balance is correct\n")
