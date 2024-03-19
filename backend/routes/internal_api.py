@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, Depends, status
 from fastapi.responses import JSONResponse
 from components.node import node
 from utils.env_variables import TOTAL_NODES
+from utils.wrappers import check_ring_full
 from colorama import Fore
 import threading
 import pickle
@@ -10,7 +11,7 @@ import pickle
 internal_api = FastAPI()
 
 @internal_api.get("/", tags=["Internal Routes"])
-async def root():
+def root():
 	return JSONResponse({"message": f"Welcome to BlockChat. Node: {node.id}"}, status_code=status.HTTP_200_OK)
 
 # Gets the completed list of nodes from Bootstrap node after all nodes have joined
@@ -23,16 +24,13 @@ async def receive_ring(request: Request):
 	data = await request.body()
 	node.ring = pickle.loads(data)
 
-	print("Ring received successfully!")
 	return JSONResponse('OK')
 
 # Gets the latest version of the blockchain from the Bootstrap node
 @internal_api.post("/receive_blockchain", tags=["Internal Routes"])
+@check_ring_full(node)
 async def receive_blockchain(request: Request):
 	
-	if len(node.ring) < TOTAL_NODES:
-		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
- 
 	if (node.is_bootstrap):
 		return JSONResponse('Cannot post blockchain to bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
 	
@@ -44,9 +42,8 @@ async def receive_blockchain(request: Request):
 
 # Gets an incoming transaction and adds it in the block.
 @internal_api.post("/receive_transaction", tags=["Internal Routes"])
+@check_ring_full(node)
 async def receive_transaction(request: Request):
-	if len(node.ring) < TOTAL_NODES:
-		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
 	
 	data = await request.body()
 	new_transaction = pickle.loads(data)
@@ -63,10 +60,8 @@ async def receive_transaction(request: Request):
 
 # Gets an incoming mined block and adds it to the blockchain.
 @internal_api.post("/receive_block", tags=["Internal Routes"])
+@check_ring_full(node)
 async def receive_block(request: Request):
-	
-	if len(node.ring) < TOTAL_NODES:
-		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
 	
 	# Deserialize the data received in the request body using pickle.loads()
 	data = await request.body()
@@ -89,9 +84,8 @@ async def receive_block(request: Request):
 
 # Gets the order to find validator from the Bootstrap node
 @internal_api.post("/find_validator", tags=["Internal Routes"])
+@check_ring_full(node)
 async def find_validator():
-	if len(node.ring) < TOTAL_NODES:
-		return JSONResponse('Ring is not full yet', status_code=status.HTTP_400_BAD_REQUEST)
 
 	node.find_next_validator()
 	return {"message": "Validator search initiated"}

@@ -1,7 +1,9 @@
 import requests
 import time
 
+successful_transactions = 0
 def send_messages(address: str, receiver_id_list, message_list):
+	global successful_transactions
 	for receiver_id, message in zip(receiver_id_list, message_list):
 		time.sleep(1)
 		# Debugging
@@ -19,6 +21,8 @@ def send_messages(address: str, receiver_id_list, message_list):
 			if response.status_code != requests.codes.ok:
 				# If the status code is not OK, raise an exception
 				response.raise_for_status()
+			else:
+				successful_transactions += 1
 		except requests.exceptions.RequestException as e:
 			# Handle exceptions
 			print("❌ Sending Messages Failed ❌")

@@ -11,6 +11,7 @@ class TransactionType(Enum):
 	INITIAL = 0
 	COINS = 1
 	MESSAGE = 2
+	STAKE = 3
 
 class Transaction:
 
@@ -33,7 +34,7 @@ class Transaction:
 				raise ValueError("Transaction amount must be a positive number")
 			self.amount = payload
 			self.message = None
-		#COINS
+
 		elif type_of_transaction == TransactionType.COINS:
 			if not ((isinstance(payload, (int, float))) and (payload > 0)):
 				raise ValueError("Transaction amount must be a positive number")
@@ -41,14 +42,20 @@ class Transaction:
 				raise ValueError("Sender and receiver address can't be the same")
 			self.amount = payload                           # amount of coins to send
 			self.message = None
-		# MESSAGE
+   
 		elif type_of_transaction == TransactionType.MESSAGE:
 			if not isinstance(payload, str):
 				raise ValueError("Transaction message must be a string")
 			if (str(receiver_address) == str(sender_address)):
 				raise ValueError("Sender and receiver address can't be the same")
 			self.amount = None
-			self.message = payload                          # message to send
+			self.message = payload
+
+		elif type_of_transaction == TransactionType.STAKE:
+			if not ((isinstance(payload, (int, float))) and (payload >= 0)):
+				raise ValueError("Transaction amount must be a negative number")
+			self.amount = payload
+			self.message = None
 		else:
 			raise ValueError("Invalid transaction type")
 
@@ -150,25 +157,19 @@ class Transaction:
 			print(f"{Fore.YELLOW}validate_transaction{Fore.RESET}: {Fore.RED}Transaction not validated, not valid signature{Fore.RESET}")
 			return False
 		
-		# Check if the sender has enough coins to send the transaction
-
-		# INITIAL CASE
+		#Calculate the correct transaction cost based on the type of transaction
 		if (self.type_of_transaction == TransactionType.INITIAL):
 			transaction_cost = self.amount
-			
-		# COINS CASE
-		elif (self.type_of_transaction == TransactionType.COINS and self.receiver_address != 0):
+
+		elif (self.type_of_transaction == TransactionType.COINS):
 			transaction_cost = self.amount+self.amount*FEE_RATE
-	
-		# MESSAGE CASE
+
 		elif (self.type_of_transaction == TransactionType.MESSAGE):
 			transaction_cost = len(self.message)
 		
-		# STAKE CASE
-		elif (self.type_of_transaction == TransactionType.COINS and self.receiver_address == 0):
+		elif (self.type_of_transaction == TransactionType.STAKE):
 			transaction_cost = self.amount
-		
-		# INVALID CASE
+
 		else:
 			# THE BELOW CODE SHOULD NEVER BE REACHED, IT IS HERE FOR SAFETY. OTHER CHECKS SHOULD CATCH THIS
 			print(f"{Fore.YELLOW}validate_transaction{Fore.RESET}: {Fore.RED}Transaction not validated, invalid transaction type{Fore.RESET}")

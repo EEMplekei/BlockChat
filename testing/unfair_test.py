@@ -1,14 +1,7 @@
-import atexit
-import signal
-from utils import utils, routines
-from colorama import Fore
+# Importing necessary modules
 import threading
 import time
 import requests
-
-#Register the exit handlers
-routines.register_exit_handlers()
-
 from colorama import Fore
 from helper_functions import parse_arg, parse_input, staking, send_messages, utils
 import expected_balance
@@ -28,25 +21,31 @@ def threading_function(address, trans_folder, receiver_id_list, messages_list):
 # Clear terminal
 utils.clear_terminal()
 
+# Starting the testing process for 5 clients
+print(f"{Fore.GREEN}Starting the testing process for 5 clients{Fore.RESET}\n")
+
 # Step 1. Arg Parse how many nodes to be in the chain
-nodes_count = utils.get_nodes_count()
+nodes = 5
 
-# Step 2. Get the addresses of the nodes
-nodes = utils.get_nodes_from_config(nodes_count)
+# Getting the addresses of the nodes
+print(f"{Fore.GREEN}Getting the addresses of the nodes{Fore.RESET}\n")
+address = utils.get_nodes_address(nodes)
 
-# Step 3. Setup the nodes 
-routines.setup_nodes(nodes)
+# Setting up the nodes
+print(f"{Fore.GREEN}Setting up the nodes{Fore.RESET}\n")
 
-# Step 4. Setup Initial Stake on nodes. Initial staking in all nodes in 10 BCC as in the example
-routines.set_initial_stake(nodes, 10)
-exit()
-#================= HERE IT STARTS THREADING ==========================
+# Setting up the initial stake on the nodes
+print(f"{Fore.GREEN}Setting up the initial stake (100 BCC) on Node 0{Fore.RESET}\n")
+staking.initial_stake(address[0], 100)
+print()
+
+# Starting the threads
 print(f"{Fore.GREEN}Starting the threads{Fore.RESET}\n")
-# Create and start five threads
-threads = []
-start_time = time.time()
+
+# Parse input files for all threads first
+receiver_id_lists = []
+messages_lists = []
 for i in range(nodes):
-    address_i = addresses[i]  # Provide the address here
     if nodes == 5:
         trans_folder = f'trans5_{i}'
     elif nodes == 10:
@@ -86,9 +85,7 @@ time.sleep(3)
 
 # Retrieve the Blockchain length
 try:
-    response = requests.get(addresses[0]+'/api/get_chain_length')
-
-    # Check if the status code is not 200 OK
+    response = requests.get(address[0]+'/api/get_chain_length')
     if response.status_code != requests.codes.ok:
         response.raise_for_status()
     else:
