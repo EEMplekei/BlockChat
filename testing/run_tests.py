@@ -44,7 +44,7 @@ routines.setup_nodes(nodes)
 
 # Step 4. Setup Initial Stake on nodes. Initial staking in all nodes in 10 BCC as in the example
 routines.set_initial_stake(nodes, 10)
-
+exit()
 #================= HERE IT STARTS THREADING ==========================
 print(f"{Fore.GREEN}Starting the threads{Fore.RESET}\n")
 # Create and start five threads

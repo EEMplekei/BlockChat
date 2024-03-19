@@ -1,5 +1,5 @@
 from colorama import Fore, Style
-from dotenv import load_dotenv
+from sys import platform
 import atexit
 import signal
 import requests
@@ -7,8 +7,6 @@ import subprocess
 import os
 
 proc = None
-load_dotenv()
-RUNALL_SCRIPT_PATH = os.getenv("RUNALL_SCRIPT")
 
 # Register the exit handlers
 #TODO doesn't work
@@ -16,23 +14,27 @@ def register_exit_handlers():
 	def handle_exit(*args):
 		global proc
 		print("Cleaning up exit")
-		os.kill(proc, signal.SIGKILL)
+		if proc != None:
+			os.kill(proc, signal.SIGKILL)
 	
 	atexit.register(handle_exit)
 	signal.signal(signal.SIGINT, handle_exit)
 	signal.signal(signal.SIGTERM, handle_exit)
  
 # Run something (e.g. a bash script) on each node to start the API
-def setup_nodes(nodes):
-	global proc
+def setup_nodes(nodes, block_size)
 	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Setting up the nodes{Fore.RESET}{Style.NORMAL}\n")
-	hostname = os.uname().nodename
-	
-	if hostname == "pop-os" and proc == None:
-		proc = subprocess.call(['gnome-terminal', '--', 'bash', RUNALL_SCRIPT_PATH])
-	else:
-		print("you are not panos :(. you better set it up on your own, go ahead open 5 terminals, and api each API ONE BY ONE")
-	
+	global proc
+		
+	#If running in Linux run the first script else the MacOS script
+	if platform == "linux":
+		proc = subprocess.Popen(f"../deploy/execute_okeanos_gnome.sh", f"-n {len(nodes)}", f"-b {block_size}")
+	elif platform == "darwin":
+		proc = subprocess.Popen(f"../deploy/mac_run_all.sh -n {len(nodes)} -b {block_size}")
+	else :
+		print(f"	{Fore.LIGHTRED_EX}Unsupported OS, start nodes one you own{Fore.RESET}")
+	exit()
+	#Test if all the nodes are running to continue with benchmarking
 	test_all_nodes_are_up(nodes)
 
 # This function checks if all nodes are up, one by one until all are up, take your time to set them up
