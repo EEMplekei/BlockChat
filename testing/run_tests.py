@@ -9,17 +9,9 @@ import requests
 total_transactions = 0
 
 # Define the function that will be executed by each thread
-def threading_function(address, trans_folder):
+def threading_function(address, trans_folder, receiver_id_list, messages_list):
     global total_transactions
-   # Step 5. Parsing the input files
-    print(f"{Fore.GREEN}[{threading.current_thread().name}] Parsing the input files{Fore.RESET}")
-    print()
-    receiver_id_list, messages_list = parse_input.parse_input_files(trans_folder)
-    total_transactions += len(receiver_id_list)
-    #print(f"[{threading.current_thread().name}] Receiver ID List: {receiver_id_list}")
-    #print(f"[{threading.current_thread().name}] Messages List: {messages_list}")
-    #print()
-
+    
     # Step 6. Send messages
     print(f"{Fore.GREEN}[{threading.current_thread().name}] Sending the messages{Fore.RESET}")
     print()
@@ -53,17 +45,17 @@ print()
 print(f"{Fore.GREEN}Setting up the initial stake on the nodes{Fore.RESET}")
 print()
 for i in range(nodes):
-	staking.initial_stake(address[i], 10)
+    staking.initial_stake(address[i], 10)
 print()
 
 #================= HERE IT STARTS THREADING ==========================
 print(f"{Fore.GREEN}Starting the threads{Fore.RESET}")
 print()
-# Create and start five threads
-threads = []
-start_time = time.time()
+
+# Parse input files for all threads first
+receiver_id_lists = []
+messages_lists = []
 for i in range(nodes):
-    address_i = address[i]  # Provide the address here
     if nodes == 5:
         trans_folder = f'trans5_{i}'
     elif nodes == 10:
@@ -71,7 +63,19 @@ for i in range(nodes):
     else:
         print(f"{Fore.RED}Invalid number of nodes{Fore.RESET}")
         exit(1)
-    thread = threading.Thread(target=threading_function, args=(address_i, trans_folder), name=f"Thread-{i}")
+    receiver_id_list, messages_list = parse_input.parse_input_files(trans_folder)
+    receiver_id_lists.append(receiver_id_list)
+    messages_lists.append(messages_list)
+    total_transactions += len(receiver_id_list)
+
+# Create and start five threads after parsing input files
+threads = []
+start_time = time.time()
+for i in range(nodes):
+    address_i = address[i]  # Provide the address here
+    receiver_id_list = receiver_id_lists[i]
+    messages_list = messages_lists[i]
+    thread = threading.Thread(target=threading_function, args=(address_i, trans_folder, receiver_id_list, messages_list), name=f"Thread-{i}")
     thread.start()
     threads.append(thread)
 
@@ -107,6 +111,8 @@ except requests.exceptions.RequestException as e:
     print(f"Exception: {e}")
 
 print("Total Transactions: ", total_transactions)
+print(f"Succesfull Transactions: {send_messages.succesfull_transactions}")
+print()
 print(f"{Fore.GREEN}Throughput: {throughput} transactions per second{Fore.RESET}")
 
 print(f"Chain Length: {chain_length}")
