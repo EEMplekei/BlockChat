@@ -26,7 +26,6 @@ echo "Changing .env on remote and syncing nodes"
 ssh -t ubuntu@snf-43775.ok-kno.grnetcloud.net ./set_env.sh $total_nodes $block_size;
 ssh -t ubuntu@snf-43775.ok-kno.grnetcloud.net /bin/bash -ic 'sync_nodes;' >> /dev/null 2>&1
 
-echo "Opening terminals for the servers"
 for s in $LIST
 do
     title=$(echo -n "${s}" | sed 's/^\(.\)/\U\1/')

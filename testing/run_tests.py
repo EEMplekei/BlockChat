@@ -1,17 +1,8 @@
-import atexit
-import signal
 from utils import utils, routines
 from colorama import Fore
 import threading
 import time
 import requests
-
-#Register the exit handlers
-routines.register_exit_handlers()
-
-from colorama import Fore
-from helper_functions import parse_arg, parse_input, staking, send_messages, utils
-import expected_balance
 
 # Define the global variable to store the total transactions
 total_transactions = 0
@@ -35,7 +26,7 @@ nodes_count = utils.get_nodes_count()
 nodes = utils.get_nodes_from_config(nodes_count)
 
 # Step 3. Setup the nodes 
-routines.setup_nodes(nodes)
+routines.setup_nodes(nodes, 10)
 
 # Step 4. Setup Initial Stake on nodes. Initial staking in all nodes in 10 BCC as in the example
 routines.set_initial_stake(nodes, 10)

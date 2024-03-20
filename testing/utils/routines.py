@@ -1,39 +1,24 @@
 from colorama import Fore, Style
 from sys import platform
-import atexit
-import signal
+from time import sleep
 import requests
 import subprocess
-import os
 
-proc = None
-
-# Register the exit handlers
-#TODO doesn't work
-def register_exit_handlers():
-	def handle_exit(*args):
-		global proc
-		print("Cleaning up exit")
-		if proc != None:
-			os.kill(proc, signal.SIGKILL)
-	
-	atexit.register(handle_exit)
-	signal.signal(signal.SIGINT, handle_exit)
-	signal.signal(signal.SIGTERM, handle_exit)
- 
 # Run something (e.g. a bash script) on each node to start the API
-def setup_nodes(nodes, block_size)
+def setup_nodes(nodes, block_size):
 	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Setting up the nodes{Fore.RESET}{Style.NORMAL}\n")
 	global proc
 		
-	#If running in Linux run the first script else the MacOS script
+	#If running in Linux run the first script else the MacOS script, suppress output
 	if platform == "linux":
-		proc = subprocess.Popen(f"../deploy/execute_okeanos_gnome.sh", f"-n {len(nodes)}", f"-b {block_size}")
+		script_path = ['bash', '../deploy/execute_okeanos_gnome.sh', str(len(nodes)), str(block_size)]
 	elif platform == "darwin":
-		proc = subprocess.Popen(f"../deploy/mac_run_all.sh -n {len(nodes)} -b {block_size}")
+		script_path = ['bash', '../deploy/execute_okeanos_gnome.sh', str(len(nodes)), str(block_size)]
 	else :
 		print(f"	{Fore.LIGHTRED_EX}Unsupported OS, start nodes one you own{Fore.RESET}")
-	exit()
+  
+	proc = subprocess.Popen(script_path, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
 	#Test if all the nodes are running to continue with benchmarking
 	test_all_nodes_are_up(nodes)
 
@@ -56,7 +41,9 @@ def test_all_nodes_are_up(nodes):
 		while not check_api_availability(address):
 			continue
 		print(f"	{Fore.CYAN}Node {Style.BRIGHT}{node}{Style.NORMAL} is up and running{Fore.RESET}")
-	
+
+	#Now we have to wait for the bootstrap to send the the ring, blockchain and the initial transactions
+	sleep(1)
 	print(f"\n	{Fore.GREEN}All nodes are up and running{Fore.RESET}\n")
 
 def set_initial_stake(nodes, stake : int):
