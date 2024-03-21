@@ -177,6 +177,9 @@ class Node:
         # Remove transactions from pending_transactions if their IDs are in incoming_transactions_ids
         self.pending_transactions = deque([tx for tx in self.pending_transactions if tx.transaction_id not in incoming_transactions_ids])
 
+        #return the len of the pending_transactions list
+        return len(self.pending_transactions)
+
     def find_next_validator(self):
         # Create an instance of PoSProtocol
         print("Previous hash: ", self.blockchain.chain[-1].hash)
@@ -222,14 +225,21 @@ class Node:
             if transaction.type_of_transaction == TransactionType.COINS:
                 self.ring[str(block.validator)]['balance'] += transaction.amount*FEE_RATE
                 fees_sum+=transaction.amount*FEE_RATE
-                # Make the temp_balance of the receiver equal to the balance 
-                self.ring[str(transaction.receiver_address)]['temp_balance'] = self.ring[str(transaction.receiver_address)]['balance']
-            # Make the temp_balance of the sender equal to the balance and remove the stake
-            self.ring[str(transaction.sender_address)]['temp_balance'] = self.ring[str(transaction.sender_address)]['balance'] - self.ring[str(transaction.sender_address)]['stake']
-        # Make the temp_balance of the validator equal to the balance
-        self.ring[str(block.validator)]['temp_balance'] = self.ring[str(block.validator)]['balance']
+        
         # Update pending_transactions list
-        self.update_pending_transactions(block)
+        if(self.update_pending_transactions(block)==0):
+            for transaction in block.transactions:
+                if(transaction.type_of_transaction != TransactionType.STAKE):
+                    # Make the temp_balance of the sender equal to the balance and remove the stake
+                    self.ring[str(transaction.sender_address)]['temp_balance'] = self.ring[str(transaction.sender_address)]['balance'] - self.ring[str(transaction.sender_address)]['stake']
+                    # Make the temp_balance of the receiver equal to the balance 
+                    self.ring[str(transaction.receiver_address)]['temp_balance'] = self.ring[str(transaction.receiver_address)]['balance']  - self.ring[str(transaction.receiver_address)]['stake']
+                else:
+                    # Make the temp_balance of the sender equal to the balance and remove the stake
+                    self.ring[str(transaction.sender_address)]['temp_balance'] = self.ring[str(transaction.sender_address)]['balance'] - self.ring[str(transaction.sender_address)]['stake']
+            # Make the temp_balance of the validator equal to the balance
+            self.ring[str(block.validator)]['temp_balance'] = self.ring[str(block.validator)]['balance'] - self.ring[str(block.validator)]['stake']
+        
         # Add transactions to blockchain set
         for t in block.transactions:
             self.blockchain.transactions_hashes.add(t.transaction_id)
