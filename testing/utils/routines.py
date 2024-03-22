@@ -1,6 +1,7 @@
 from colorama import Fore, Style
 from sys import platform
 from time import sleep
+import time
 import requests
 import subprocess
 
@@ -64,3 +65,40 @@ def set_initial_stake(nodes, stake : int):
 			print(f"	{Fore.RED}Node {Style.BRIGHT}{node}{Style.NORMAL} with address {Style.BRIGHT}{address}{Style.NORMAL} seems to be down{Fore.RED}")
 			exit(-5)
 	print(f"\n	{Fore.GREEN}Initial Stake Set{Fore.RESET}\n")
+
+def start_tests(nodes):
+	print(f"{Fore.GREEN}Starting the threads{Fore.RESET}\n")
+	# Create and start five threads
+	threads = []
+	start_time = time.time()
+	for i in range(nodes):
+		address_i = addresses[i]  # Provide the address here
+		if nodes == 5:
+			trans_folder = f'trans5_{i}'
+		elif nodes == 10:
+			trans_folder = f'trans10_{i}'
+		else:
+			print(f"{Fore.RED}Invalid number of nodes{Fore.RESET}")
+			exit(1)
+		receiver_id_list, messages_list = parse_input.parse_input_files(trans_folder)
+		receiver_id_lists.append(receiver_id_list)
+		messages_lists.append(messages_list)
+		total_transactions += len(receiver_id_list)
+
+	# Create and start threads after parsing input files
+	threads = []
+	start_time = time.time()
+	for i in range(nodes):
+		address_i = address[i]  # Provide the address here
+		receiver_id_list = receiver_id_lists[i]
+		messages_list = messages_lists[i]
+		thread = threading.Thread(target=threading_function, args=(address_i, trans_folder, receiver_id_list, messages_list), name=f"Thread-{i}")
+		thread.start()
+		threads.append(thread)
+
+	# Wait for all threads to finish
+	for thread in threads:
+		thread.join()
+
+	end_time = time.time()
+	print("All threads have finished execution.\n")

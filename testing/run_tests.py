@@ -1,7 +1,5 @@
 from utils import utils, routines
 from colorama import Fore
-import threading
-import time
 import requests
 
 # Define the global variable to store the total transactions
@@ -26,47 +24,13 @@ nodes_count = utils.get_nodes_count()
 nodes = utils.get_nodes_from_config(nodes_count)
 
 # Step 3. Setup the nodes 
-routines.setup_nodes(nodes, 10)
+routines.setup_nodes(nodes, block_size=10)
 
 # Step 4. Setup Initial Stake on nodes. Initial staking in all nodes in 10 BCC as in the example
-routines.set_initial_stake(nodes, 10)
-exit()
+routines.set_initial_stake(nodes, stake=10)
+
 #================= HERE IT STARTS THREADING ==========================
-print(f"{Fore.GREEN}Starting the threads{Fore.RESET}\n")
-# Create and start five threads
-threads = []
-start_time = time.time()
-for i in range(nodes):
-    address_i = addresses[i]  # Provide the address here
-    if nodes == 5:
-        trans_folder = f'trans5_{i}'
-    elif nodes == 10:
-        trans_folder = f'trans10_{i}'
-    else:
-        print(f"{Fore.RED}Invalid number of nodes{Fore.RESET}")
-        exit(1)
-    receiver_id_list, messages_list = parse_input.parse_input_files(trans_folder)
-    receiver_id_lists.append(receiver_id_list)
-    messages_lists.append(messages_list)
-    total_transactions += len(receiver_id_list)
-
-# Create and start threads after parsing input files
-threads = []
-start_time = time.time()
-for i in range(nodes):
-    address_i = address[i]  # Provide the address here
-    receiver_id_list = receiver_id_lists[i]
-    messages_list = messages_lists[i]
-    thread = threading.Thread(target=threading_function, args=(address_i, trans_folder, receiver_id_list, messages_list), name=f"Thread-{i}")
-    thread.start()
-    threads.append(thread)
-
-# Wait for all threads to finish
-for thread in threads:
-    thread.join()
-
-end_time = time.time()
-print("All threads have finished execution.\n")
+routines.start_tests(nodes)
 
 # Collect throughput and block time and write to output files
 print(f"{Fore.GREEN}Collecting the throughput and block time{Fore.RESET}")
