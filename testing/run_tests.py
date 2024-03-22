@@ -14,8 +14,10 @@ nodes = utils.get_nodes_from_config(nodes_count)
 # Step 3. Setup the nodes 
 routines.setup_nodes(nodes, block_size=10)
 
+stake  = 10
+
 # Step 4. Setup Initial Stake on nodes. Initial staking in all nodes in 10 BCC as in the example
-routines.set_initial_stake(nodes, stake=10)
+routines.set_initial_stake(nodes, stake)
 
 #================= HERE IT STARTS THREADING ==========================
-routines.start_tests(nodes)
+routines.start_tests(nodes, stake)

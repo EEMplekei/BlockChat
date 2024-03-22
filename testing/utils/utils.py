@@ -81,12 +81,11 @@ def parse_input_files(trans_file: str):
 					print(f"		Exception: {e}")
 	
 	# All tests passed
-	print(f"		{Fore.GREEN}✅ Parsing successful for file {trans_file}.txt{Fore.RESET}")
 	return receiver_id, message
 
 # Run the parsing for all the inputs files
 def parse_all_input_files(nodes_count):
-	print(f"	{Fore.GREEN}Parsing input files{Fore.RESET}\n")
+	print(f"\n	{Fore.GREEN}Parsing input files{Fore.RESET}\n")
  
 	receiver_id_lists = []
 	messages_lists = []
@@ -110,18 +109,18 @@ def parse_all_input_files(nodes_count):
 	return receiver_id_lists, messages_lists, total_transactions
 
 def start_threads(nodes, receiver_id_lists, messages_lists):
-    
+	
 	# Define the function that will be executed by each thread
 	def _threading_function(node, address, receiver_id_list, messages_list):
-		print(f"		{Fore.GREEN}[{threading.current_thread().name}] Sending the messages to {node} with address {address}{Fore.RESET}")
+		print(f"		[{threading.current_thread().name}] Sending the messages to {node} with address {address}")
 		send_messages(node, address, receiver_id_list, messages_list)
-    
+	
 	print(f"	{Fore.GREEN}{Style.BRIGHT}➜ Starting threads for {len(nodes)} nodes{Style.NORMAL}{Fore.RESET}\n")
 
 	threads = []
 	start_time = time.time()
 	for i, (node, address) in enumerate(nodes.items()):
-     
+	 
 		receiver_id_list, messages_list = receiver_id_lists[i], messages_lists[i]
 		thread = threading.Thread(target=_threading_function, args=(node, address, receiver_id_list, messages_list), name=f"Thread-{node}")
 		thread.start()
@@ -133,10 +132,10 @@ def start_threads(nodes, receiver_id_lists, messages_lists):
 
 	end_time = time.time()
  
-	print("All threads have finished execution.\n")
+	print(f"\n		{Fore.GREEN}All threads have finished execution.{Fore.RESET}\n")
 	return end_time - start_time, SUCCESSFUL_TRANSACTIONS
 		
-def send_messages(node,address: str, receiver_id_list, message_list):
+def send_messages(node, address: str, receiver_id_list, message_list):
 	global SUCCESSFUL_TRANSACTIONS
 	for receiver_id, message in zip(receiver_id_list, message_list):
 		time.sleep(1)
@@ -162,5 +161,58 @@ def send_messages(node,address: str, receiver_id_list, message_list):
 			return False
 
 	# All tests passed
-	print(f"✅ Messages were send successfully for Node with address: {address}")
-	return True,
+	print(f"		{Fore.GREEN}✅ Messages were send successfully for node {node} with address: {address}{Fore.RESET}")
+	return True
+
+def get_chain_length(address):
+	# Retrieve the Blockchain length
+	try:
+		response = requests.get(address+'/api/get_chain_length')
+
+		# Check if the status code is not 200 OK
+		if response.status_code != requests.codes.ok:
+			response.raise_for_status()
+		else:
+			response_json = response.json()
+			chain_length = response_json.get('chain_length')
+	except requests.exceptions.RequestException as e:
+		print("	❌ Retrieving chain length Failed")
+		print(f"Exception: {e}")
+	
+	return chain_length
+
+def check_temp_balances(nodes, stake):
+	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Checking the temp balance{Fore.RESET}{Style.NORMAL}\n")
+	for i, (node, address) in enumerate(nodes.items()):
+     
+		response = requests.get(address+'/api/get_temp_balance')
+		if response.status_code != requests.codes.ok:
+			response.raise_for_status()
+		else:
+			response_json = response.json()
+			temp_balance = response_json.get('temp_balance')
+
+			exp_balance = expected_balance(len(nodes), i, stake)
+			if temp_balance != exp_balance:
+				print(f"❌ {Fore.RED}Node {node} temp balance is incorrect{Fore.RESET}")
+				print(f"❌ Expected: {exp_balance}")
+				print(f"❌ Actual: {temp_balance}\n")
+			else:
+				print(f"	✅ Node {node} temp balance is correct")
+   
+def expected_balance(nodes_count, i, stake: int):
+	if nodes_count == 5:
+			trans_folder = f'nodes_5/trans_{i}'
+	elif nodes_count == 10:
+		trans_folder = f'nodes_10/trans_{i}'
+	else:
+		print(f"		{Fore.RED}{Style.BRIGHT}Invalid number of nodes{Style.NORMAL}{Fore.RESET}")
+		exit(1)
+
+	balance = 1000
+	_, messages_list = parse_input_files(trans_folder)
+	for message in messages_list:
+		balance -= len(message)
+	# Due to staking at the beginning (we are talking about temp_balance, not balance)
+	balance -= stake
+	return balance

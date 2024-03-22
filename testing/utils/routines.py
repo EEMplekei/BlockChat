@@ -8,7 +8,7 @@ import requests
 import subprocess
 
 # Run something (e.g. a bash script) on each node to start the API
-def setup_nodes(nodes, block_size):
+def setup_nodes(nodes, block_size):	
 	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Setting up the nodes{Fore.RESET}{Style.NORMAL}\n")
 	global proc
 		
@@ -68,7 +68,7 @@ def set_initial_stake(nodes, stake : int):
 			exit(-5)
 	print(f"\n	{Fore.GREEN}Initial Stake Set{Fore.RESET}\n")
 
-def start_tests(nodes):
+def start_tests(nodes, stake: int):
 	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Starting tests for {len(nodes)} nodes{Style.NORMAL}{Fore.RESET}\n")
 
 	#Parse all the input files
@@ -77,35 +77,21 @@ def start_tests(nodes):
 	# Create and start threads after parsing input files
 	run_time, successful_transactions = utils.start_threads(nodes, receiver_id_lists, messages_lists)
 	
- 
- 
 	# Collect throughput and block time and write to output files
-	print(f"{Fore.GREEN}Collecting the throughput and block time{Fore.RESET}")
-	throughput = total_transactions / run_time
-
+	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Collecting the throughput and block time{Fore.RESET}{Style.NORMAL}\n")
+	
 	# Wait for 3 seconds before retrieving the chain length to ensure all transactions are processed
 	time.sleep(3)
 
-	# Retrieve the Blockchain length
-	try:
-		response = requests.get(nodes.items()[0].value+'/api/get_chain_length')
-
-		# Check if the status code is not 200 OK
-		if response.status_code != requests.codes.ok:
-			response.raise_for_status()
-		else:
-			response_json = response.json()
-			chain_length = response_json.get('chain_length')
-	except requests.exceptions.RequestException as e:
-		print("❌ Retrieving chain length Failed ❌")
-		print(f"Exception: {e}")
-
+	chain_length = utils.get_chain_length(list(nodes.values())[0])
+	throughput = total_transactions / run_time
+	block_time = run_time / (chain_length - 1)
 	# Output results
-	print("Total Transactions: ", total_transactions)
-	print(f"Successful Transactions: {successful_transactions}\n")
-	print(f"{Fore.GREEN}Throughput: {throughput} transactions per second{Fore.RESET}")
-	print(f"Chain Length: {chain_length}")
-	print(f"{Fore.GREEN}Block Time: {run_time / (chain_length - 1)} seconds{Fore.RESET}")
+	print(f"	Total Transactions: {total_transactions}")
+	print(f"	Successful Transactions: {successful_transactions}")
+	print(f"	{Fore.GREEN}Throughput: {throughput} transactions per second{Fore.RESET}")
+	print(f"	Chain Length: {chain_length}")
+	print(f"	{Fore.GREEN}Block Time: {block_time} seconds{Fore.RESET}\n")
 
 	# Write the results to the output file and name the file accordingly
 	# if nodes == 5:
@@ -123,19 +109,6 @@ def start_tests(nodes):
 	#     file.write(f"Chain Length: {chain_length}\n")
 	#     file.write(f"Block Time: {(end_time - start_time) / (chain_length - 1)} seconds\n")
 
-	# Check if the temp balance is correct the expected
-	print(f"{Fore.GREEN}Checking the temp balance{Fore.RESET}")
-	for i in range(nodes):
-		response = requests.get(address[i]+'/api/get_temp_balance')
-		if response.status_code != requests.codes.ok:
-			response.raise_for_status()
-		else:
-			response_json = response.json()
-			temp_balance = response_json.get('temp_balance')
-
-			if temp_balance != expected_balance.expected_balance(nodes, i):
-				print(f"❌ {Fore.RED}Node {i} temp balance is incorrect{Fore.RESET}")
-				print(f"❌ Expected: {expected_balance.expected_balance(nodes, i)}")
-				print(f"❌ Actual: {temp_balance}\n")
-			else:
-				print(f"✅ Node {i} temp balance is correct\n")
+	# Check if the temp balances are correct the expected
+	utils.check_temp_balances(nodes, stake)		
+	
