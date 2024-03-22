@@ -138,7 +138,6 @@ def start_threads(nodes, receiver_id_lists, messages_lists):
 def send_messages(node, address: str, receiver_id_list, message_list):
 	global SUCCESSFUL_TRANSACTIONS
 	for receiver_id, message in zip(receiver_id_list, message_list):
-		time.sleep(1)
 
 		# Send the message to the receiver
 		try:
@@ -151,6 +150,7 @@ def send_messages(node, address: str, receiver_id_list, message_list):
 			# Check if the status code is not 200 OK
 			if response.status_code != requests.codes.ok:
 				# If the status code is not OK, raise an exception
+				print('here')
 				response.raise_for_status()
 			else:
 				SUCCESSFUL_TRANSACTIONS += 1
