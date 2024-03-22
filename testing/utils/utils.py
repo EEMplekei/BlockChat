@@ -1,8 +1,13 @@
 from colorama import Fore, Style
 from argparse import ArgumentParser
+import threading
+import requests
 import os
 import re
 import json
+import time
+
+SUCCESSFUL_TRANSACTIONS = 0
 
 # Function to clear the terminal
 def clear_terminal():
@@ -28,11 +33,11 @@ def get_nodes_from_config(nodes_count: int):
 		except json.JSONDecodeError as e:
 			print(f"{Fore.RED}JSON Decode Error: {e}{Fore.RESET}")
 			exit(-3)
-   
+
 	nodes = {}
 	for i, item in enumerate(nodes_config.items()):
 		if i >= nodes_count:
-			break		
+			break
 		nodes[item[0]] = item[1]
 
 	return nodes
@@ -50,11 +55,12 @@ def get_nodes_count():
 	return nodes_count
 
 # Function that parses the input files from trans0.txt to a list of receiver ids and a list of messages
-def parse_input_files(test_input: str):
+def parse_input_files(trans_file: str):
 	receiver_id = []
 	message = []
+
 	# Read to the correct trans.txt file according to the node number
-	with open('./test_inputs/'+test_input+'.txt', 'r') as file:
+	with open('./test_inputs/'+trans_file+'.txt', 'r') as file:
 		text = file.read()
 		lines = text.strip().split('\n')
 		for line in lines:
@@ -65,18 +71,96 @@ def parse_input_files(test_input: str):
 					current_receiver_id = (int(match.group(1)))
 					receiver_id.append(current_receiver_id)
 
-					# Debugging
-					#print(f"Transaction id: {current_receiver_id}")
 					# Get message after id and one space after
 					current_message = line[match.end():].lstrip()  # Remove the first space from the message
 					message.append(current_message)
 
-					# Debugging
-					#print(f"Message: {current_message}")
 			except re.error as e:
 					# Handle exceptions
-					print("❌ Parsing Failed ❌")
-					print(f"Exception: {e}")
+					print(f"		{Style.BRIGHT}{Fore.RED}❌ Parsing failed for file {trans_file}.txt {Fore.RESET}{Style.NORMAL}")
+					print(f"		Exception: {e}")
+	
 	# All tests passed
-	print("✅ Parsing Successful ✅")
+	print(f"		{Fore.GREEN}✅ Parsing successful for file {trans_file}.txt{Fore.RESET}")
 	return receiver_id, message
+
+# Run the parsing for all the inputs files
+def parse_all_input_files(nodes_count):
+	print(f"	{Fore.GREEN}Parsing input files{Fore.RESET}\n")
+ 
+	receiver_id_lists = []
+	messages_lists = []
+	total_transactions = 0
+
+	for i in range(nodes_count):
+		if nodes_count == 5:
+			trans_folder = f'nodes_5/trans_{i}'
+		elif nodes_count == 10:
+			trans_folder = f'nodes_10/trans_{i}'
+		else:
+			print(f"		{Fore.RED}{Style.BRIGHT}Invalid number of nodes{Style.NORMAL}{Fore.RESET}")
+			exit(1)
+   
+		receiver_id_list, messages_list = parse_input_files(trans_folder)
+		receiver_id_lists.append(receiver_id_list)
+		messages_lists.append(messages_list)
+		total_transactions += len(receiver_id_list)
+
+	print(f"		{Fore.GREEN}✅ Parsed all transactions files{Fore.RESET}\n")
+	return receiver_id_lists, messages_lists, total_transactions
+
+def start_threads(nodes, receiver_id_lists, messages_lists):
+    
+	# Define the function that will be executed by each thread
+	def _threading_function(node, address, receiver_id_list, messages_list):
+		print(f"		{Fore.GREEN}[{threading.current_thread().name}] Sending the messages to {node} with address {address}{Fore.RESET}")
+		send_messages(node, address, receiver_id_list, messages_list)
+    
+	print(f"	{Fore.GREEN}{Style.BRIGHT}➜ Starting threads for {len(nodes)} nodes{Style.NORMAL}{Fore.RESET}\n")
+
+	threads = []
+	start_time = time.time()
+	for i, (node, address) in enumerate(nodes.items()):
+     
+		receiver_id_list, messages_list = receiver_id_lists[i], messages_lists[i]
+		thread = threading.Thread(target=_threading_function, args=(node, address, receiver_id_list, messages_list), name=f"Thread-{node}")
+		thread.start()
+		threads.append(thread)
+
+	# Wait for all threads to finish
+	for thread in threads:
+		thread.join()
+
+	end_time = time.time()
+ 
+	print("All threads have finished execution.\n")
+	return end_time - start_time, SUCCESSFUL_TRANSACTIONS
+		
+def send_messages(node,address: str, receiver_id_list, message_list):
+	global SUCCESSFUL_TRANSACTIONS
+	for receiver_id, message in zip(receiver_id_list, message_list):
+		time.sleep(1)
+
+		# Send the message to the receiver
+		try:
+			response = requests.post(address+'/api/create_transaction', json={
+				"receiver_id": int(receiver_id),
+				"payload": message,
+				"type_of_transaction": "MESSAGE"
+			})
+
+			# Check if the status code is not 200 OK
+			if response.status_code != requests.codes.ok:
+				# If the status code is not OK, raise an exception
+				response.raise_for_status()
+			else:
+				SUCCESSFUL_TRANSACTIONS += 1
+		except requests.exceptions.RequestException as e:
+			# Handle exceptions
+			print(f"	{Fore.RED}❌ Sending message failed for node {node} with address: {address}")
+			print(f"Exception: {e}")
+			return False
+
+	# All tests passed
+	print(f"✅ Messages were send successfully for Node with address: {address}")
+	return True,
