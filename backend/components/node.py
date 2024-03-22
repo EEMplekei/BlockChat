@@ -227,6 +227,9 @@ class Node:
                 fees_sum+=transaction.amount*FEE_RATE
         
         # Update pending_transactions list
+        # If no transactions are in the pending list then temp_balance is the same as the balance
+        # Update the temp_balance of each address that was seen in a transaction in the block
+        # We could do that for each node in the ring every time, but this is in an optimization when we have much more nodes that block size
         if(self.update_pending_transactions(block)==0):
             for transaction in block.transactions:
                 if(transaction.type_of_transaction != TransactionType.STAKE):
