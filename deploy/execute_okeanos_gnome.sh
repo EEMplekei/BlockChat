@@ -44,9 +44,9 @@ if [ "$total_nodes" = "10" ]; then
     do
         title=$(echo -n "${s}" | sed 's/^\(.\)/\U\1/')
         if [ "$s" = "$(echo $LIST | cut -d' ' -f1)" ]; then
-            args="${args} --tab --title=\"$title\" --command=\"${cmdssh} -t ubuntu@${s}.ok-kno.grnetcloud.net 'sleep $sleep; python3 ~/BlockChat/backend/api.py -i eth2 -p 8002; bash'\""
+            args="${args} --tab --title=\"$title\" --command=\"${cmdssh} -t ubuntu@${s}.ok-kno.grnetcloud.net 'sleep $sleep; python3 ~/BlockChat/backend/api.py -i eth2 -p 8001; bash'\""
         else
-            args="${args} --tab --title=\"$title\" --command=\"${cmdssh} -t ubuntu@${s}.ok-kno.grnetcloud.net 'sleep $sleep; python3 ~/BlockChat/backend/api.py -i eth1 -p 8002; bash'\""
+            args="${args} --tab --title=\"$title\" --command=\"${cmdssh} -t ubuntu@${s}.ok-kno.grnetcloud.net 'sleep $sleep; python3 ~/BlockChat/backend/api.py -i eth1 -p 8001; bash'\""
             sleep=$((sleep+1))
         fi
     done
