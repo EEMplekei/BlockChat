@@ -3,8 +3,9 @@ import threading
 import time
 import requests
 from colorama import Fore
-from helper_functions import parse_arg, parse_input, staking, send_messages, utils
+from helper_functions import parse_arg, parse_input, staking, send_messages, utils, write_file
 import expected_outputs
+import json
 
 # Define the global variable to store the total transactions
 total_transactions = 0
@@ -87,6 +88,7 @@ print("All threads have finished execution.\n")
 print(f"{Fore.GREEN}Collecting the throughput and block time{Fore.RESET}")
 throughput = total_transactions / (end_time - start_time)
 
+
 # Wait for 3 seconds before retrieving the chain length to ensure all transactions are processed
 time.sleep(3)
 
@@ -98,32 +100,19 @@ try:
     else:
         response_json = response.json()
         chain_length = response_json.get('chain_length')
+        blocktime = (end_time - start_time) / (chain_length - 1)
 except requests.exceptions.RequestException as e:
     print("❌ Retrieving chain length Failed ❌")
     print(f"Exception: {e}")
+
 
 # Output results
 print("Total Transactions: ", total_transactions)
 print(f"Successful Transactions: {send_messages.successful_transactions}\n")
 print(f"{Fore.GREEN}Throughput: {throughput} transactions per second{Fore.RESET}")
 print(f"Chain Length: {chain_length}")
-print(f"{Fore.GREEN}Block Time: {(end_time - start_time) / (chain_length - 1)} seconds{Fore.RESET}")
+print(f"{Fore.GREEN}Block Time: {blocktime} seconds{Fore.RESET}")
 
-# Write the results to the output file and name the file accordingly
-# if nodes == 5:
-#     output_file = "output5.txt"
-# elif nodes == 10:
-#     output_file = "output10.txt"
-# else:
-#     print(f"{Fore.RED}Invalid number of nodes{Fore.RESET}")
-#     exit(1)
-
-# with open(output_file, "w") as file:
-#     file.write(f"Total Transactions: {total_transactions}\n")
-#     file.write(f"Successful Transactions: {send_messages.successful_transactions}\n")
-#     file.write(f"Throughput: {throughput} transactions per second\n")
-#     file.write(f"Chain Length: {chain_length}\n")
-#     file.write(f"Block Time: {(end_time - start_time) / (chain_length - 1)} seconds\n")
 
 # Check if the temp balance is correct the expected
 print(f"{Fore.GREEN}Checking the temp balance{Fore.RESET}")
@@ -159,3 +148,9 @@ for i in range(nodes):
             print(f"❌ Actual: {chain_length}\n")
         else:
             print(f"✅ Node {i} chain length is correct\n")
+
+
+# Write the blocktime and throughtput with keys the pair (number of nodes,blocksize) to the output file as json format to be used by a script to make graph
+write_file.write_file(nodes, blocksize, blocktime, throughput)
+
+
