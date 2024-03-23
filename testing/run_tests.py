@@ -4,7 +4,7 @@ import time
 import requests
 from colorama import Fore
 from helper_functions import parse_arg, parse_input, staking, send_messages, utils
-import expected_balance
+import expected_outputs
 
 # Define the global variable to store the total transactions
 total_transactions = 0
@@ -25,7 +25,8 @@ utils.clear_terminal()
 print(f"{Fore.GREEN}Starting the testing process for 5 clients{Fore.RESET}\n")
 
 # Step 1. Arg Parse how many nodes to be in the chain
-nodes = int(parse_arg.parse_arguments())
+nodes = int(parse_arg.parse_arguments()[0])
+blocksize = int(parse_arg.parse_arguments()[1])
 
 # Check if the number of nodes is valid
 if nodes not in (5, 10):
@@ -134,9 +135,27 @@ for i in range(nodes):
         response_json = response.json()
         temp_balance = response_json.get('temp_balance')
 
-        if temp_balance != expected_balance.expected_balance(nodes, i):
+        if temp_balance != expected_outputs.expected_balance(nodes, i):
             print(f"❌ {Fore.RED}Node {i} temp balance is incorrect{Fore.RESET}")
-            print(f"❌ Expected: {expected_balance.expected_balance(nodes, i)}")
+            print(f"❌ Expected: {expected_outputs.expected_balance(nodes, i)}")
             print(f"❌ Actual: {temp_balance}\n")
         else:
             print(f"✅ Node {i} temp balance is correct\n")
+
+
+# Check if the number of blocks in blockchain is correct
+print(f"{Fore.GREEN}Checking the number of blocks{Fore.RESET}")
+for i in range(nodes):
+    response = requests.get(address[i]+'/api/get_chain_length')
+    if response.status_code != requests.codes.ok:
+        response.raise_for_status()
+    else:
+        response_json = response.json()
+        chain_length = response_json.get('chain_length')
+
+        if chain_length != expected_outputs.expected_chain_length(nodes, blocksize, total_transactions):
+            print(f"❌ {Fore.RED}Node {i} chain length is incorrect{Fore.RESET}")
+            print(f"❌ Expected: {expected_outputs.expected_chain_length(nodes, blocksize, total_transactions)}")
+            print(f"❌ Actual: {chain_length}\n")
+        else:
+            print(f"✅ Node {i} chain length is correct\n")

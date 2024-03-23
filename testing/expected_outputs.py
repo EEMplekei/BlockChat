@@ -17,6 +17,14 @@ def expected_balance(number_of_nodes, node):
     balance -= 10
     return balance
 
+
+def expected_chain_length(number_of_nodes, blocksize, total_transactions):
+    # 2*number_of_nodes-1 is the additional number of transactions that will be sent to the network
+    # number_of nodes - 1 for initial transactions 
+    # number_of_nodes for the staking transactions
+    all_transactions = total_transactions+ 2*number_of_nodes-1
+    return (all_transactions  // blocksize) + 1
+
 print(f"{Fore.GREEN}Expected Temp_Balances for 5 NODES{Fore.RESET}")
 print()
 
