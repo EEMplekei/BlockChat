@@ -36,7 +36,7 @@ do
         sleep=$((sleep+1))
     fi
 done
-
+sleep=$((sleep+2))
 #Add 5 more nodes in nodes=10
 if [ "$total_nodes" = "10" ]; then
     for s in $LIST
