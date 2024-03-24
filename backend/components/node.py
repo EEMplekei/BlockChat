@@ -51,7 +51,7 @@ class Node:
         self.pending_transactions = deque()
         self.current_validator = {}
         self.block_counter = 1
-        self.incoming_block_lock = threading.Lock()
+        self.add_to_pending_lock = threading.Lock()
         self.processing_block_lock = threading.Lock()
         self.nonce = random.randint(0, 10000)
         self.is_bootstrap = self.check_if_bootstrap()
@@ -72,7 +72,7 @@ class Node:
     # Adds a transaction to a list of pending transactions
     def add_transaction_to_pending(self, transaction: Transaction):
         # Before we add to pending list we will call validate_transaction to check if the transaction is valid
-
+        print('Adding transaction to pending list')
         # If it is valid we will add it to the pending list
         # Validate it here because here we reach and for other's transactions
         
@@ -85,19 +85,25 @@ class Node:
         else:
             if not transaction.validate_transaction(self.ring[str(transaction.sender_address)]['temp_balance']):
                 return False
-        
-        self.pending_transactions.appendleft(transaction)
-        self.update_temp_balance(transaction)
-        # Check if the block is full to mint
-        self.check_if_block_is_full_to_mint()
-
+        print("validated transaction")
+        with(self.add_to_pending_lock):
+                print("got lock")
+                self.pending_transactions.appendleft(transaction)
+                self.update_temp_balance(transaction)
+                # Check if the block is full to mint
+                self.check_if_block_is_full_to_mint()
+        print("left lock, returing")        
         return True
     
     def check_if_block_is_full_to_mint(self):
         if len(self.pending_transactions) >= BLOCK_SIZE:
+            print("check full block called")
             # Create a thread to mint the block
             mint_thread = threading.Thread(target=self.mint_block)
             mint_thread.start()
+            #Wait the thread to finish 
+            mint_thread.join()
+            print("thread finished")
         return
 
     # Updates the temporary balance for each node given a validated transaction
@@ -194,7 +200,6 @@ class Node:
         print(f"🎲 Randomly selected validator for the next Block: {validator[1]}")
 
     def mint_block(self):
-        time.sleep(1)
         with (self.processing_block_lock):
             if len(self.pending_transactions) >= BLOCK_SIZE:
                 # If the current node is the validator, mint a block
@@ -211,6 +216,7 @@ class Node:
                     self.add_block_to_chain(new_block)
                     # Broadcast block to the network
                     self.broadcast_block(new_block)
+        return
         # print("I RELEASED THE LOCK")
 
     # Adds a newly block to the chain (assuming it has been validated)
@@ -315,7 +321,7 @@ class Node:
 
     def check_if_bootstrap(self):
         if (self.ip, self.port) == (BOOTSTRAP_IP, BOOTSTRAP_PORT):
-            print(f"I am bootstrap. {Fore.CYAN}My ID is:{Fore.RESET} {Fore.MAGENTA}0 {Fore.RESET}")
+            print(f"I am bootstrap.\n{Fore.CYAN}My ID is:{Fore.RESET} {Fore.MAGENTA}0 {Fore.RESET}")
             return True
         else:
             return False
