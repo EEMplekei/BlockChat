@@ -18,8 +18,9 @@ def parse_arguments():
 	try:
 		arg_parser = ArgumentParser()
 		arg_parser.add_argument("-n", "--nodes", help="Number of nodes in the test", required = True)
+		arg_parser.add_argument("-b", "--blocksize", help="Number of transactions per block in the test", required = True)
 		args = arg_parser.parse_args()
-		return args.nodes
+		return args.nodes, args.blocksize
 	except Exception as e:
 		print(f"{Fore.YELLOW}parse_arguments: {Fore.RED}{e}{Fore.RESET}")
 		exit(-1)
@@ -43,16 +44,18 @@ def get_nodes_from_config(nodes_count: int):
 	return nodes
 
 #Get for how many nodes to test for
-def get_nodes_count():
+def get_arguments():
 	try:
-		nodes_count = int(parse_arguments())
-		if nodes_count != 5 and nodes_count != 10:
+		nodes_count, block_size = int(parse_arguments())
+		if nodes_count not in {5, 10}:
+			raise ValueError
+		if block_size not in {5, 10, 20}:
 			raise ValueError
 	except ValueError:
-		print(f"{Fore.RED}Invalid number of nodes, exiting...{Fore.RESET}")
+		print(f"{Fore.RED}Invalid number of nodes or block_size, exiting...{Fore.RESET}")
 		exit(-2)
-	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Starting the testing process for {nodes_count} clients{Fore.RESET}{Style.NORMAL}\n")
-	return nodes_count
+	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Starting the testing process for {nodes_count} clients and {block_size} block size{Fore.RESET}{Style.NORMAL}\n")
+	return nodes_count, block_size
 
 # Function that parses the input files from trans0.txt to a list of receiver ids and a list of messages
 def parse_input_files(trans_file: str):
@@ -180,25 +183,6 @@ def get_chain_length(address):
 		print(f"Exception: {e}")
 	
 	return chain_length
-
-def check_temp_balances(nodes, stake):
-	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Checking the temp balance{Fore.RESET}{Style.NORMAL}\n")
-	for i, (node, address) in enumerate(nodes.items()):
-     
-		response = requests.get(address+'/api/get_temp_balance')
-		if response.status_code != requests.codes.ok:
-			response.raise_for_status()
-		else:
-			response_json = response.json()
-			temp_balance = response_json.get('temp_balance')
-
-			exp_balance = expected_balance(len(nodes), i, stake)
-			if temp_balance != exp_balance:
-				print(f"❌ {Fore.RED}Node {node} temp balance is incorrect{Fore.RESET}")
-				print(f"❌ Expected: {exp_balance}")
-				print(f"❌ Actual: {temp_balance}\n")
-			else:
-				print(f"	✅ Node {node} temp balance is correct")
    
 def expected_balance(nodes_count, i, stake: int):
 	if nodes_count == 5:
@@ -216,3 +200,28 @@ def expected_balance(nodes_count, i, stake: int):
 	# Due to staking at the beginning (we are talking about temp_balance, not balance)
 	balance -= stake
 	return balance
+
+def expected_chain_length(number_of_nodes, blocksize, total_transactions):
+    # 2*number_of_nodes-1 is the additional number of transactions that will be sent to the network
+    # number_of nodes - 1 for initial transactions 
+    # number_of_nodes for the staking transactions
+    all_transactions = total_transactions+ 2*number_of_nodes-1
+    return (all_transactions  // blocksize) + 1
+
+# Write the blocktime and throughtput with keys the pair (number of nodes,blocksize) to the output file as json format to be used by a script to make graph
+def write_file(nodes, block_size, throughput, block_time):
+    output_file = "output.txt"
+    key = f"({nodes},{block_size})"
+    # Read existing contents from the file
+    try:
+        with open(output_file, "r") as file:
+            data = json.load(file)
+    except FileNotFoundError:
+        data = {}
+
+    # Update the data with new values
+    data[key] = {'block_time': block_time, 'throughput': throughput}
+
+    # Write the updated data back to the file
+    with open(output_file, "w") as file:
+        json.dump(data, file, indent=4)

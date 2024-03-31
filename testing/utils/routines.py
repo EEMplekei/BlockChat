@@ -2,10 +2,13 @@ from colorama import Fore, Style
 from sys import platform
 from time import sleep
 from utils import utils
-import threading
+import json
+import matplotlib.pyplot as plt
 import time
 import requests
 import subprocess
+
+total_transactions = 0
 
 # Run something (e.g. a bash script) on each node to start the API
 def setup_nodes(nodes, block_size):	
@@ -72,7 +75,7 @@ def set_initial_stake(nodes, stake : int):
 
 def start_tests(nodes, stake: int):
 	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Starting tests for {len(nodes)} nodes{Style.NORMAL}{Fore.RESET}\n")
-
+	global total_transactions
 	#Parse all the input files
 	receiver_id_lists, messages_lists, total_transactions = utils.parse_all_input_files(len(nodes))
 
@@ -88,29 +91,98 @@ def start_tests(nodes, stake: int):
 	chain_length = utils.get_chain_length(list(nodes.values())[0])
 	throughput = total_transactions / run_time
 	block_time = run_time / (chain_length - 1)
+
 	# Output results
 	print(f"	Total Transactions: {total_transactions}")
 	print(f"	Successful Transactions: {successful_transactions}")
 	print(f"	{Fore.GREEN}Throughput: {throughput} transactions per second{Fore.RESET}")
 	print(f"	Chain Length: {chain_length}")
 	print(f"	{Fore.GREEN}Block Time: {block_time} seconds{Fore.RESET}\n")
+ 
+	return throughput, block_time
 
-	# Write the results to the output file and name the file accordingly
-	# if nodes == 5:
-	#     output_file = "output5.txt"
-	# elif nodes == 10:
-	#     output_file = "output10.txt"
-	# else:
-	#     print(f"{Fore.RED}Invalid number of nodes{Fore.RESET}")
-	#     exit(1)
-
-	# with open(output_file, "w") as file:
-	#     file.write(f"Total Transactions: {total_transactions}\n")
-	#     file.write(f"Successful Transactions: {send_messages.successful_transactions}\n")
-	#     file.write(f"Throughput: {throughput} transactions per second\n")
-	#     file.write(f"Chain Length: {chain_length}\n")
-	#     file.write(f"Block Time: {(end_time - start_time) / (chain_length - 1)} seconds\n")
-
-	# Check if the temp balances are correct the expected
-	utils.check_temp_balances(nodes, stake)		
+def check_temp_balances(nodes, stake):
+	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Checking the temp balance{Fore.RESET}{Style.NORMAL}\n")
 	
+	for i, (node, address) in enumerate(nodes.items()):
+	
+		response = requests.get(address+'/api/get_temp_balance')
+		if response.status_code != requests.codes.ok:
+			response.raise_for_status()
+		else:
+			response_json = response.json()
+			temp_balance = response_json.get('temp_balance')
+
+			exp_balance = utils.expected_balance(len(nodes), i, stake)
+			if temp_balance != exp_balance:
+				print(f"	❌ {Fore.RED}Node {node} temp balance is incorrect{Fore.RESET}")
+				print(f"	❌ Expected: {exp_balance}")
+				print(f"	❌ Actual: {temp_balance}\n")
+			else:
+				print(f"	✅ Node {node} temp balance is correct")
+
+def check_chain_length(nodes, block_size):
+	time.sleep(5)
+ 
+	# Check if the number of blocks in blockchain is correct
+	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Checking the chain lengths{Fore.RESET}{Style.NORMAL}\n")
+	for i, (node, address) in enumerate(nodes.items()):
+		response = requests.get(address+'/api/get_chain_length')
+		if response.status_code != requests.codes.ok:
+			response.raise_for_status()
+		else:
+			response_json = response.json()
+			chain_length = response_json.get('chain_length')
+   
+			expected_chain_length = utils.expected_chain_length(nodes, block_size, total_transactions)			
+			if chain_length != expected_chain_length:
+				print(f"	❌ {Fore.RED}Node {node} chain length is incorrect{Fore.RESET}")
+				print(f"	❌ Expected: {expected_chain_length}")
+				print(f"	❌ Actual: {chain_length}\n")
+			else:
+				print(f"	✅ Node {node} chain length is correct\n")
+
+def draw_graphs():
+	# Load data from the file
+	with open("../output.txt", "r") as file:
+		data = json.load(file)
+
+	# Extract keys and corresponding values
+	keys = list(data.keys())
+	blocktimes = [data[key]["blocktime"] for key in keys]
+	throughputs = [data[key]["throughput"] for key in keys]
+
+	# Extract number of nodes and block size from keys for labeling
+	node_labels = [key.split(",")[0][1:] for key in keys]
+	blocksize_labels = [key.split(",")[1][:-1] for key in keys]
+
+	# Plotting
+	plt.figure(figsize=(10, 6))
+	bar_width = 0.35
+	index = range(len(keys))
+
+	bars1 = plt.bar(index, blocktimes, bar_width, label='Block Time')
+	bars2 = plt.bar([i + bar_width for i in index], throughputs, bar_width, label='Throughput')
+
+	plt.xlabel('Number of Nodes, Block Size')
+	plt.ylabel('Value')
+	plt.title('Block Time and Throughput for Each Node and Block Size combination')
+	plt.xticks([i + bar_width / 2 for i in index], [f"{node_labels[i]}, {blocksize_labels[i]}" for i in range(len(keys))])
+	plt.legend()
+
+	# Function to add labels on bars
+	def add_labels(bars):
+		for bar in bars:
+			height = bar.get_height()
+			plt.annotate('{}'.format(round(height, 2)),
+						xy=(bar.get_x() + bar.get_width() / 2, height),
+						xytext=(0, 3),
+						textcoords="offset points",
+						ha='center', va='bottom')
+
+	add_labels(bars1)
+	add_labels(bars2)
+
+	plt.tight_layout()
+	plt.show()
+

@@ -111,15 +111,9 @@ class Node:
     def check_if_block_is_full_to_mint(self):
         if len(self.pending_transactions) >= BLOCK_SIZE:
             # Create a thread to call the async function
-            print(f"{Fore.YELLOW}check_if_block_is_full_to_mint{Fore.RESET}: {Fore.RED}starting thread to mint_block{Fore.RESET}")
             mint_thread = threading.Thread(target=self.async_function_wrapper)
-            mint_thread.start()
-            # output incoming_block_lock status
-            print(f"{Fore.YELLOW}check_if_block_is_full_to_mint{Fore.RESET}: {Fore.RED}incoming_block_lock status: {self.incoming_block_lock.locked()}{Fore.RESET}")
-            #output mint_block_lock status
-            print(f"{Fore.YELLOW}check_if_block_is_full_to_mint{Fore.RESET}: {Fore.RED}mint_block_lock status: {self.mint_block_lock.locked()}{Fore.RESET}")
+            mint_thread.start()            #output mint_block_lock status
             mint_thread.join()
-            print(f"{Fore.YELLOW}check_if_block_is_full_to_mint{Fore.RESET}: {Fore.RED}thread to mint_block returned{Fore.RESET}")
         return
 
     # Updates the temporary balance for each node given a validated transaction
@@ -257,8 +251,9 @@ class Node:
                 print(f"{Fore.YELLOW}mint_block{Fore.RESET}: {Fore.RED}released mint block lock{Fore.RESET}")
         return
 
+    # Repeatedly call check_and_mint_block every 'interval' seconds
     def schedule_mint_block(self, interval=0.1):
-        # Define a function to repeatedly call check_and_mint_block every 'interval' seconds
+        
         def repeat_function():
             self.check_if_block_is_full_to_mint()
             threading.Timer(interval, repeat_function).start()
