@@ -131,7 +131,7 @@ for i in range(nodes):
         else:
             print(f"✅ Node {i} temp balance is correct\n")
 
-
+time.sleep(20)
 # Check if the number of blocks in blockchain is correct
 print(f"{Fore.GREEN}Checking the number of blocks{Fore.RESET}")
 for i in range(nodes):

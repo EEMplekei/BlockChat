@@ -5,7 +5,7 @@ successful_transactions = 0
 def send_messages(address: str, receiver_id_list, message_list):
 	global successful_transactions
 	for receiver_id, message in zip(receiver_id_list, message_list):
-		time.sleep(1)
+		#time.sleep(1)
 		# Debugging
 		# print(f"Sending message to {receiver_id} with message: {message}")
 		

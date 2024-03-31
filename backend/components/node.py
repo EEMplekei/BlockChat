@@ -5,6 +5,7 @@ import pickle
 import random
 import threading
 import time
+import asyncio
 
 #Try loading modules, if it fails, print error and raise ImportError
 try:
@@ -50,9 +51,11 @@ class Node:
         self.processing_block = False
         self.pending_transactions = deque()
         self.current_validator = {}
-        self.block_counter = 1
-        self.incoming_block_lock = threading.Lock()
+        self.block_counter = 2
+        self.add_to_pending_lock = threading.Lock()
         self.processing_block_lock = threading.Lock()
+        self.incoming_block_lock = asyncio.Lock()
+        self.mint_block_lock = threading.Lock()
         self.nonce = random.randint(0, 10000)
         self.is_bootstrap = self.check_if_bootstrap()
         
@@ -72,7 +75,6 @@ class Node:
     # Adds a transaction to a list of pending transactions
     def add_transaction_to_pending(self, transaction: Transaction):
         # Before we add to pending list we will call validate_transaction to check if the transaction is valid
-
         # If it is valid we will add it to the pending list
         # Validate it here because here we reach and for other's transactions
         
@@ -85,19 +87,39 @@ class Node:
         else:
             if not transaction.validate_transaction(self.ring[str(transaction.sender_address)]['temp_balance']):
                 return False
-        
+
         self.pending_transactions.appendleft(transaction)
         self.update_temp_balance(transaction)
         # Check if the block is full to mint
         self.check_if_block_is_full_to_mint()
-
         return True
     
+    async def mint_block_async(self):
+        await self.mint_block()
+
+    def async_function_wrapper(self):
+        # Check if lock is acquired, if not, acquire it
+        if not self.mint_block_lock.locked():
+            self.mint_block_lock.acquire()
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(self.mint_block_async())
+            loop.close()
+            if self.mint_block_lock.locked():
+                self.mint_block_lock.release()
+
     def check_if_block_is_full_to_mint(self):
         if len(self.pending_transactions) >= BLOCK_SIZE:
-            # Create a thread to mint the block
-            mint_thread = threading.Thread(target=self.mint_block)
+            # Create a thread to call the async function
+            print(f"{Fore.YELLOW}check_if_block_is_full_to_mint{Fore.RESET}: {Fore.RED}starting thread to mint_block{Fore.RESET}")
+            mint_thread = threading.Thread(target=self.async_function_wrapper)
             mint_thread.start()
+            # output incoming_block_lock status
+            print(f"{Fore.YELLOW}check_if_block_is_full_to_mint{Fore.RESET}: {Fore.RED}incoming_block_lock status: {self.incoming_block_lock.locked()}{Fore.RESET}")
+            #output mint_block_lock status
+            print(f"{Fore.YELLOW}check_if_block_is_full_to_mint{Fore.RESET}: {Fore.RED}mint_block_lock status: {self.mint_block_lock.locked()}{Fore.RESET}")
+            mint_thread.join()
+            print(f"{Fore.YELLOW}check_if_block_is_full_to_mint{Fore.RESET}: {Fore.RED}thread to mint_block returned{Fore.RESET}")
         return
 
     # Updates the temporary balance for each node given a validated transaction
@@ -190,28 +212,60 @@ class Node:
         validator = protocol.select_validator()
         # If the current node is the validator, mint a block
         self.current_validator[self.block_counter] = validator[0]
+        self.block_counter += 1  
         # Output what random generator selected
         print(f"🎲 Randomly selected validator for the next Block: {validator[1]}")
 
-    def mint_block(self):
-        time.sleep(1)
-        with (self.processing_block_lock):
-            if len(self.pending_transactions) >= BLOCK_SIZE:
-                # If the current node is the validator, mint a block
-                if self.current_validator[self.block_counter] == str(self.wallet.address):
-                    print("🔒 I am the validator")
-                    new_block = self.create_new_block()
-                    self.block_counter += 1  
-                    # Add transactions to the new block
-                    for _ in range(BLOCK_SIZE):
-                        new_block.transactions.append(self.pending_transactions.pop())
-                    # Calculate hash
-                    new_block.calculate_hash()
-                    # Add block to blockchain
-                    self.add_block_to_chain(new_block)
-                    # Broadcast block to the network
-                    self.broadcast_block(new_block)
-        # print("I RELEASED THE LOCK")
+    async def mint_block(self):
+        print(f"{Fore.YELLOW}mint_block{Fore.RESET}: {Fore.RED}getting processing block lock{Fore.RESET}")
+        try:
+            with (self.processing_block_lock):
+                if len(self.pending_transactions) >= BLOCK_SIZE:
+                    # If the current node is the validator, mint a block
+                    print("=========================")
+                    print(self.block_counter,self.ring[str(self.wallet.address)]['id'])
+                    if self.current_validator[len(self.blockchain.chain)+1] == str(self.wallet.address):
+                        print(f"{Fore.YELLOW}mint_block{Fore.RESET}: {Fore.RED}check if incoming block lock is acquired{Fore.RESET}")
+                        if not self.incoming_block_lock.locked():
+                            self.incoming_block_lock.acquire()
+                            #print(f"{Fore.YELLOW}mint_block{Fore.RESET}: {Fore.RED}got incoming block lock{Fore.RESET}")
+                            if self.current_validator[len(self.blockchain.chain)+1] == str(self.wallet.address):
+                                print("🔒 I am the validator")
+                                new_block = self.create_new_block()
+                                # Add transactions to the new block
+                                print(f"{Fore.YELLOW}mint_block{Fore.RESET}: {Fore.RED}popping transactions and adding to block{Fore.RESET}")
+                                for _ in range(BLOCK_SIZE):
+                                    new_block.transactions.append(self.pending_transactions.pop())
+                                # Calculate hash
+                                new_block.calculate_hash()
+                                # Add block to blockchain
+                                self.add_block_to_chain(new_block)
+                                # Broadcast block to the network
+                                print(f"{Fore.YELLOW}mint_block{Fore.RESET}: {Fore.RED}broadcasting block{Fore.RESET}")
+                                self.broadcast_block(new_block)
+                                # Release the lock
+                                if self.incoming_block_lock.locked():
+                                    self.incoming_block_lock.release()
+                                print(f"{Fore.YELLOW}mint_block{Fore.RESET}: {Fore.RED}released incoming block lock{Fore.RESET}")
+                            else:
+                                # Release the lock
+                                self.incoming_block_lock.release()
+
+        finally:
+            if self.mint_block_lock.locked():
+                self.mint_block_lock.release()
+                print(f"{Fore.YELLOW}mint_block{Fore.RESET}: {Fore.RED}released mint block lock{Fore.RESET}")
+        return
+
+    def schedule_mint_block(self, interval=0.1):
+        # Define a function to repeatedly call check_and_mint_block every 'interval' seconds
+        def repeat_function():
+            self.check_if_block_is_full_to_mint()
+            threading.Timer(interval, repeat_function).start()
+
+        # Start checking for minting
+        repeat_function()
+    
 
     # Adds a newly block to the chain (assuming it has been validated)
     def add_block_to_chain(self, block: Block):
@@ -268,15 +322,42 @@ class Node:
     # Unicast a validated block
     def unicast_block(self, node, block):
         request_address = 'http://' + node['ip'] + ':' + node['port']
+        print(f"{Fore.YELLOW}unicast_block{Fore.RESET}: {Fore.RED}sending block {block.hash}to {node['id']}{Fore.RESET}")
         request_url = request_address + '/receive_block'
-        requests.post(request_url, pickle.dumps(block))
+        _ = requests.post(request_url, pickle.dumps(block))
+
+    # Unicast release of the lock
+    def unicast_release_lock(self, node):
+        request_address = 'http://' + node['ip'] + ':' + node['port']
+        request_url = request_address + '/release_lock'
+        _ = requests.post(request_url, data=None)
+
+    # Define a function for releasing lock
+    def release_lock(self, node):
+        request_address = 'http://' + node['ip'] + ':' + node['port']
+        request_url = request_address + '/release_lock'
+        requests.post(request_url, data=None)
     
     # Broadcast a validated block
     def broadcast_block(self, block: Block):
         for node in self.ring.values():
             if (self.id != node['id']):
                 self.unicast_block(node, block)
-        print("Block broadcasted")
+        print("Block broadcasted!")
+        
+        # Create threads for releasing locks
+        release_threads = []
+        for node in self.ring.values():
+            if (self.id != node['id']):
+                t = threading.Thread(target=self.release_lock, args=(node,))
+                release_threads.append(t)
+                t.start()
+        
+        # Wait for all threads to finish
+        for t in release_threads:
+            t.join()
+        
+        print("Incoming Block Lock released!")
     
     ##### Transaction #####
     def create_transaction(self, receiver_address, type_of_transaction: TransactionType, payload):
@@ -315,7 +396,7 @@ class Node:
 
     def check_if_bootstrap(self):
         if (self.ip, self.port) == (BOOTSTRAP_IP, BOOTSTRAP_PORT):
-            print(f"I am bootstrap. {Fore.CYAN}My ID is:{Fore.RESET} {Fore.MAGENTA}0 {Fore.RESET}")
+            print(f"I am bootstrap.\n{Fore.CYAN}My ID is:{Fore.RESET} {Fore.MAGENTA}0 {Fore.RESET}")
             return True
         else:
             return False
@@ -453,11 +534,12 @@ class Node:
                 time.sleep(0.5)
             self.broadcast_ring()
             self.broadcast_blockchain()
-            self.broadcast_initial_bcc()
             # Select a validator for the first block
             self.find_next_validator()
+            self.schedule_mint_block(interval=0.1)
             # Broadcast the order for the validator
             self.broadcast_order_for_validator()
+            self.broadcast_initial_bcc()
     
     @bootstrap_required
     def broadcast_order_for_validator(self):
