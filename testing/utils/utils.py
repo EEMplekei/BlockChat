@@ -208,20 +208,3 @@ def expected_chain_length(number_of_nodes, blocksize, total_transactions):
     all_transactions = total_transactions+ 2*number_of_nodes-1
     return (all_transactions  // blocksize) + 1
 
-# Write the blocktime and throughtput with keys the pair (number of nodes,blocksize) to the output file as json format to be used by a script to make graph
-def write_file(nodes, block_size, throughput, block_time):
-    output_file = "output.txt"
-    key = f"({nodes},{block_size})"
-    # Read existing contents from the file
-    try:
-        with open(output_file, "r") as file:
-            data = json.load(file)
-    except FileNotFoundError:
-        data = {}
-
-    # Update the data with new values
-    data[key] = {'block_time': block_time, 'throughput': throughput}
-
-    # Write the updated data back to the file
-    with open(output_file, "w") as file:
-        json.dump(data, file, indent=4)

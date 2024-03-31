@@ -1,6 +1,4 @@
 from utils import utils, routines
-from colorama import Fore
-import requests
 
 # Clear terminal
 utils.clear_terminal()

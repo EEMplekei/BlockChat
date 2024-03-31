@@ -47,7 +47,6 @@ if [ "$total_nodes" = "10" ]; then
             sleep=$((sleep+1))
         else
             args="${args} --tab --title=\"$title\" --command=\"${cmdssh} -t ubuntu@${s}.ok-kno.grnetcloud.net 'sleep $sleep; python3 ~/BlockChat/backend/api.py -i eth1 -p 8001; bash'\""
-            args="${args} --tab --title=\"$title\" --command=\"${cmdssh} -t ubuntu@${s}.ok-kno.grnetcloud.net 'sleep $sleep; python3 ~/BlockChat/backend/api.py -i eth1 -p 8001; bash'\""
             sleep=$((sleep+1))
         fi
     done

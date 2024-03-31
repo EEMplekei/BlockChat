@@ -5,6 +5,7 @@ from utils import utils
 import json
 import matplotlib.pyplot as plt
 import time
+import random
 import requests
 import subprocess
 
@@ -61,7 +62,7 @@ def set_initial_stake(nodes, stake : int):
 			response = requests.post(address+'/api/set_stake', json={
 				"stake": stake
 			})
-			print(response.elapsed.total_seconds())
+			
 			if(response.status_code != 200):
 				raise requests.exceptions.HTTPError
 			print(f"	{Fore.LIGHTCYAN_EX}Node {Style.BRIGHT}{node}{Style.NORMAL} has set the initial stake{Fore.RESET}")
@@ -72,6 +73,31 @@ def set_initial_stake(nodes, stake : int):
 			print(f"	{Fore.RED}Node {Style.BRIGHT}{node}{Style.NORMAL} with address {Style.BRIGHT}{address}{Style.NORMAL} seems to be down{Fore.RED}")
 			exit(-5)
 	print(f"\n	{Fore.GREEN}Initial Stake Set{Fore.RESET}\n")
+
+def set_unfair_stake(nodes, stake : int, unfair_stake : int):
+	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Setting the initial stake on the nodes{Fore.RESET}{Style.NORMAL}\n")
+	
+	random_node, _ = random.choice(list(nodes.items()))
+ 
+	for node, address in nodes.items():
+		try:
+			# api client post call
+			response = requests.post(address+'/api/set_stake', json={
+				"stake": unfair_stake if node == random_node else stake
+			})
+			
+			if(response.status_code != 200):
+				raise requests.exceptions.HTTPError
+			print(f"	{Fore.LIGHTCYAN_EX}Node {Style.BRIGHT}{node}{Style.NORMAL} has set the initial stake{Fore.RESET}")
+		except requests.exceptions.HTTPError:
+			print(f"	{Fore.RED}{Style.BRIGHT}Node {node} has failed to set the initial stake{Fore.RED}{Style.NORMAL}")
+			exit(-4)
+		except requests.exceptions.ConnectionError:
+			print(f"	{Fore.RED}Node {Style.BRIGHT}{node}{Style.NORMAL} with address {Style.BRIGHT}{address}{Style.NORMAL} seems to be down{Fore.RED}")
+			exit(-5)
+	print(f"\n	{Fore.GREEN}Initial Stake Set{Fore.RESET}\n")
+	return random_node
+
 
 def start_tests(nodes, stake: int):
 	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Starting tests for {len(nodes)} nodes{Style.NORMAL}{Fore.RESET}\n")
@@ -101,7 +127,7 @@ def start_tests(nodes, stake: int):
  
 	return throughput, block_time
 
-def check_temp_balances(nodes, stake):
+def check_temp_balances(nodes, stake: int):
 	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Checking the temp balance{Fore.RESET}{Style.NORMAL}\n")
 	
 	for i, (node, address) in enumerate(nodes.items()):
@@ -121,12 +147,32 @@ def check_temp_balances(nodes, stake):
 			else:
 				print(f"	✅ Node {node} temp balance is correct")
 
+def check_unfair_balances(nodes, staked_node, stake: int, unfair_stake: int):
+	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Checking the temp balance{Fore.RESET}{Style.NORMAL}\n")
+	
+	for i, (node, address) in enumerate(nodes.items()):
+	
+		response = requests.get(address+'/api/get_temp_balance')
+		if response.status_code != requests.codes.ok:
+			response.raise_for_status()
+		else:
+			response_json = response.json()
+			temp_balance = response_json.get('temp_balance')
+
+			exp_balance = utils.expected_balance(len(nodes), i, (stake if node != staked_node else unfair_stake))
+			if temp_balance != exp_balance:
+				print(f"	❌ {Fore.RED}Node {node} temp balance is incorrect{Fore.RESET}")
+				print(f"	❌ Expected: {exp_balance}")
+				print(f"	❌ Actual: {temp_balance}\n")
+			else:
+				print(f"	✅ Node {node} temp balance is correct")
+
 def check_chain_length(nodes, block_size):
 	time.sleep(5)
  
 	# Check if the number of blocks in blockchain is correct
-	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Checking the chain lengths{Fore.RESET}{Style.NORMAL}\n")
-	for i, (node, address) in enumerate(nodes.items()):
+	print(f"\n{Fore.GREEN}{Style.BRIGHT}➜ Checking the chain lengths{Fore.RESET}{Style.NORMAL}\n")
+	for _, (node, address) in enumerate(nodes.items()):
 		response = requests.get(address+'/api/get_chain_length')
 		if response.status_code != requests.codes.ok:
 			response.raise_for_status()
@@ -134,55 +180,32 @@ def check_chain_length(nodes, block_size):
 			response_json = response.json()
 			chain_length = response_json.get('chain_length')
    
-			expected_chain_length = utils.expected_chain_length(nodes, block_size, total_transactions)			
+			expected_chain_length = utils.expected_chain_length(len(nodes), block_size, total_transactions)			
 			if chain_length != expected_chain_length:
 				print(f"	❌ {Fore.RED}Node {node} chain length is incorrect{Fore.RESET}")
 				print(f"	❌ Expected: {expected_chain_length}")
 				print(f"	❌ Actual: {chain_length}\n")
 			else:
-				print(f"	✅ Node {node} chain length is correct\n")
+				print(f"	✅ Node {node} chain length is correct")
 
-def draw_graphs():
-	# Load data from the file
-	with open("../output.txt", "r") as file:
-		data = json.load(file)
+# Write the blocktime and throughtput with keys the pair (number of nodes,blocksize) to the output file as json format to be used by a script to make graph
+def write_file(nodes, block_size, throughput, block_time):
+    print(f"\n{Fore.GREEN}{Style.BRIGHT}➜ Writing results to output.txt{Fore.RESET}{Style.NORMAL}\n")
+    
+    output_file = "output.txt"
+    key = f"({nodes},{block_size})"
+    # Read existing contents from the file
+    try:
+        with open(output_file, "r") as file:
+            data = json.load(file)
+    except FileNotFoundError:
+        data = {}
 
-	# Extract keys and corresponding values
-	keys = list(data.keys())
-	blocktimes = [data[key]["blocktime"] for key in keys]
-	throughputs = [data[key]["throughput"] for key in keys]
+    # Update the data with new values
+    data[key] = {'block_time': block_time, 'throughput': throughput}
 
-	# Extract number of nodes and block size from keys for labeling
-	node_labels = [key.split(",")[0][1:] for key in keys]
-	blocksize_labels = [key.split(",")[1][:-1] for key in keys]
+    # Write the updated data back to the file
+    with open(output_file, "w") as file:
+        json.dump(data, file, indent=4)
 
-	# Plotting
-	plt.figure(figsize=(10, 6))
-	bar_width = 0.35
-	index = range(len(keys))
-
-	bars1 = plt.bar(index, blocktimes, bar_width, label='Block Time')
-	bars2 = plt.bar([i + bar_width for i in index], throughputs, bar_width, label='Throughput')
-
-	plt.xlabel('Number of Nodes, Block Size')
-	plt.ylabel('Value')
-	plt.title('Block Time and Throughput for Each Node and Block Size combination')
-	plt.xticks([i + bar_width / 2 for i in index], [f"{node_labels[i]}, {blocksize_labels[i]}" for i in range(len(keys))])
-	plt.legend()
-
-	# Function to add labels on bars
-	def add_labels(bars):
-		for bar in bars:
-			height = bar.get_height()
-			plt.annotate('{}'.format(round(height, 2)),
-						xy=(bar.get_x() + bar.get_width() / 2, height),
-						xytext=(0, 3),
-						textcoords="offset points",
-						ha='center', va='bottom')
-
-	add_labels(bars1)
-	add_labels(bars2)
-
-	plt.tight_layout()
-	plt.show()
 
