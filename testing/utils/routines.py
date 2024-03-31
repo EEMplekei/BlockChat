@@ -58,7 +58,9 @@ def set_initial_stake(nodes, stake : int):
 			response = requests.post(address+'/api/set_stake', json={
 				"stake": stake
 			})
-			data = response.json()
+			print(response.elapsed.total_seconds())
+			if(response.status_code != 200):
+				raise requests.exceptions.HTTPError
 			print(f"	{Fore.LIGHTCYAN_EX}Node {Style.BRIGHT}{node}{Style.NORMAL} has set the initial stake{Fore.RESET}")
 		except requests.exceptions.HTTPError:
 			print(f"	{Fore.RED}{Style.BRIGHT}Node {node} has failed to set the initial stake{Fore.RED}{Style.NORMAL}")
