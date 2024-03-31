@@ -46,7 +46,7 @@ def get_nodes_from_config(nodes_count: int):
 #Get for how many nodes to test for
 def get_arguments():
 	try:
-		nodes_count, block_size = int(parse_arguments())
+		nodes_count, block_size = int(parse_arguments()[0]), int(parse_arguments()[1])
 		if nodes_count not in {5, 10}:
 			raise ValueError
 		if block_size not in {5, 10, 20}:
