@@ -141,7 +141,7 @@ class Node:
         return
 
     # Updates the balance for each node given a validated transaction
-    def update_wallet_state(self, transaction: Transaction):         
+    def update_wallet_state(self, transaction: Transaction, validator_address):         
         # If the transaction is related to node, update wallet
         if (transaction.receiver_address == str(self.wallet.address) or 
             transaction.sender_address == self.wallet.address):
@@ -160,12 +160,15 @@ class Node:
             # Update the balance of sender and receiver in the ring.
             self.ring[str(transaction.sender_address)]['balance'] -=  transaction.amount + transaction.amount*FEE_RATE
             self.ring[str(transaction.receiver_address)]['balance'] +=  transaction.amount
+            self.ring[validator_address]['balance'] += transaction.amount*FEE_RATE
         
         elif(transaction.type_of_transaction == TransactionType.MESSAGE):
             print(f"{Fore.LIGHTBLUE_EX}========= NEW MESSAGE 💬 ================={Fore.RESET}")
             print(f"Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> {self.ring[str(transaction.receiver_address)]['id']} {str(transaction.message)} : {len(transaction.message)} characters")
             # Update the balance of sender and receiver in the ring.
             self.ring[str(transaction.sender_address)]['balance'] -=  len(transaction.message)
+            self.ring[validator_address]['balance'] += len(transaction.message)
+            
             
         elif(transaction.type_of_transaction == TransactionType.STAKE):
             print(f"{Fore.LIGHTBLUE_EX}========= STAKING 🎰 ====================={Fore.RESET}")
@@ -263,28 +266,23 @@ class Node:
         fees_sum = 0
         # Update wallet 
         for transaction in block.transactions:
-            self.update_wallet_state(transaction)
-            # Update the balance of the validator in the ring (if it is a normal COINS transaction)
+            self.update_wallet_state(transaction, str(block.validator))
+            
+            # Update the temp_balance of the validator and the fees_sum
             if transaction.type_of_transaction == TransactionType.COINS:
-                self.ring[str(block.validator)]['balance'] += transaction.amount*FEE_RATE
+                self.ring[str(block.validator)]['temp_balance'] += transaction.amount*FEE_RATE
                 fees_sum+=transaction.amount*FEE_RATE
+            elif transaction.type_of_transaction == TransactionType.MESSAGE:
+                self.ring[str(block.validator)]['temp_balance'] += len(transaction.message)
+                fees_sum+=len(transaction.message)
         
         # Update pending_transactions list
-        # If no transactions are in the pending list then temp_balance is the same as the balance
-        # Update the temp_balance of each address that was seen in a transaction in the block
-        # We could do that for each node in the ring every time, but this is in an optimization when we have much more nodes that block size
+        # I think that the following code is not necessary 
+        # because if pending_list is empty then temp_balance should automatically be the same as balance minus corresponding stake
+        # If you agree and want to remove it, keep the " self.update_pending_transactions(block) "
         if(self.update_pending_transactions(block)==0):
-            for transaction in block.transactions:
-                if(transaction.type_of_transaction != TransactionType.STAKE):
-                    # Make the temp_balance of the sender equal to the balance and remove the stake
-                    self.ring[str(transaction.sender_address)]['temp_balance'] = self.ring[str(transaction.sender_address)]['balance'] - self.ring[str(transaction.sender_address)]['stake']
-                    # Make the temp_balance of the receiver equal to the balance 
-                    self.ring[str(transaction.receiver_address)]['temp_balance'] = self.ring[str(transaction.receiver_address)]['balance']  - self.ring[str(transaction.receiver_address)]['stake']
-                else:
-                    # Make the temp_balance of the sender equal to the balance and remove the stake
-                    self.ring[str(transaction.sender_address)]['temp_balance'] = self.ring[str(transaction.sender_address)]['balance'] - self.ring[str(transaction.sender_address)]['stake']
-            # Make the temp_balance of the validator equal to the balance
-            self.ring[str(block.validator)]['temp_balance'] = self.ring[str(block.validator)]['balance'] - self.ring[str(block.validator)]['stake']
+            for address, node_info in self.ring.items():
+                node_info['temp_balance'] = node_info['balance'] - node_info['stake']
         
         # Add transactions to blockchain set
         for t in block.transactions:
