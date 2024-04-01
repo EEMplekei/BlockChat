@@ -167,9 +167,7 @@ def check_unfair_balances(nodes, staked_node, stake: int, unfair_stake: int):
 			else:
 				print(f"	✅ Node {node} temp balance is correct")
 
-def check_chain_length(nodes, block_size):
-	time.sleep(5)
- 
+def check_chain_length(nodes, block_size): 
 	# Check if the number of blocks in blockchain is correct
 	print(f"\n{Fore.GREEN}{Style.BRIGHT}➜ Checking the chain lengths{Fore.RESET}{Style.NORMAL}\n")
 	for _, (node, address) in enumerate(nodes.items()):
