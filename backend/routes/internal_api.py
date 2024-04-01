@@ -45,26 +45,26 @@ async def receive_blockchain(request: Request):
 @internal_api.post("/receive_transaction", tags=["Internal Routes"])
 @check_ring_full(node)
 async def receive_transaction(request: Request):
-    
-    data = await request.body()
-    new_transaction = pickle.loads(data)
+	
+	data = await request.body()
+	new_transaction = pickle.loads(data)
 
-    def add_transaction_thread():
-        if not node.is_transaction_replayed(new_transaction):
-            if node.add_transaction_to_pending(new_transaction):
-                print("New transaction received successfully!")
-                return 'OK'
-            else:
-                print("Transaction could not be added to pending transactions. Maybe the sender does not have enough BCCs")
-                return 'Error adding transaction. Not enough coins!'
-        else:
-            print("Transaction is already seen. Ignoring it.")
-            return 'Error adding transaction. Transaction is already seen!'
+	def add_transaction_thread():
+		if not node.is_transaction_replayed(new_transaction):
+			if node.add_transaction_to_pending(new_transaction):
+				print("New transaction received successfully!")
+				return 'OK'
+			else:
+				print("Transaction could not be added to pending transactions. Maybe the sender does not have enough BCCs")
+				return 'Error adding transaction. Not enough coins!'
+		else:
+			print("Transaction is already seen. Ignoring it.")
+			return 'Error adding transaction. Transaction is already seen!'
 
-    thread = threading.Thread(target=add_transaction_thread)
-    thread.start()
+	thread = threading.Thread(target=add_transaction_thread)
+	thread.start()
 
-    return JSONResponse('Processing transaction in the background.', status_code=status.HTTP_202_ACCEPTED)
+	return JSONResponse('Processing transaction in the background.', status_code=status.HTTP_202_ACCEPTED)
 
 
 # Gets an incoming mined block and adds it to the blockchain.
@@ -83,7 +83,6 @@ async def receive_block(request: Request):
 	await node.incoming_block_lock.acquire()
 	# Check validity of block		
 	if (new_block.validate_block(node.blockchain.chain[-1].hash, node.current_validator[len(node.blockchain.chain)+1])):
-		#node.block_counter += 1
 		print(f"{Fore.LIGHTGREEN_EX}Block was mined by someone else\n✅📦 Adding it to the chain{Fore.RESET}")
 		# Add block to the blockchain
 		node.add_block_to_chain(new_block)
@@ -106,8 +105,11 @@ async def find_validator():
 # Gets the order to release the incoming_block_lock
 @internal_api.post("/release_lock", tags=["Internal Routes"])
 async def release_lock():
-	node.incoming_block_lock.release()
-	print(f"{Fore.YELLOW}release_lock{Fore.RESET}: {Fore.RED}Lock released{Fore.RESET}")
+	if node.incoming_block_lock.locked():
+		node.incoming_block_lock.release()
+		print(f"{Fore.YELLOW}release_lock{Fore.RESET}: {Fore.RED}Lock released{Fore.RESET}")
+	else:
+		print(f"{Fore.YELLOW}release_lock{Fore.RESET}: {Fore.RED}Lock has aleready been released{Fore.RESET}")
 	return {"message": "Lock released"}
 
 # Asks bootstrap node to enter the network, api endpoint accessed by non-bootstrap nodes

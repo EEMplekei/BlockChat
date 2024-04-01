@@ -52,8 +52,6 @@ class Node:
         self.pending_transactions = deque()
         self.current_validator = {}
         self.block_counter = 2
-        self.add_to_pending_lock = threading.Lock()
-        self.processing_block_lock = threading.Lock()
         self.incoming_block_lock = asyncio.Lock()
         self.mint_block_lock = threading.Lock()
         self.nonce = random.randint(0, 10000)
@@ -211,18 +209,14 @@ class Node:
         print(f"🎲 Randomly selected validator for the next Block: {validator[1]}")
 
     async def mint_block(self):
-        print(f"{Fore.YELLOW}mint_block{Fore.RESET}: {Fore.RED}getting processing block lock{Fore.RESET}")
         try:
-            with (self.processing_block_lock):
-                if len(self.pending_transactions) >= BLOCK_SIZE:
-                    # If the current node is the validator, mint a block
-                    print("=========================")
-                    print(self.block_counter,self.ring[str(self.wallet.address)]['id'])
+            if len(self.pending_transactions) >= BLOCK_SIZE:
+                #check if exists len(self.blockchain.chain)+1 in current_validator
+                if len(self.blockchain.chain)+1 in self.current_validator:
                     if self.current_validator[len(self.blockchain.chain)+1] == str(self.wallet.address):
                         print(f"{Fore.YELLOW}mint_block{Fore.RESET}: {Fore.RED}check if incoming block lock is acquired{Fore.RESET}")
                         if not self.incoming_block_lock.locked():
                             self.incoming_block_lock.acquire()
-                            #print(f"{Fore.YELLOW}mint_block{Fore.RESET}: {Fore.RED}got incoming block lock{Fore.RESET}")
                             if self.current_validator[len(self.blockchain.chain)+1] == str(self.wallet.address):
                                 print("🔒 I am the validator")
                                 new_block = self.create_new_block()
@@ -317,7 +311,7 @@ class Node:
     # Unicast a validated block
     def unicast_block(self, node, block):
         request_address = 'http://' + node['ip'] + ':' + node['port']
-        print(f"{Fore.YELLOW}unicast_block{Fore.RESET}: {Fore.RED}sending block {block.hash}to {node['id']}{Fore.RESET}")
+        #print(f"{Fore.YELLOW}unicast_block{Fore.RESET}: {Fore.RED}sending block {block.hash}to {node['id']}{Fore.RESET}")
         request_url = request_address + '/receive_block'
         _ = requests.post(request_url, pickle.dumps(block))
 
