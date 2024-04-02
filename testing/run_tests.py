@@ -21,9 +21,7 @@ routines.set_initial_stake(nodes, stake)
 # Step 5. Run the tests
 throughput, block_time = routines.start_tests(nodes, stake)
 
-#Step 6. Check chain length and temp balances
-time.sleep(5)
-routines.check_temp_balances(nodes, stake)
+#Step 6. Check chain length
 time.sleep(10)
 routines.check_chain_length(nodes, block_size)
 

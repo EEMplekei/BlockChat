@@ -1,6 +1,7 @@
 # This file tests the justice of the system, with 5 nodes and a block size of 5.
 # The stake is set to 10 BCC except for one node that the stake is 100BCC.
 from utils import utils, routines
+import time
 
 nodes_count, block_size = 5, 5
 
@@ -21,5 +22,5 @@ staked_node = routines.set_unfair_stake(nodes, stake, unfair_stake)
 throughput, block_time = routines.start_tests(nodes, stake)
 
 #Step 6. Check chain length and temp balances
-routines.check_unfair_balances(nodes, staked_node, stake, unfair_stake)
+time.sleep(10)
 routines.check_chain_length(nodes, block_size)

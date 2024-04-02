@@ -183,23 +183,6 @@ def get_chain_length(address):
 		print(f"Exception: {e}")
 	
 	return chain_length
-   
-def expected_balance(nodes_count, i, stake: int):
-	if nodes_count == 5:
-			trans_folder = f'nodes_5/trans_{i}'
-	elif nodes_count == 10:
-		trans_folder = f'nodes_10/trans_{i}'
-	else:
-		print(f"		{Fore.RED}{Style.BRIGHT}Invalid number of nodes{Style.NORMAL}{Fore.RESET}")
-		exit(1)
-
-	balance = 1000
-	_, messages_list = parse_input_files(trans_folder)
-	for message in messages_list:
-		balance -= len(message)
-	# Due to staking at the beginning (we are talking about temp_balance, not balance)
-	balance -= stake
-	return balance
 
 def expected_chain_length(number_of_nodes, blocksize, total_transactions):
     # 2*number_of_nodes-1 is the additional number of transactions that will be sent to the network

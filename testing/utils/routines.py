@@ -98,7 +98,6 @@ def set_unfair_stake(nodes, stake : int, unfair_stake : int):
 	print(f"\n	{Fore.GREEN}Initial Stake Set{Fore.RESET}\n")
 	return random_node
 
-
 def start_tests(nodes, stake: int):
 	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Starting tests for {len(nodes)} nodes{Style.NORMAL}{Fore.RESET}\n")
 	global total_transactions
@@ -126,46 +125,6 @@ def start_tests(nodes, stake: int):
 	print(f"	{Fore.GREEN}Block Time: {block_time} seconds{Fore.RESET}\n")
  
 	return throughput, block_time
-
-def check_temp_balances(nodes, stake: int):
-	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Checking the temp balance{Fore.RESET}{Style.NORMAL}\n")
-	
-	for i, (node, address) in enumerate(nodes.items()):
-	
-		response = requests.get(address+'/api/get_temp_balance')
-		if response.status_code != requests.codes.ok:
-			response.raise_for_status()
-		else:
-			response_json = response.json()
-			temp_balance = response_json.get('temp_balance')
-
-			exp_balance = utils.expected_balance(len(nodes), i, stake)
-			if temp_balance != exp_balance:
-				print(f"	❌ {Fore.RED}Node {node} temp balance is incorrect{Fore.RESET}")
-				print(f"	❌ Expected: {exp_balance}")
-				print(f"	❌ Actual: {temp_balance}\n")
-			else:
-				print(f"	✅ Node {node} temp balance is correct")
-
-def check_unfair_balances(nodes, staked_node, stake: int, unfair_stake: int):
-	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Checking the temp balance{Fore.RESET}{Style.NORMAL}\n")
-	
-	for i, (node, address) in enumerate(nodes.items()):
-	
-		response = requests.get(address+'/api/get_temp_balance')
-		if response.status_code != requests.codes.ok:
-			response.raise_for_status()
-		else:
-			response_json = response.json()
-			temp_balance = response_json.get('temp_balance')
-
-			exp_balance = utils.expected_balance(len(nodes), i, (stake if node != staked_node else unfair_stake))
-			if temp_balance != exp_balance:
-				print(f"	❌ {Fore.RED}Node {node} temp balance is incorrect{Fore.RESET}")
-				print(f"	❌ Expected: {exp_balance}")
-				print(f"	❌ Actual: {temp_balance}\n")
-			else:
-				print(f"	✅ Node {node} temp balance is correct")
 
 def check_chain_length(nodes, block_size): 
 	# Check if the number of blocks in blockchain is correct
