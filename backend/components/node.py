@@ -278,13 +278,13 @@ class Node:
                 fees_sum+=len(transaction.message)
         
         # Update pending_transactions list
-        self.update_pending_transactions(block)
         # I think that the following code is not necessary 
         # because if pending_list is empty then temp_balance should automatically be the same as balance minus corresponding stake
-        # If you agree and want to remove it, keep the " self.update_pending_transactions(block) "
-        # if(self.update_pending_transactions(block)==0):
-        #     for _, node_info in self.ring.items():
-        #         node_info['temp_balance'] = node_info['balance'] - node_info['stake']
+        # It is, though, left here to embrace the fact that after all the balance gets updated to what the validator sent us
+        # If someone wants to remove the function update_pending_transactions should still be run
+        if(self.update_pending_transactions(block)==0):
+            for _, node_info in self.ring.items():
+                node_info['temp_balance'] = node_info['balance'] - node_info['stake']
         
         # Add transactions to blockchain set
         for t in block.transactions:
