@@ -127,7 +127,7 @@ class Node:
             self.ring[str(transaction.receiver_address)]['temp_balance'] += transaction.amount
         
         elif (transaction.type_of_transaction == TransactionType.MESSAGE):
-            # Remove the coins from the sender. No fees and no coins are added to the receiver
+            # Remove the coins from the sender. No coins are added to the receiver
             self.ring[str(transaction.sender_address)]['temp_balance'] -= len(transaction.message)        
         
         elif (transaction.type_of_transaction == TransactionType.STAKE):
@@ -157,7 +157,7 @@ class Node:
         elif(transaction.type_of_transaction == TransactionType.COINS):
             print(f"{Fore.LIGHTBLUE_EX}========= NEW TRANSACTION 💵 ============={Fore.RESET}")
             print(f"Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> {self.ring[str(transaction.receiver_address)]['id']} : {transaction.amount} BBCs")
-            # Update the balance of sender and receiver in the ring.
+            # Update the balance of sender and receiver in the ring. Validator gets the fee
             self.ring[str(transaction.sender_address)]['balance'] -=  transaction.amount + transaction.amount*FEE_RATE
             self.ring[str(transaction.receiver_address)]['balance'] +=  transaction.amount
             self.ring[validator_address]['balance'] += transaction.amount*FEE_RATE
@@ -165,7 +165,7 @@ class Node:
         elif(transaction.type_of_transaction == TransactionType.MESSAGE):
             print(f"{Fore.LIGHTBLUE_EX}========= NEW MESSAGE 💬 ================={Fore.RESET}")
             print(f"Transaction added to blockchain: {self.ring[str(transaction.sender_address)]['id']} -> {self.ring[str(transaction.receiver_address)]['id']} {str(transaction.message)} : {len(transaction.message)} characters")
-            # Update the balance of sender and receiver in the ring.
+            # Update the balance of sender and receiver in the ring. Validator gets the message cost
             self.ring[str(transaction.sender_address)]['balance'] -=  len(transaction.message)
             self.ring[validator_address]['balance'] += len(transaction.message)
             
@@ -263,8 +263,9 @@ class Node:
     def add_block_to_chain(self, block: Block):
         # Add block to original chain
         self.blockchain.chain.append(block)
+        
+        # Update wallet
         fees_sum = 0
-        # Update wallet 
         for transaction in block.transactions:
             self.update_wallet_state(transaction, str(block.validator))
             
@@ -277,25 +278,26 @@ class Node:
                 fees_sum+=len(transaction.message)
         
         # Update pending_transactions list
+        self.update_pending_transactions(block)
         # I think that the following code is not necessary 
         # because if pending_list is empty then temp_balance should automatically be the same as balance minus corresponding stake
         # If you agree and want to remove it, keep the " self.update_pending_transactions(block) "
-        if(self.update_pending_transactions(block)==0):
-            for address, node_info in self.ring.items():
-                node_info['temp_balance'] = node_info['balance'] - node_info['stake']
+        # if(self.update_pending_transactions(block)==0):
+        #     for _, node_info in self.ring.items():
+        #         node_info['temp_balance'] = node_info['balance'] - node_info['stake']
         
         # Add transactions to blockchain set
         for t in block.transactions:
             self.blockchain.transactions_hashes.add(t.transaction_id)
-        # Output the validator of this block and the total FEES he earned
-        print(f"🏆 Block mined by {self.ring[str(block.validator)]['id']} and earned a total of {fees_sum} BBCs as fee")
-        print("🔗 BLOCKCHAIN 🔗")
-        print([block.hash[:7] for block in self.blockchain.chain])
 
+        # Output the validator of this block and the total FEES he earned
+        print(f"🏆 Block mined by {self.ring[str(block.validator)]['id']} and earned a total of {fees_sum} BBCs as fee\n 🔗 BLOCKCHAIN 🔗")
+        print([block.hash[:7] for block in self.blockchain.chain])
         print("Blockchain length: ", len(self.blockchain.chain))
 
         # Select a new validator for the next block
         self.find_next_validator()
+        
         # After you have selected a validator, set the stake of each node in the ring equal to 0
         # This should be left commented out because we want the stake to be the same for the next block
         # self.refresh_stake()
