@@ -315,12 +315,6 @@ class Node:
         request_url = request_address + '/receive_block'
         _ = requests.post(request_url, pickle.dumps(block))
 
-    # Unicast release of the lock
-    def unicast_release_lock(self, node):
-        request_address = 'http://' + node['ip'] + ':' + node['port']
-        request_url = request_address + '/release_lock'
-        _ = requests.post(request_url, data=None)
-
     # Define a function for releasing lock
     def release_lock(self, node):
         request_address = 'http://' + node['ip'] + ':' + node['port']
