@@ -110,8 +110,13 @@ def start_tests(nodes, stake: int, block_size: int):
 	run_time, successful_transactions = utils.start_threads(nodes, receiver_id_lists, messages_lists)
 	
 	# When the expected length of the chain is achieved, get the time of that happening
-	while check_chain_length(nodes, block_size) == False:
+ 
+	expected_chain_length = utils.expected_chain_length(len(nodes), block_size, total_transactions)
+	chain_length = utils.get_chain_length(list(nodes.values())[0])
+	while chain_length != expected_chain_length:
 		time.sleep(0.1)
+		expected_chain_length = utils.expected_chain_length(len(nodes), block_size, total_transactions)
+		chain_length = utils.get_chain_length(list(nodes.values())[0])
 	
 	time_end = time.time()
 
@@ -148,7 +153,6 @@ def check_chain_length(nodes, block_size):
 		response = requests.get(address+'/api/get_chain_length')
 		if response.status_code != requests.codes.ok:
 			response.raise_for_status()
-			return False
 		else:
 			response_json = response.json()
 			chain_length = response_json.get('chain_length')
@@ -158,11 +162,8 @@ def check_chain_length(nodes, block_size):
 				print(f"	❌ {Fore.RED}Node {node} chain length is incorrect{Fore.RESET}")
 				print(f"	❌ Expected: {expected_chain_length}")
 				print(f"	❌ Actual: {chain_length}\n")
-
-				return False
 			else:
 				print(f"	✅ Node {node} chain length is correct")
-				return True
 
 # Write the blocktime and throughtput with keys the pair (number of nodes,blocksize) to the output file as json format to be used by a script to make graph
 def write_file(nodes, block_size, throughput, block_time):
