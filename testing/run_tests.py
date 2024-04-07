@@ -19,7 +19,7 @@ stake  = 10
 routines.set_initial_stake(nodes, stake)
 
 # Step 5. Run the tests
-throughput, block_time = routines.start_tests(nodes, stake)
+throughput, block_time = routines.start_tests(nodes, stake, block_size)
 
 #Step 6. Check chain length
 time.sleep(10)

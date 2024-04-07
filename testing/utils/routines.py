@@ -98,15 +98,25 @@ def set_unfair_stake(nodes, stake : int, unfair_stake : int):
 	print(f"\n	{Fore.GREEN}Initial Stake Set{Fore.RESET}\n")
 	return random_node
 
-def start_tests(nodes, stake: int):
+def start_tests(nodes, stake: int, block_size: int):
 	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Starting tests for {len(nodes)} nodes{Style.NORMAL}{Fore.RESET}\n")
 	global total_transactions
 	#Parse all the input files
 	receiver_id_lists, messages_lists, total_transactions = utils.parse_all_input_files(len(nodes))
 
+	time_start = time.time()
+
 	# Create and start threads after parsing input files
 	run_time, successful_transactions = utils.start_threads(nodes, receiver_id_lists, messages_lists)
 	
+	# When the expected length of the chain is achieved, get the time of that happening
+	while check_chain_length(nodes, block_size) == False:
+		time.sleep(0.1)
+	
+	time_end = time.time()
+
+	digestion_time = time_end - time_start
+
 	# Collect throughput and block time and write to output files
 	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Collecting the throughput and block time{Fore.RESET}{Style.NORMAL}\n")
 	
@@ -117,14 +127,19 @@ def start_tests(nodes, stake: int):
 	throughput = total_transactions / run_time
 	block_time = run_time / (chain_length - 1)
 
+	digestion_throughput = total_transactions / digestion_time
+	block_digestion_time = digestion_time / (chain_length - 1)
+
 	# Output results
 	print(f"	Total Transactions: {total_transactions}")
 	print(f"	Successful Transactions: {successful_transactions}")
 	print(f"	{Fore.GREEN}Throughput: {throughput} transactions per second{Fore.RESET}")
 	print(f"	Chain Length: {chain_length}")
 	print(f"	{Fore.GREEN}Block Time: {block_time} seconds{Fore.RESET}\n")
+	print(f"	{Fore.GREEN}Digestion Throughput: {digestion_throughput} transactions per second{Fore.RESET}")
+	print(f"	{Fore.GREEN}Digestion Block Time: {block_digestion_time} seconds{Fore.RESET}\n")
  
-	return throughput, block_time
+	return throughput, block_time, digestion_throughput, block_digestion_time
 
 def check_chain_length(nodes, block_size): 
 	# Check if the number of blocks in blockchain is correct
@@ -133,6 +148,7 @@ def check_chain_length(nodes, block_size):
 		response = requests.get(address+'/api/get_chain_length')
 		if response.status_code != requests.codes.ok:
 			response.raise_for_status()
+			return False
 		else:
 			response_json = response.json()
 			chain_length = response_json.get('chain_length')
@@ -142,8 +158,11 @@ def check_chain_length(nodes, block_size):
 				print(f"	❌ {Fore.RED}Node {node} chain length is incorrect{Fore.RESET}")
 				print(f"	❌ Expected: {expected_chain_length}")
 				print(f"	❌ Actual: {chain_length}\n")
+
+				return False
 			else:
 				print(f"	✅ Node {node} chain length is correct")
+				return True
 
 # Write the blocktime and throughtput with keys the pair (number of nodes,blocksize) to the output file as json format to be used by a script to make graph
 def write_file(nodes, block_size, throughput, block_time):
@@ -164,5 +183,3 @@ def write_file(nodes, block_size, throughput, block_time):
     # Write the updated data back to the file
     with open(output_file, "w") as file:
         json.dump(data, file, indent=4)
-
-
