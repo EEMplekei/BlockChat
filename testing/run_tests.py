@@ -25,5 +25,12 @@ throughput, block_time, digestion_throughput, digestion_block_time = routines.st
 time.sleep(10)
 routines.check_chain_length(nodes, block_size)
 
-# Step 7. Write the block_time and throughput with keys the pair (number of nodes, blocksize) to the output file as json format to be used by a script to make graph
-routines.write_file(len(nodes), block_size, throughput, block_time)
+# Step 7. Write the digestion block_time and throughput with keys the pair (number of nodes, blocksize) to the output file as json format to be used by a script to make graph
+routines.write_file(len(nodes), block_size, throughput, digestion_block_time)
+
+# Note!
+# The block digestion time is effectively the average time required
+# for a block to be processed by the network and added to the chain.
+# In the same way, the transaction digestion throughput is the average
+# number of transactions that can be processed by the network in second
+# (that is added to the blockchain  and not just added to the pending list)
