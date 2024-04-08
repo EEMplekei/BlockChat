@@ -110,7 +110,7 @@ class Node:
         if len(self.pending_transactions) >= BLOCK_SIZE:
             # Create a thread to call the async function
             mint_thread = threading.Thread(target=self.async_function_wrapper)
-            mint_thread.start()            #output mint_block_lock status
+            mint_thread.start()        
             mint_thread.join()
         return
 
@@ -217,14 +217,12 @@ class Node:
                 #check if exists len(self.blockchain.chain)+1 in current_validator
                 if len(self.blockchain.chain)+1 in self.current_validator:
                     if self.current_validator[len(self.blockchain.chain)+1] == str(self.wallet.address):
-                        print(f"{Fore.YELLOW}mint_block{Fore.RESET}: {Fore.RED}check if incoming block lock is acquired{Fore.RESET}")
                         if not self.incoming_block_lock.locked():
                             self.incoming_block_lock.acquire()
                             if self.current_validator[len(self.blockchain.chain)+1] == str(self.wallet.address):
                                 print("🔒 I am the validator")
                                 new_block = self.create_new_block()
                                 # Add transactions to the new block
-                                print(f"{Fore.YELLOW}mint_block{Fore.RESET}: {Fore.RED}popping transactions and adding to block{Fore.RESET}")
                                 for _ in range(BLOCK_SIZE):
                                     new_block.transactions.append(self.pending_transactions.pop())
                                 # Calculate hash
@@ -232,20 +230,16 @@ class Node:
                                 # Add block to blockchain
                                 self.add_block_to_chain(new_block)
                                 # Broadcast block to the network
-                                print(f"{Fore.YELLOW}mint_block{Fore.RESET}: {Fore.RED}broadcasting block{Fore.RESET}")
                                 self.broadcast_block(new_block)
                                 # Release the lock
                                 if self.incoming_block_lock.locked():
                                     self.incoming_block_lock.release()
-                                print(f"{Fore.YELLOW}mint_block{Fore.RESET}: {Fore.RED}released incoming block lock{Fore.RESET}")
                             else:
                                 # Release the lock
                                 self.incoming_block_lock.release()
-
         finally:
             if self.mint_block_lock.locked():
                 self.mint_block_lock.release()
-                print(f"{Fore.YELLOW}mint_block{Fore.RESET}: {Fore.RED}released mint block lock{Fore.RESET}")
         return
 
     # Repeatedly call check_and_mint_block every 'interval' seconds
@@ -278,10 +272,6 @@ class Node:
                 fees_sum+=len(transaction.message)
         
         # Update pending_transactions list
-        # I think that the following code is not necessary 
-        # because if pending_list is empty then temp_balance should automatically be the same as balance minus corresponding stake
-        # It is, though, left here to embrace the fact that after all the balance gets updated to what the validator sent us
-        # If someone wants to remove the function update_pending_transactions should still be run
         if(self.update_pending_transactions(block)==0):
             for _, node_info in self.ring.items():
                 node_info['temp_balance'] = node_info['balance'] - node_info['stake']
@@ -298,10 +288,7 @@ class Node:
         # Select a new validator for the next block
         self.find_next_validator()
         
-        # After you have selected a validator, set the stake of each node in the ring equal to 0
-        # This should be left commented out because we want the stake to be the same for the next block
-        # self.refresh_stake()
-
+    
     # Refresh the stake of each node
     def refresh_stake(self):
         for node in self.ring.values():
@@ -311,7 +298,6 @@ class Node:
     # Unicast a validated block
     def unicast_block(self, node, block):
         request_address = 'http://' + node['ip'] + ':' + node['port']
-        #print(f"{Fore.YELLOW}unicast_block{Fore.RESET}: {Fore.RED}sending block {block.hash}to {node['id']}{Fore.RESET}")
         request_url = request_address + '/receive_block'
         _ = requests.post(request_url, pickle.dumps(block))
 

@@ -76,10 +76,10 @@ async def receive_block(request: Request):
 	data = await request.body()
 	new_block = pickle.loads(data)
 
-	print(f"{Fore.GREEN}NEWS{Fore.RESET}: Got new block, now lets validate it!")
+	print(f"{Fore.LIGHTGREEN_EX}NEWS{Fore.RESET}: Got new block, now lets validate it!")
 
 	# Wait until incoming block has finished processing
-	print(f"{Fore.YELLOW}receive_block{Fore.RESET}: {Fore.RED}Waiting for processing block lock{Fore.RESET}")
+	print(f"{Fore.YELLOW}receive_block{Fore.RESET}: {Fore.LIGHTGREEN_EX}Waiting for processing block lock{Fore.RESET}")
 	await node.incoming_block_lock.acquire()
 	# Check validity of block		
 	if (new_block.validate_block(node.blockchain.chain[-1].hash, node.current_validator[len(node.blockchain.chain)+1])):
@@ -107,9 +107,9 @@ async def find_validator():
 async def release_lock():
 	if node.incoming_block_lock.locked():
 		node.incoming_block_lock.release()
-		print(f"{Fore.YELLOW}release_lock{Fore.RESET}: {Fore.RED}Lock released{Fore.RESET}")
+		print(f"{Fore.YELLOW}release_lock{Fore.RESET}: {Fore.LIGHTGREEN_EX}Lock released{Fore.RESET}")
 	else:
-		print(f"{Fore.YELLOW}release_lock{Fore.RESET}: {Fore.RED}Lock has aleready been released{Fore.RESET}")
+		print(f"{Fore.YELLOW}release_lock{Fore.RESET}: {Fore.LIGHTGREEN_EX}Lock has already been released{Fore.RESET}")
 	return {"message": "Lock released"}
 
 # Asks bootstrap node to enter the network, api endpoint accessed by non-bootstrap nodes
@@ -119,7 +119,7 @@ async def join_request(request: Request):
 	if not node.is_bootstrap:
 		return JSONResponse('Cannot post to join_request to a non-bootstrap node', status_code=status.HTTP_400_BAD_REQUEST)
 
-	  # Deserialize the data received in the request body using pickle.loads()
+	# Deserialize the data received in the request body using pickle.loads()
 	data = await request.body()
 	node_data = pickle.loads(data)
 

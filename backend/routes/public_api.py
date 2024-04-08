@@ -64,7 +64,6 @@ async def create_transaction(request: Request, transaction: CreateTransaction):
 				receiver_address = key
 
 		# Get the validator address
-		#validator_address = node.current_validator[node.block_counter]
 		if receiver_address != None:
 			try:
 				# Create transaction function also signs it and validates it inside
@@ -74,11 +73,8 @@ async def create_transaction(request: Request, transaction: CreateTransaction):
 				if not node.add_transaction_to_pending(transaction):
 					return JSONResponse('Transaction is not valid', status_code=status.HTTP_400_BAD_REQUEST)
 				# Broadcast transaction	
-				# print(f"{Fore.GREEN}I will broadcast it{Fore.RESET}")
 				thread = threading.Thread(target=node.broadcast_transaction, args=(transaction,))
 				thread.start()			
-				#node.broadcast_transaction(transaction)
-				# print(f"{Fore.GREEN}I broadcasted it{Fore.RESET}")
 				
 				return JSONResponse('Successful Transaction!', status_code=status.HTTP_200_OK)
 			except Exception as e:
