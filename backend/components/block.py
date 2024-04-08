@@ -61,12 +61,14 @@ class Block:
 
 	# Get total amount of fees from a block 
 	def get_total_fees(self): 
-		# Initialize total_fees 
-		total_fees = 0 
-		for transaction in self.transactions: 
-			if transaction.type_of_transaction == TransactionType.COINS: 
-				total_fees += (transaction.amount)*FEE_RATE 
 		
+		total_fees = 0
+		for transaction in self.transactions:
+			if transaction.type_of_transaction == TransactionType.COINS: 
+				total_fees += (transaction.amount)*FEE_RATE
+			elif transaction.type_of_transaction == TransactionType.MESSAGE: 
+				total_fees += len(transaction.message)
+
 		return total_fees
 
 	#Get the transactions from a block

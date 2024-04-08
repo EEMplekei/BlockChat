@@ -26,7 +26,6 @@ echo "Changing .env on remote and syncing nodes"
 ssh -t ubuntu@snf-43775.ok-kno.grnetcloud.net ./set_env.sh $total_nodes $block_size;
 ssh -t ubuntu@snf-43775.ok-kno.grnetcloud.net /bin/bash -ic 'sync_nodes;' >> /dev/null 2>&1
 
-echo "Opening terminals for the servers"
 for s in $LIST
 do
     title=$(echo -n "${s}" | sed 's/^\(.\)/\U\1/')
@@ -37,7 +36,7 @@ do
         sleep=$((sleep+1))
     fi
 done
-
+sleep=$((sleep+2))
 #Add 5 more nodes in nodes=10
 if [ "$total_nodes" = "10" ]; then
     for s in $LIST
@@ -45,6 +44,7 @@ if [ "$total_nodes" = "10" ]; then
         title=$(echo -n "${s}" | sed 's/^\(.\)/\U\1/')
         if [ "$s" = "$(echo $LIST | cut -d' ' -f1)" ]; then
             args="${args} --tab --title=\"$title\" --command=\"${cmdssh} -t ubuntu@${s}.ok-kno.grnetcloud.net 'sleep $sleep; python3 ~/BlockChat/backend/api.py -i eth2 -p 8001; bash'\""
+            sleep=$((sleep+1))
         else
             args="${args} --tab --title=\"$title\" --command=\"${cmdssh} -t ubuntu@${s}.ok-kno.grnetcloud.net 'sleep $sleep; python3 ~/BlockChat/backend/api.py -i eth1 -p 8001; bash'\""
             sleep=$((sleep+1))
