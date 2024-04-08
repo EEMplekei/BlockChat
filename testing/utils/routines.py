@@ -130,8 +130,6 @@ def start_tests(nodes, stake: int, block_size: int):
 
 	chain_length = utils.get_chain_length(list(nodes.values())[0])
 	throughput = total_transactions / run_time
-	block_time = run_time / (chain_length - 1)
-
 	digestion_throughput = total_transactions / digestion_time
 	block_digestion_time = digestion_time / (chain_length - 1)
 
@@ -140,11 +138,10 @@ def start_tests(nodes, stake: int, block_size: int):
 	print(f"	Successful Transactions: {successful_transactions}")
 	print(f"	{Fore.GREEN}Throughput: {throughput} transactions per second{Fore.RESET}")
 	print(f"	Chain Length: {chain_length}")
-	print(f"	{Fore.GREEN}Block Time: {block_time} seconds{Fore.RESET}\n")
 	print(f"	{Fore.GREEN}Digestion Throughput: {digestion_throughput} transactions per second{Fore.RESET}")
 	print(f"	{Fore.GREEN}Digestion Block Time: {block_digestion_time} seconds{Fore.RESET}\n")
  
-	return throughput, block_time, digestion_throughput, block_digestion_time
+	return throughput, digestion_throughput, block_digestion_time
 
 def check_chain_length(nodes, block_size): 
 	# Check if the number of blocks in blockchain is correct
