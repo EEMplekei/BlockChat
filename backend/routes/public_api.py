@@ -147,7 +147,7 @@ def get_balance():
 	try:
 		balance = node.ring[str(node.wallet.address)]['balance'] # Alternative
 	except Exception as e:
-		print(f"{Fore.RED}Error get_balance: {e}{Fore.RESET}")
+		print(f"{Fore.YELLOW}get_balance{Fore.RESET}: {Fore.RED}Error: {e}{Fore.RESET}")
 		return JSONResponse('Could not get balance', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 	return JSONResponse({'balance': balance}, status_code=status.HTTP_200_OK)

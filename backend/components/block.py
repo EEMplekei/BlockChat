@@ -120,7 +120,6 @@ class Block:
 		transactions = []
 
 		for transaction in self.transactions:
-			#print(transaction.sender_address, transaction.receiver_address, transaction.amount, transaction.type_of_transaction)
 			if transaction.sender_address == '0':
 				transactions.append({
 					"type": "Genesis",

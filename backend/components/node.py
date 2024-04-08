@@ -328,8 +328,6 @@ class Node:
         # Wait for all threads to finish
         for t in release_threads:
             t.join()
-        
-        print("Incoming Block Lock released!")
     
     ##### Transaction #####
     def create_transaction(self, receiver_address, type_of_transaction: TransactionType, payload):

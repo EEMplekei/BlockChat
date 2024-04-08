@@ -79,7 +79,6 @@ async def receive_block(request: Request):
 	print(f"{Fore.LIGHTGREEN_EX}NEWS{Fore.RESET}: Got new block, now lets validate it!")
 
 	# Wait until incoming block has finished processing
-	print(f"{Fore.YELLOW}receive_block{Fore.RESET}: {Fore.LIGHTGREEN_EX}Waiting for processing block lock{Fore.RESET}")
 	await node.incoming_block_lock.acquire()
 	# Check validity of block		
 	if (new_block.validate_block(node.blockchain.chain[-1].hash, node.current_validator[len(node.blockchain.chain)+1])):
