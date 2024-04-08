@@ -288,6 +288,9 @@ class Node:
         # Select a new validator for the next block
         self.find_next_validator()
         
+        # After you have selected a validator, set the stake of each node in the ring equal to 0
+        # This should be left commented out because we want the stake to be the same for the next block
+        # self.refresh_stake()
     
     # Refresh the stake of each node
     def refresh_stake(self):
