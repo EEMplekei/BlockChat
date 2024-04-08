@@ -4,6 +4,62 @@ A blockchain from scratch built for the purposes of the course Distributed Syste
 <br/>
 <img src="https://cdn-icons-png.flaticon.com/512/2152/2152539.png" alt="blocks" height="250"/>
 
+## Exploring the Repo 🔍
+
+``` bash
+BlockChat
+├── nodes_config.json               # Addresses of all nodes
+├── README.md                    
+├── requirements.txt                # Python pip requirements
+├── backend                         # Folder containing backend node code
+│   ├── api.py                      # API Code for one node
+│   ├── .env                        # Env variables of blockchain
+│   ├── README.md
+│   ├── components                  
+│   │   ├── blockchain.py           # Blockchain class along with some methods 
+│   │   ├── block.py                # Block class along with some methods 
+│   │   ├── node.py                 # Node class along the major methods of the system
+│   │   ├── proof_of_stake.py       # POS class along with some methods 
+│   │   ├── transaction.py          # Transaction class along with some methods 
+│   │   └── wallet.py               # Wallet class along with some methods 
+│   ├── routes
+│   │   ├── internal_api.py         # All endpoints made to be called from other nodes in the system
+│   │   └── public_api.py           # All endpoints made to be called from an external client
+│   └── utils                       # Utils folder containing functions used in API
+│       ├── env_variables.py        
+│       ├── middleware.py           
+│       ├── network.py              
+│       └── wrappers.py
+├── client
+│   ├── client.py                   # Main client file that implements the client features
+│   ├── README.md           
+│   └── utils                       # Utils folder containing functions used in client.py
+│       ├── drawers.py
+│       ├── handlers.py
+│       └── utils.py
+├── deploy                          # Deploy scripts for both GNOME terminal and MAC terminal
+│   ├── execute_okeanos_gnome.sh
+│   └── mac_run_all.sh
+├── testing                         # Testing folder (only used for benchmarking)
+│   ├── output.txt                  # In this file we write the benchmarking after each test
+│   ├── run_tests.py                # Script that runs the tests with equal staking (all 10)
+│   ├── unfair_test.py              # Script that runs the tests with unfair staking (all 10 except one --> 100)
+│   ├── draw_graphs.py              # Reads output.txt and generates graphs
+│   ├── helper_functions            # Folder containing functions used in testing
+│   │   ├── draw_graph.py
+│   │   └── write_file.py
+│   ├── test_inputs                 # Folder containing dummy messages for the tests to run
+│   │   ├── nodes_10                # Dummy messages for 10 node deployment
+│   │   │   ├── ...
+│   │   └── nodes_5                 # Dummy messages for 5 node deployment
+│   │       ├── ...
+│   └── utils                       # Utils folder containing functions and routines used in tests
+│       ├── routines.py
+│       └── utils.py
+└── VPP                             # Detailed documentation with UML
+    └── BlockChat.vpp
+```
+
 ## Installation 🖥️
 The deployment process (for Linux-Debian) is described below:
 
@@ -16,39 +72,42 @@ git clone git@github.com:EEMplekei/BlockChat.git
 ```bash
 sudo apt install python3
 sudo apt install pip3
-cd BlockChat/api
+cd BlockChat
 pip3 install -r requirements.txt
 ```
 
 #### Run the [API](./backend/README.md) (you have to do this in every node of the blockchain)
 
-<img src="https://static1.smartbear.co/swagger/media/assets/images/swagger_logo.svg" alt="blocks" height="80"/>
+##### Deploy the nodes
+
+For OKEANOS Deployment do the following:
+
+```bash
+cd BlockChat/deploy
+
+# For GNOME Terminal
+bash execute_okeanos_gnome.sh 5 10 # for 5 node deployment with block size 10
+
+# For Mac Teminal
+bash mac_run_all.sh 5 10 # for 5 node deployment with block size 10
+```
 
 Detailed API documentation is implemented in OpenAPI 3.0 specifications and you can view the routes and calls in Swagger 
 
-###### [API DOCUMENTATION SWAGGER HERE](https://app.swaggerhub.com/apis-docs/EEMplekei/BlockChatAPI/0.1.0)
+[API DOCUMENTATION SWAGGER HERE](https://app.swaggerhub.com/apis-docs/EEMplekei/BlockChatAPI/0.1.0)
 
 
 
+#### Run the [CLI](./client/README.md) (in order create and see transactions among other things)
 ```bash
-cd BlockChat/api
-python3 api --i eth --port p
+cd BlockChat
+python3 client.py --node node0
 ```
-> [!IMPORTANT]  
-> eth: Interface on which the node is running
-> p: Port on which the node is running
 
-##### Run the [CLI](./client/README.md) (in order create and see transactions among other things)
-```bash
-cd BlockChat/client
-python3 client.py --node n
-```
-> [!IMPORTANT]  
-> n: The node on which you want to connect to
 
 For other operating systems different than Linux-Debian you will have to fill in the gaps 
 
-## High Level Software Description 🔍
+## High Level Software Description 
 
 #### Genesis Block
 The Genesis block is the first block of the blockchain and  it is the only block that does not get validated. The genesis block has only 1 transaction that is (TOTAL_NODES*1000) Coins to Bootstrap Node.
@@ -73,20 +132,18 @@ Text should be added here
 ## Testing 🔬
 To run the given transactions from the txt files [here](./testing/). Do the following:
 
+
+#### Fair Testing
+
 ```bash
 cd BlockChat/testing
-python3 run_tests.py -t test
+python3 run_tests.py -n 5 -b 10     # for testing 5 nodes with block_size 10  
 ```
-> [!IMPORTANT]  
-> test: Test to be run. (eg 0 --> trans0.txt)
 
-- `trans0.txt` : Transactions that are made from node0
-- `trans1.txt` : Transactions that are made from node1
-- `trans2.txt` : Transactions that are made from node2
-- `trans3.txt` : Transactions that are made from node3
-- `trans4.txt` : Transactions that are made from node4
-- `trans5.txt` : Transactions that are made from node5
-- `trans6.txt` : Transactions that are made from node6
-- `trans7.txt` : Transactions that are made from node7
-- `trans8.txt` : Transactions that are made from node8
-- `trans9.txt` : Transactions that are made from node9
+#### Unfair Testing
+
+```bash
+cd BlockChat/testing
+python3 unfair_test.py    # automatically runs only for 5 nodes with block_size 5 (from project requirements)
+```
+
