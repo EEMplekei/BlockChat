@@ -1,8 +1,0 @@
-fastapi
-uvicorn
-pycryptodome
-requests
-python-dotenv
-python-multipart
-inquirer
-texttable
