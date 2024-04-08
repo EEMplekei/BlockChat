@@ -166,7 +166,7 @@ def check_chain_length(nodes, block_size):
 				print(f"	✅ Node {node} chain length is correct")
 
 #check temp_balance of a node
-def check_temp_balance(nodes, stake : int):
+def check_temp_balance(nodes):
 	print(f"\n{Fore.GREEN}{Style.BRIGHT}➜ Checking the temp_balance of the nodes{Fore.RESET}{Style.NORMAL}\n")
 	for node, address in nodes.items():
 		response = requests.get(address+'/api/get_temp_balance')
@@ -175,7 +175,7 @@ def check_temp_balance(nodes, stake : int):
 		else:
 			response_json = response.json()
 			temp_balance = response_json.get('temp_balance')
-				print(f"Node {node} temporary balance is {temp_balance}")
+			print(f"	Node {node} temporary balance is {temp_balance}")
 
 # Write the blocktime and throughtput with keys the pair (number of nodes,blocksize) to the output file as json format to be used by a script to make graph
 def write_file(nodes, block_size, throughput, block_time):

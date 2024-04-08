@@ -19,12 +19,11 @@ stake, unfair_stake = 10, 100
 staked_node = routines.set_unfair_stake(nodes, stake, unfair_stake)
 
 # Step 5. Run the tests
-throughput, block_time = routines.start_tests(nodes, stake)
+throughput, block_time, digestive_throughput, digestion_block = routines.start_tests(nodes, stake, block_size)
 
 #Step 6. Check chain length and temp balances
 time.sleep(10)
 routines.check_chain_length(nodes, block_size)
 
 # Step 7. Check the temp balances of the nodes
-routines.check_temp_balances(nodes, stake, unfair_stake, staked_node)
-
+routines.check_temp_balance(nodes)
