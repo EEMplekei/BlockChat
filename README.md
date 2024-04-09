@@ -45,9 +45,6 @@ BlockChat
 │   ├── run_tests.py                # Script that runs the tests with equal staking (all 10)
 │   ├── unfair_test.py              # Script that runs the tests with unfair staking (all 10 except one --> 100)
 │   ├── draw_graphs.py              # Reads output.txt and generates graphs
-│   ├── helper_functions            # Folder containing functions used in testing
-│   │   ├── draw_graph.py
-│   │   └── write_file.py
 │   ├── test_inputs                 # Folder containing dummy messages for the tests to run
 │   │   ├── nodes_10                # Dummy messages for 10 node deployment
 │   │   │   ├── ...
