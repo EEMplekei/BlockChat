@@ -7,7 +7,7 @@ with open("output.txt", "r") as file:
 	data = json.load(file)
 
 def performance_scaling(data):
-	keys = [key for key in list(data.keys())[::-1] if key.startswith('(5')]
+	keys = [key for key in list(data.keys()) if key.startswith('(5')]
 
 	#Throughput and Block Time for 5,10, 20 block size (5 nodes)
 	throughputs = [data[key]["throughput"] for key in keys if key.startswith('(5')]
@@ -44,7 +44,7 @@ def performance_scaling(data):
 	def add_labels(ax, bars, unit):
 		for bar in bars:
 			height = bar.get_height()
-			ax.annotate(f"{round(height, 2)} {unit}",
+			ax.annotate(f"{round(height, 3)} {unit}",
 						xy=(bar.get_x() + bar.get_width() / 2, height),
 						xytext=(0, 3),
 						textcoords="offset points",
@@ -58,8 +58,8 @@ def performance_scaling(data):
 
 def node_scaling(data):
 	# Extracting keys for 5 and 10 nodes
-	keys_5_nodes = [key for key in data.keys() if key.startswith('(5')][::-1]
-	keys_10_nodes = [key for key in data.keys() if key.startswith('(10')][::-1]
+	keys_5_nodes = [key for key in data.keys() if key.startswith('(5')]
+	keys_10_nodes = [key for key in data.keys() if key.startswith('(10')]
 
 	# Throughput for different block sizes for 5 and 10 nodes
 	throughputs_5_nodes = [data[key]["throughput"] for key in keys_5_nodes]
@@ -103,5 +103,5 @@ def node_scaling(data):
 	plt.tight_layout()
 	plt.show()
 
-# performance_scaling(data)
+performance_scaling(data)
 node_scaling(data)
