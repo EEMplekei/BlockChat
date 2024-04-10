@@ -176,7 +176,7 @@ class Transaction:
 			return False
 		
 		if(transaction_cost > sender_balance):
-			print(f"{Fore.YELLOW}validate_transaction{Fore.RESET}: {Fore.RED}Transaction not validated, not enough coins{Fore.RESET}")
+			print(f"{Fore.YELLOW}validate_transaction{Fore.RESET}: {Fore.YELLOW}Transaction not validated, not enough coins{Fore.RESET}")
 			return False
 				
 		return True
