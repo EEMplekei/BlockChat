@@ -3,7 +3,6 @@ from sys import platform
 from time import sleep
 from utils import utils
 import json
-import matplotlib.pyplot as plt
 import time
 import random
 import requests
