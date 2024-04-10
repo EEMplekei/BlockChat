@@ -23,8 +23,8 @@ def performance_scaling(data):
 	bar_width = 0.35
 	index = range(len(keys))
 
-	bars1 = ax1.bar(index, throughputs, bar_width, label='Throughput', color='c')
-	bars2 = ax2.bar(index, block_times, bar_width, label='Block Time', color='y')
+	bars1 = ax1.bar(index, throughputs, bar_width, label='Throughput')
+	bars2 = ax2.bar(index, block_times, bar_width, label='Block Time', color='#ff7f0f')
 
 	ax1.set_xlabel('Block Size')
 	ax1.set_ylabel('Throughput (trans/sec)')

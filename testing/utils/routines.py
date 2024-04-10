@@ -112,11 +112,14 @@ def start_tests(nodes, stake: int, block_size: int):
 	
 	# When the expected length of the chain is achieved, get the time of that happening
  
-	expected_chain_length = utils.expected_chain_length(len(nodes), block_size, successful_transactions)
+	expected_chain_length = utils.expected_chain_length(len(nodes), block_size)
 	chain_length = utils.get_chain_length(list(nodes.values())[0])
+	i = 0
 	while chain_length != expected_chain_length:
 		time.sleep(0.1)
-		chain_length = utils.get_chain_length(list(nodes.values())[0])
+		chain_length = utils.get_chain_length(list(nodes.values())[i])
+		i = (i + 1) % len(nodes)
+
 	
 	time_end = time.time()
 
@@ -154,7 +157,7 @@ def check_chain_length(nodes, block_size):
 			response_json = response.json()
 			chain_length = response_json.get('chain_length')
    
-			expected_chain_length = utils.expected_chain_length(len(nodes), block_size, SUCCESSFUL_TRANSACTIONS)			
+			expected_chain_length = utils.expected_chain_length(len(nodes), block_size)			
 			if chain_length != expected_chain_length:
 				print(f"	❌ {Fore.RED}Node {node} chain length is incorrect{Fore.RESET}")
 				print(f"	❌ Expected: {expected_chain_length}")
