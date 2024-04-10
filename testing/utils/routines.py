@@ -111,15 +111,15 @@ def start_tests(nodes, stake: int, block_size: int):
 	
 	# When the expected length of the chain is achieved, get the time of that happening
  
-	expected_chain_length = utils.expected_chain_length(len(nodes), block_size)
-	chain_length = utils.get_chain_length(list(nodes.values())[0])
-	i = 0
-	while chain_length != expected_chain_length:
-		time.sleep(0.1)
-		chain_length = utils.get_chain_length(list(nodes.values())[i])
-		i = (i + 1) % len(nodes)
+	# expected_chain_length = utils.expected_chain_length(len(nodes), block_size)
+	# chain_length = utils.get_chain_length(list(nodes.values())[0])
+	# i = 0
+	# while chain_length != expected_chain_length:
+	# 	time.sleep(0.1)
+	# 	chain_length = utils.get_chain_length(list(nodes.values())[i])
+	# 	i = (i + 1) % len(nodes)
 
-	
+	sleep(0.2)
 	time_end = time.time()
 
 	digestion_time = time_end - time_start
@@ -127,8 +127,7 @@ def start_tests(nodes, stake: int, block_size: int):
 	# Collect throughput and block time and write to output files
 	print(f"{Fore.GREEN}{Style.BRIGHT}➜ Collecting the throughput and block time{Fore.RESET}{Style.NORMAL}\n")
 	
-	# Wait for 3 seconds before retrieving the chain length to ensure all transactions are processed
-	time.sleep(3)
+	sleep(15)
 
 	chain_length = utils.get_chain_length(list(nodes.values())[0])
 	throughput = total_transactions / run_time
@@ -138,10 +137,10 @@ def start_tests(nodes, stake: int, block_size: int):
 	# Output results
 	print(f"	Total Transactions: {total_transactions}")
 	print(f"	Successful Transactions: {successful_transactions}")
-	print(f"	{Fore.GREEN}Throughput: {throughput} transactions per second{Fore.RESET}")
+	#print(f"	{Fore.GREEN}Throughput: {throughput} transactions per second{Fore.RESET}")
 	print(f"	Chain Length: {chain_length}")
-	print(f"	{Fore.GREEN}Digestion Throughput: {digestion_throughput} transactions per second{Fore.RESET}")
-	print(f"	{Fore.GREEN}Digestion Block Time: {block_digestion_time} seconds{Fore.RESET}\n")
+	#print(f"	{Fore.GREEN}Digestion Throughput: {digestion_throughput} transactions per second{Fore.RESET}")
+	#print(f"	{Fore.GREEN}Digestion Block Time: {block_digestion_time} seconds{Fore.RESET}\n")
  
 	return throughput, digestion_throughput, block_digestion_time
 

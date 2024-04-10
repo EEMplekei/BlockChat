@@ -26,7 +26,7 @@ time.sleep(10)
 routines.check_chain_length(nodes, block_size)
 
 # Step 7. Write the digestion block_time and throughput with keys the pair (number of nodes, blocksize) to the output file as json format to be used by a script to make graph
-routines.write_file(len(nodes), block_size, throughput, digestion_block_time)
+#routines.write_file(len(nodes), block_size, throughput, digestion_block_time)
 
 # Note!
 # The block digestion time is effectively the average time required
