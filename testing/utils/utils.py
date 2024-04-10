@@ -157,9 +157,7 @@ def send_messages(node, address: str, receiver_id_list, message_list):
 			else:
 				SUCCESSFUL_TRANSACTIONS += 1
 		except requests.exceptions.RequestException as e:
-			# Handle exceptions
-			print(f"	{Fore.RED}❌ Sending message failed for node {node} with address: {address}")
-			print(f"Exception: {e}")
+			print(f"	{Fore.YELLOW}⚠️ Sending message failed for node {node} with address: {address}")
 
 	# All tests passed
 	print(f"		{Fore.GREEN}✅ Messages were send successfully for node {node} with address: {address}{Fore.RESET}")

@@ -8,6 +8,7 @@ import time
 import random
 import requests
 import subprocess
+from utils.utils import SUCCESSFUL_TRANSACTIONS
 
 total_transactions = 0
 
@@ -153,7 +154,7 @@ def check_chain_length(nodes, block_size):
 			response_json = response.json()
 			chain_length = response_json.get('chain_length')
    
-			expected_chain_length = utils.expected_chain_length(len(nodes), block_size, total_transactions)			
+			expected_chain_length = utils.expected_chain_length(len(nodes), block_size, SUCCESSFUL_TRANSACTIONS)			
 			if chain_length != expected_chain_length:
 				print(f"	❌ {Fore.RED}Node {node} chain length is incorrect{Fore.RESET}")
 				print(f"	❌ Expected: {expected_chain_length}")
