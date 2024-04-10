@@ -11,7 +11,7 @@ nodes_count, block_size = utils.get_arguments()
 nodes = utils.get_nodes_from_config(nodes_count)
 
 # Step 3. Setup the nodes 
-#routines.setup_nodes(nodes, block_size)
+routines.setup_nodes(nodes, block_size)
 
 stake  = 10
 
