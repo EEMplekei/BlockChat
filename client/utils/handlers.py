@@ -150,7 +150,7 @@ def handle_view_incoming_messages(address, node):
 		# Print incoming messages
 		for block in chain:
 			for transaction in block['transactions']:
-				if transaction['type'] == "Message" and str(transaction['receiver_id']) == str(node):
+				if transaction['type'] == "Message" and f"node{transaction['receiver_id']}" == str(node):
 					print(f"{count}.")
 					print()
 					print(f"    {Fore.GREEN}FROM: {Fore.RESET}"+transaction['sender_id']+"")
