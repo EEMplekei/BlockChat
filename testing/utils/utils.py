@@ -8,6 +8,7 @@ import json
 import time
 
 SUCCESSFUL_TRANSACTIONS = 0
+unsuccessful_transactions = []
 
 # Function to clear the terminal
 def clear_terminal():
@@ -140,9 +141,36 @@ def start_threads(nodes, receiver_id_lists, messages_lists):
 		
 def send_messages(node, address: str, receiver_id_list, message_list):
 	global SUCCESSFUL_TRANSACTIONS
+	global unsuccessful_transactions
 	for receiver_id, message in zip(receiver_id_list, message_list):
 
 		# Send the message to the receiver
+		try:
+			response = requests.post(address+'/api/create_transaction', json={
+				"receiver_id": int(receiver_id),
+				"payload": message,
+				"type_of_transaction": "MESSAGE"
+			})
+
+			# Check if the status code is not 200 OK
+			if response.status_code != requests.codes.ok:
+				# If the status code is not OK, raise an exception
+				unsuccessful_transactions.append((node, address, receiver_id, message))
+				response.raise_for_status()
+			else:
+				SUCCESSFUL_TRANSACTIONS += 1
+		except requests.exceptions.RequestException as e:
+			print(f"	{Fore.YELLOW}⚠️ Sending message failed for node {node} with address: {address}")
+
+	# All tests passed
+	print(f"		{Fore.GREEN}✅ Messages were send successfully for node {node} with address: {address}{Fore.RESET}")
+	return True
+
+def send_unsuccessful_transactions():
+	global unsuccessful_transactions
+	global SUCCESSFUL_TRANSACTIONS
+	print(f"\n	{Fore.GREEN}Sending unsuccessful transactions{Fore.RESET}\n")
+	for node, address, receiver_id, message in unsuccessful_transactions:
 		try:
 			response = requests.post(address+'/api/create_transaction', json={
 				"receiver_id": int(receiver_id),
@@ -160,8 +188,8 @@ def send_messages(node, address: str, receiver_id_list, message_list):
 			print(f"	{Fore.YELLOW}⚠️ Sending message failed for node {node} with address: {address}")
 
 	# All tests passed
-	print(f"		{Fore.GREEN}✅ Messages were send successfully for node {node} with address: {address}{Fore.RESET}")
-	return True
+	print(f"	{Fore.GREEN}✅ All unsuccessful transactions were sent{Fore.RESET}")
+	return SUCCESSFUL_TRANSACTIONS
 
 def get_chain_length(address):
 	# Retrieve the Blockchain length

@@ -8,7 +8,6 @@ import time
 import random
 import requests
 import subprocess
-from utils.utils import SUCCESSFUL_TRANSACTIONS
 
 total_transactions = 0
 
@@ -109,9 +108,12 @@ def start_tests(nodes, stake: int, block_size: int):
 
 	# Create and start threads after parsing input files
 	run_time, successful_transactions = utils.start_threads(nodes, receiver_id_lists, messages_lists)
+
+	time.sleep(2)
+	if successful_transactions != total_transactions:
+		total_successful_transactions = utils.send_unsuccessful_transactions()
 	
 	# When the expected length of the chain is achieved, get the time of that happening
- 
 	expected_chain_length = utils.expected_chain_length(len(nodes), block_size)
 	chain_length = utils.get_chain_length(list(nodes.values())[0])
 	i = 0
@@ -138,7 +140,7 @@ def start_tests(nodes, stake: int, block_size: int):
 
 	# Output results
 	print(f"	Total Transactions: {total_transactions}")
-	print(f"	Successful Transactions: {successful_transactions}")
+	print(f"	Successful Transactions: {total_successful_transactions}")
 	print(f"	{Fore.GREEN}Throughput: {throughput} transactions per second{Fore.RESET}")
 	print(f"	Chain Length: {chain_length}")
 	print(f"	{Fore.GREEN}Digestion Throughput: {digestion_throughput} transactions per second{Fore.RESET}")
