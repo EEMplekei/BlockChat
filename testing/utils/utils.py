@@ -96,9 +96,9 @@ def parse_all_input_files(nodes_count):
 
 	for i in range(nodes_count):
 		if nodes_count == 5:
-			trans_folder = f'nodes_5/trans_{i}'
+			trans_folder = f'nodes_5/trans{i}'
 		elif nodes_count == 10:
-			trans_folder = f'nodes_10/trans_{i}'
+			trans_folder = f'nodes_10/trans{i}'
 		else:
 			print(f"		{Fore.RED}{Style.BRIGHT}Invalid number of nodes{Style.NORMAL}{Fore.RESET}")
 			exit(1)

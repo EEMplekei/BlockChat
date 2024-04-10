@@ -1,7 +1,0 @@
-id1 Forty-two, said Deep Thought, with infinite majesty and calm.
-id3 There really is one.
-id3 There is an answer?
-id3 Forty-two
-id3 With a flashlight.
-id1 Yes...
-id0 Of Life, the Universe and Everything...

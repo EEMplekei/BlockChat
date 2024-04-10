@@ -1,7 +1,0 @@
-id1 In the beginning the Universe was created.
-id2 Don't panic
-id1 Yes...
-id2 Tricky
-id3 Yes...!
-id1 Everything!
-id2 All right
