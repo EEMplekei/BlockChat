@@ -153,7 +153,6 @@ def send_messages(node, address: str, receiver_id_list, message_list):
 			# Check if the status code is not 200 OK
 			if response.status_code != requests.codes.ok:
 				# If the status code is not OK, raise an exception
-				print('here')
 				response.raise_for_status()
 			else:
 				SUCCESSFUL_TRANSACTIONS += 1
@@ -161,7 +160,6 @@ def send_messages(node, address: str, receiver_id_list, message_list):
 			# Handle exceptions
 			print(f"	{Fore.RED}❌ Sending message failed for node {node} with address: {address}")
 			print(f"Exception: {e}")
-			return False
 
 	# All tests passed
 	print(f"		{Fore.GREEN}✅ Messages were send successfully for node {node} with address: {address}{Fore.RESET}")

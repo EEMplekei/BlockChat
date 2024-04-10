@@ -111,11 +111,10 @@ def start_tests(nodes, stake: int, block_size: int):
 	
 	# When the expected length of the chain is achieved, get the time of that happening
  
-	expected_chain_length = utils.expected_chain_length(len(nodes), block_size, total_transactions)
+	expected_chain_length = utils.expected_chain_length(len(nodes), block_size, successful_transactions)
 	chain_length = utils.get_chain_length(list(nodes.values())[0])
 	while chain_length != expected_chain_length:
 		time.sleep(0.1)
-		expected_chain_length = utils.expected_chain_length(len(nodes), block_size, total_transactions)
 		chain_length = utils.get_chain_length(list(nodes.values())[0])
 	
 	time_end = time.time()
