@@ -6,8 +6,9 @@ Welcome to the API documentation for the BlockChat backend. This API allows you 
 ## Getting Started
 To get started with the API, you will need to follow these steps:
 
-```bash 
-add stuff here
+```bash
+cd BlockChat/backend
+python3 api.py -i eth0 -p 8000
 ```
 
 ## API Endpoints
@@ -33,38 +34,27 @@ request.body = {
 ```
 
 #### <span style="color:#63bc86">GET</span> `/api/view_last_block`
-Sample Text
 
 #### <span style="color:#63bc86">GET</span> `/api/get_balance`
-Sample Text
 
 #### <span style="color:#63bc86">GET</span> `/api/get_temp_balance`
-Sample Text
 
 #### <span style="color:#63bc86">GET</span> `/api/get_chain_length`
-Sample Text
 
 #### <span style="color:#63bc86">GET</span> `/api/get_chain`
-Sample Text
 
 ## Internal Endpoints
 The following internal endpoints are available in the API in order for the nodes to communicate with each other:
 
 #### <span style="color:#d7bf6c">POST</span> `/receive_ring`
-Sample Text
 
 #### <span style="color:#d7bf6c">POST</span> `/receive_blockchain`
-Sample Text
 
 #### <span style="color:#d7bf6c">POST</span> `/receive_transaction`
-Sample Text
 
 #### <span style="color:#d7bf6c">POST</span> `/receive_block`
-Sample Text
 
 #### <span style="color:#d7bf6c">POST</span> `/join_request`
-Sample Text
-
 
 ## Error Handling
 In case of any errors, the API will return appropriate error responses with status codes and error messages.
