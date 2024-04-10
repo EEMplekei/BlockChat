@@ -104,27 +104,6 @@ python3 client.py --node node0
 
 For other operating systems different than Linux-Debian you will have to fill in the gaps 
 
-## High Level Software Description 
-
-#### Genesis Block
-The Genesis block is the first block of the blockchain and  it is the only block that does not get validated. The genesis block has only 1 transaction that is (TOTAL_NODES*1000) Coins to Bootstrap Node.
-
-#### Initial State
-
-
-
-#### Create Transaction
-
-Text should be added here 
-
-
-#### Moving from Block 1 to many Blocks
-
-Text should be added here 
-
-#### Proof of Stake Protocol
-
-Text should be added here 
 
 ## Testing 🔬
 To run the given transactions from the txt files [here](./testing/). Do the following:
