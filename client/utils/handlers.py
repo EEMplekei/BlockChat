@@ -45,7 +45,9 @@ def handle_new_transaction(address):
   
 		if response.status_code == 200:
 			print(f"{Fore.GREEN}Coins sent successfully{Fore.RESET}")
-		data = response.json()
+		else:
+			data = response.json()
+			raise requests.exceptions.HTTPError
   
 	except requests.exceptions.HTTPError:
 		if (data):
