@@ -22,7 +22,7 @@ routines.set_initial_stake(nodes, stake)
 throughput, digestion_throughput, digestion_block_time = routines.start_tests(nodes, stake, block_size)
 
 #Step 6. Check chain length
-time.sleep(10)
+time.sleep(15)
 routines.check_chain_length(nodes, block_size)
 
 # Step 7. Write the digestion block_time and throughput with keys the pair (number of nodes, blocksize) to the output file as json format to be used by a script to make graph

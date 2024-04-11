@@ -7,7 +7,6 @@ import time
 import random
 import requests
 import subprocess
-from utils.utils import SUCCESSFUL_TRANSACTIONS
 
 total_transactions = 0
 
